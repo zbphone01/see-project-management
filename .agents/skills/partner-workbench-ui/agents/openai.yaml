@@ -1,0 +1,5 @@
+interface:
+  display_name: "伙伴端工作台 UI"
+  short_description: "保持伙伴端页面与现有工作台视觉和交互样式一致"
+  default_prompt: "Use $partner-workbench-ui to design and implement a partner-side page consistent with the current workbench."
+

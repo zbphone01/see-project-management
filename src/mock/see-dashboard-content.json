@@ -1,0 +1,42 @@
+{
+  "statistics": [
+    {
+      "key": "recruitment",
+      "metrics": [
+        { "label": "招募总数", "value": 361 },
+        { "label": "进行中的招募", "value": 200 },
+        { "label": "已结束的招募", "value": 181 },
+        { "label": "执行中的项目总数", "value": 884 },
+        { "label": "逾期项目数", "value": 884 }
+      ]
+    },
+    {
+      "key": "funded",
+      "metrics": [
+        { "label": "资助项目总数", "value": 361 },
+        { "label": "草稿数量", "value": 200 },
+        { "label": "执行中数量", "value": 181 },
+        { "label": "结项（包括异常结项）数量", "value": 40 },
+        { "label": "进展总数", "value": 7 }
+      ]
+    },
+    {
+      "key": "joint",
+      "metrics": [
+        { "label": "联合公益项目总数", "value": 361 },
+        { "label": "草稿数量", "value": 200 },
+        { "label": "执行中数量", "value": 181 },
+        { "label": "结项（包括异常结项）数量", "value": 40 },
+        { "label": "进展总数", "value": 7 }
+      ]
+    }
+  ],
+  "projects": [
+    { "id": 1, "name": "梭梭大气水汽利用机制和水资源承载力研究", "code": "ZZ-1234567890", "organization": "北京林业大学", "status": "草稿", "tone": "neutral", "image": "/assets/project-suosuo.png", "actions": ["填写协议金额"] },
+    { "id": 2, "name": "蚂蚁森林-墨脱格当公益保护地项目(2024-2026)", "code": "ZZ-1234567891", "organization": "四川省动物学会", "status": "申请待审", "tone": "pending", "cover": "see-forest", "icon": "environment", "auditProjectId": 6, "actions": ["审核", "导出申请书", "导出预算表"] },
+    { "id": 6, "name": "大熊猫栖息地生态监测与社区保护项目", "code": "ZZ-1234567895", "organization": "荥经县野生动植物保护协会", "status": "进展待审", "tone": "pending", "cover": "see-forest", "icon": "environment", "reportId": "P-001006", "actions": ["审核"] },
+    { "id": 3, "name": "2024年泥巴山大熊猫退化栖息地修复项目", "code": "ZZ-1234567892", "organization": "荥经县野生动植物保护协会", "status": "待筹款修订", "tone": "neutral", "cover": "see-mountain", "icon": "picture", "actions": ["变更筹款状态", "填写协议金额"] },
+    { "id": 4, "name": "《中国物种研究和保护优先性专家建议》报告", "code": "ZZ-1234567893", "organization": "保护地友好（北京）生态科技有限责任公司", "status": "请求修订", "tone": "pending", "cover": "see-report", "icon": "read", "actions": ["同意", "驳回"] },
+    { "id": 5, "name": "基于多重效应的生态修复项目2022年蚂蚁森林北京市企业家环保基金会合作造林宁夏中卫市多树种造林项目", "code": "ZZ-1234567894", "organization": "保护地友好（北京）生态科技有限责任公司", "status": "审核流程中", "tone": "neutral", "cover": "see-desert", "icon": "global", "actions": ["下载项目资料", "上传协议扫描件"] }
+  ]
+}

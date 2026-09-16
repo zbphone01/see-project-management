@@ -1,0 +1,30 @@
+{
+  "projects": [
+    { "id": 1, "title": "闲鱼红树林-海草生境演替项目", "status": "执行中", "statusTone": "success", "cover": "mangrove", "description": "围绕红树林与海草床生态系统开展长期监测，形成阶段性研究成果，为后续保护行动和项目决策提供依据。", "updatedAt": "2026-03-03 12:59:59", "actions": [{ "label": "请求修订", "icon": "file-exclamation", "tone": "neutral" }, { "label": "提交进展", "icon": "container", "tone": "progress" }, { "label": "提交结项", "icon": "book", "tone": "complete" }] },
+    { "id": 2, "title": "闲鱼红树林-海草生境演替项目（逾期示例）", "status": "执行中", "statusTone": "success", "cover": "mangrove", "description": "项目概述第一行内容，项目概述第一行内容，项目概述第一行内容；项目概述第二行内容，项目概述第二行内容。", "updatedAt": "2026-03-03 12:59:59", "overdue": true, "actions": [{ "label": "请求修订", "icon": "file-exclamation", "tone": "neutral" }, { "label": "提交结项", "icon": "book", "tone": "complete" }] },
+    { "id": 3, "title": "荒漠化防治示范项目", "status": "草稿", "statusTone": "neutral", "cover": "sand", "description": "项目申请资料尚未提交，完成编辑后可继续发起申请。", "updatedAt": "2026-03-03 12:59:59", "actions": [{ "label": "编辑草稿", "icon": "edit", "tone": "neutral" }] },
+    { "id": 4, "title": "社区自然教育共建项目", "status": "申请待审", "statusTone": "pending", "cover": "forest", "description": "项目申请已提交，等待管理方审核。", "updatedAt": "2026-03-03 12:59:59", "actions": [] },
+    { "id": 5, "title": "湿地保护伙伴协作项目", "status": "申请待修改", "statusTone": "danger", "cover": "ocean", "description": "申请材料需要补充或修改后重新提交。", "updatedAt": "2026-03-03 12:59:59", "actions": [{ "label": "修改申请", "icon": "edit", "tone": "edit" }] },
+    { "id": 7, "title": "山地生物多样性保护项目", "status": "审核流程中", "statusTone": "neutral", "cover": "forest", "description": "项目正在按照审核流程进行评估。", "updatedAt": "2026-03-03 12:59:59", "actions": [] },
+    { "id": 8, "title": "河流生态修复监测项目", "status": "进展待审", "statusTone": "pending", "cover": "ocean", "description": "阶段性进展已提交，等待审核。", "updatedAt": "2026-03-03 12:59:59", "actions": [] },
+    { "id": 9, "title": "草原生态监测与牧民能力建设", "status": "进展驳回", "statusTone": "danger", "cover": "sand", "description": "进展材料被退回，请根据意见完成修改。", "updatedAt": "2026-03-03 12:59:59", "actions": [{ "label": "修改进展", "icon": "form", "tone": "edit" }] },
+    { "id": 10, "title": "候鸟迁徙通道保护项目", "status": "进展已审", "statusTone": "success", "cover": "ocean", "description": "阶段性进展已审核通过。", "updatedAt": "2026-03-03 12:59:59", "actions": [] },
+    { "id": 11, "title": "社区低碳行动网络建设项目", "status": "结项待审", "statusTone": "pending", "cover": "climate", "description": "结项材料已提交，等待审核。", "updatedAt": "2026-03-03 12:59:59", "actions": [] },
+    { "id": 12, "title": "森林保护与自然教育项目", "status": "结项驳回", "statusTone": "danger", "cover": "forest", "description": "结项材料被退回，请根据意见完成修改。", "updatedAt": "2026-03-03 12:59:59", "actions": [{ "label": "修改结项", "icon": "book", "tone": "edit" }] },
+    { "id": 13, "title": "城市生物多样性提升项目", "status": "结项已审", "statusTone": "success", "cover": "industry", "description": "项目结项已审核通过。", "updatedAt": "2026-03-03 12:59:59", "actions": [] },
+    { "id": 14, "title": "绿色金融支持生态保护项目", "status": "请求修订", "statusTone": "pending", "cover": "climate", "description": "项目已发起修订请求，等待后续处理。", "updatedAt": "2026-03-03 12:59:59", "actions": [] },
+    { "id": 15, "title": "湿地恢复与公众参与计划", "status": "修订中", "statusTone": "danger", "cover": "ocean", "description": "项目修订正在进行中。", "updatedAt": "2026-03-03 12:59:59", "actions": [{ "label": "项目修订", "icon": "edit", "tone": "edit" }] },
+    { "id": 16, "title": "自然保护地协同治理项目", "status": "修订待审", "statusTone": "pending", "cover": "forest", "description": "修订内容已提交，等待审核。", "updatedAt": "2026-03-03 12:59:59", "actions": [] },
+    { "id": 17, "title": "海洋生态保护与修复项目", "status": "修订驳回", "statusTone": "danger", "cover": "ocean", "description": "修订内容被退回，请完成项目修订。", "updatedAt": "2026-03-03 12:59:59", "actions": [{ "label": "项目修订", "icon": "edit", "tone": "edit" }] },
+    { "id": 18, "title": "补充结项材料完善项目", "status": "补充结项驳回", "statusTone": "danger", "cover": "sand", "description": "补充结项材料被退回，请根据意见重新提交。", "updatedAt": "2026-03-03 12:59:59", "actions": [{ "label": "修改结项", "icon": "book", "tone": "edit" }] }
+  ],
+  "donationApplications": [
+    { "id": 1, "title": "募捐申请书的项目名称募捐申请书的项目名称", "status": "募捐申请待审", "statusTone": "pending", "cover": "mangrove", "updatedAt": "2026-03-03 12:59:59" },
+    { "id": 2, "title": "募捐申请书的项目名称募捐申请书的项目名称", "status": "募捐申请驳回", "statusTone": "danger", "cover": "mangrove", "updatedAt": "2026-03-03 12:59:59", "action": "修改申请", "actionIcon": "edit", "actionTone": "danger" },
+    { "id": 3, "title": "募捐申请书的项目名称募捐申请书的项目名称", "status": "募捐申请通过", "statusTone": "approved", "cover": "mangrove", "updatedAt": "2026-03-03 12:59:59", "action": "申请项目", "actionIcon": "file-add", "actionTone": "approved" }
+  ],
+  "recruitments": [
+    { "id": 1, "title": "这里是招募名称", "description": "海龟是著名的“活化石”物种，对海洋生态系统具有至关重要的作用。南海是海龟的重要分布区和基因交流通道，也是海龟在中国最大的产卵场和避难所。", "date": "2023-02-03 至 2023-02-20", "phone": "13518074869", "email": "test@see.org.cn", "group": "项目组 - 荒漠化防治", "action": "申请项目", "actionIcon": "file-add", "actionTone": "approved" },
+    { "id": 2, "title": "招募名称超长时的样式招募名称超长时的样式招募名称超长时的样式", "description": "简述简短时的样式", "date": "2023-02-03 至 2023-02-20", "phone": "13518074869", "email": "test@see.org.cn", "group": "联合公益", "action": "募捐申请", "actionIcon": "file-add", "actionTone": "fundraising" }
+  ]
+}

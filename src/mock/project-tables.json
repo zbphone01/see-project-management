@@ -1,0 +1,603 @@
+{
+  "basic": {
+    "code": "ZZ-1764740216",
+    "recruitment": "大熊猫国家公园四川片区药用植物种类、分布、利用现状调查及保护与可持续利用建议",
+    "name": "加速绿色低碳铝采购实践项目—溢价评估与分配机制研究、再生铝上下游及区域协作模式研究与开发",
+    "type": "资助项目",
+    "strategy": "气候变化与商业可持续",
+    "issue": "废弃物管理",
+    "funding": "资助",
+    "targets": "保护地、水",
+    "organization": "重庆大巴山国家级自然保护区管理事务中心",
+    "thirdParties": "无",
+    "period": "2024年12月01日 至 2026年02月28日",
+    "rural": "否",
+    "aid": "否",
+    "beneficiaries": "青海省玉树州治多县扎河乡牧民",
+    "publicBenefit": "项目面向青海省玉树州治多县扎河乡牧民及周边社区，以改善高海拔地区生活垃圾处理条件、提升居民零废弃意识和可持续发展能力为核心，不以营利为目的。项目将通过入户宣传、社区培训、示范家庭建设和可重复使用物资支持，帮助牧民掌握垃圾源头减量、分类回收和资源再利用方法；同时培养本地管护员和社区骨干，推动形成由居民共同参与、长期维护的禁塑减废机制。项目实施成果与实践经验将向周边社区开放共享，为三江源地区生态环境保护、社区能力建设及乡村可持续发展提供可复制、可推广的公益实践参考。",
+    "total": "200,000 元（贰拾万元整）",
+    "requested": "200,000 元（贰拾万元整）",
+    "matching": "0 元（零元整）",
+    "leader": "洛松昂文",
+    "phone": "13800138000"
+  },
+  "aiInitialReview": [
+    {
+      "section": "项目基本信息",
+      "content": "申报主体、项目周期及受益对象信息填写完整，建议结合附件进一步核验，同时建议人工复核项目名称、实施区域与受益对象之间的一致性，并确认关键字段与申报附件的对应关系。"
+    },
+    {
+      "section": "项目执行计划",
+      "content": "项目目标、产出与活动安排较为清晰，建议复核关键节点的可执行性。"
+    },
+    {
+      "section": "执行团队配置",
+      "content": "团队职责分工明确，相关成员经验与项目实施需求基本匹配。"
+    },
+    {
+      "section": "项目预算计划",
+      "content": "预算科目与活动安排基本对应，建议重点核对测算依据及金额合理性。"
+    }
+  ],
+  "auditHistory": [
+    {
+      "id": 1,
+      "time": "2026-01-06 23:59:59",
+      "result": "结项通过",
+      "reviewer": "王五",
+      "paymentAmount": "100,000 元",
+      "remark": "预算执行率 99.99%；请款比例 99.99%（取自报告）"
+    },
+    {
+      "id": 2,
+      "time": "2026-01-05 23:59:59",
+      "result": "进展通过",
+      "reviewer": "王五",
+      "paymentAmount": "100,000 元",
+      "remark": "预算执行率 99.99%；请款比例 99.99%（取自报告）"
+    },
+    {
+      "id": 3,
+      "time": "2026-01-04 23:59:59",
+      "result": "执行中",
+      "reviewer": "李四",
+      "agreement": true
+    },
+    {
+      "id": 4,
+      "time": "2026-01-03 23:59:59",
+      "result": "修订审核通过",
+      "reviewer": "李四",
+      "approvedAmount": "200,000 元",
+      "snapshot": true
+    },
+    {
+      "id": 5,
+      "time": "2026-01-02 23:59:59",
+      "result": "修订审核驳回",
+      "reviewer": "李四",
+      "remark": "按修改意见修改"
+    },
+    {
+      "id": 6,
+      "time": "2026-01-01 23:59:59",
+      "result": "同意修订",
+      "reviewer": "李四"
+    },
+    {
+      "id": 7,
+      "time": "2024-12-30 23:59:59",
+      "result": "执行中",
+      "reviewer": "张三",
+      "agreement": true
+    },
+    {
+      "id": 8,
+      "time": "2024-11-31 23:59:59",
+      "result": "通过",
+      "reviewer": "张三",
+      "approvedAmount": "200,000 元",
+      "remark": "SEE零废星球-青山公益洁净自然（第二期）项目由SEE基金会支持，共支持16个项目。经专家会评审后，本项目已得到专家评审会通过及全体评委签字确认（见附件）。",
+      "review": true,
+      "snapshot": true
+    },
+    {
+      "id": 9,
+      "time": "2024-10-09 16:58:05",
+      "result": "修改",
+      "reviewer": "张三",
+      "remark": "尽调沟通后修改项目书及预算"
+    }
+  ],
+  "areas": [
+    {
+      "id": "areas-1",
+      "province": "青海省",
+      "city": "玉树藏族自治州",
+      "district": "治多县扎河乡"
+    },
+    {
+      "id": "areas-2",
+      "province": "青海省",
+      "city": "玉树藏族自治州",
+      "district": "口前村"
+    }
+  ],
+  "team": [
+    {
+      "id": "team-1",
+      "name": "胡刚",
+      "position": "专家",
+      "responsibilities": "负责项目整体统筹与执行管理，组织需求调研和社区沟通，协调合作伙伴及项目资源，跟进阶段目标完成情况，汇总监测数据并撰写项目进展报告与结项报告。"
+    },
+    {
+      "id": "team-2",
+      "name": "张慧敏",
+      "position": "正式员工",
+      "responsibilities": "负责自然教育活动的策划、组织和参与者招募，维护活动记录与影像资料，并根据现场反馈持续优化课程内容和社区参与方式。"
+    }
+  ],
+  "outputs": [
+    {
+      "id": "output-1",
+      "name": "建立 20 户零废弃家庭",
+      "standard": "完成 20 户牧民家庭入户宣传教育，直接受益约 60 人，并为每户形成一份符合当地生产生活习惯的零废弃行动建议。\n向参与家庭发放可重复使用的生产生活物资，推动一次性塑料制品减量，并持续记录物资使用及垃圾分类情况。\n由社区参与者共同讨论并制定禁塑减废制度，通过季度回访检查执行效果，形成可供周边社区参考的实践记录。",
+      "activities": [
+        {
+          "id": "activity-1-1",
+          "name": "协会工作人员入户宣讲零废弃生活方式",
+          "start": "2025-01",
+          "end": "2025-02",
+          "location": "青海省玉树藏族自治州治多县扎河乡",
+          "people": "才旦文次、洛松昂文、东周",
+          "content": "介绍零废弃理念、案例、垃圾危害与实践步骤，逐户走访牧民家庭并共同讨论适合本地的零废弃生活方式。"
+        },
+        {
+          "id": "activity-1-2",
+          "name": "发放零废弃物资",
+          "start": "2025-06",
+          "end": "2025-08",
+          "location": "治多县扎河乡",
+          "people": "才旦文次、洛松昂文、东周",
+          "content": "为牧民家庭提供定制零废弃方案及可重复使用的家庭工具包。"
+        }
+      ]
+    },
+    {
+      "id": "output-2",
+      "name": "垃圾减塑和减量——推动高原牧民家庭建立垃圾分类、称重记录与资源循环利用机制，结合入户指导、可重复使用物资发放和季度跟踪评估，持续减少一次性塑料使用及不可回收垃圾产生，形成可向周边社区推广的零废弃生活实践",
+      "standard": "20 户零废弃管护员家庭每年不可回收生活垃圾减少到 10 公斤以内。\n完成家庭垃圾称重与分类记录，并按季度汇总减量结果，作为项目监测与社区反馈依据。",
+      "activities": [
+        {
+          "id": "activity-2-1",
+          "name": "垃圾回收再利用",
+          "start": "2025-06",
+          "end": "2025-08",
+          "location": "治多县扎河乡",
+          "people": "项目执行团队",
+          "content": "学习利用回收衣物加工制作环保袋、家居用品与牧场用具。"
+        }
+      ]
+    },
+    {
+      "id": "output-3",
+      "name": "形成社区零废弃实践经验并开展周边推广",
+      "standard": "完成项目实践资料整理，形成一套包含家庭减废方法、垃圾分类记录和社区协作机制的零废弃实践总结。\n面向周边社区开展经验分享，推动更多居民了解并参与垃圾源头减量和资源循环利用。",
+      "activities": [
+        {
+          "id": "activity-3-1",
+          "name": "整理项目经验并开展社区分享",
+          "start": "2025-09",
+          "end": "2025-11",
+          "location": "治多县扎河乡及周边社区",
+          "people": "项目执行团队、社区管护员",
+          "content": "汇总家庭减废记录、物资使用情况和社区反馈，形成实践材料，并通过社区交流活动分享零废弃家庭建设经验。"
+        }
+      ]
+    }
+  ],
+  "stakeholders": [
+    {
+      "id": "stakeholders-1",
+      "party": "治多县扎河乡居民",
+      "interest": "实行零废弃健康生活方式",
+      "impact": "积极",
+      "management": "参与管护员家庭示范项目建设"
+    },
+    {
+      "id": "stakeholders-2",
+      "party": "周边社区",
+      "interest": "改善水源与环境清洁度",
+      "impact": "积极",
+      "management": "从源头减少垃圾产生"
+    },
+    {
+      "id": "stakeholders-3",
+      "party": "当地政府",
+      "interest": "推动社区可持续发展模式落地",
+      "impact": "积极",
+      "management": "支持社区形成内生能力"
+    },
+    {
+      "id": "stakeholders-4",
+      "party": "一次性塑料用品供应商",
+      "interest": "一次性用品需求减少，短期影响原有销售",
+      "impact": "消极",
+      "management": "提前沟通减塑计划，引导提供可重复使用的替代产品"
+    }
+  ],
+  "risks": [
+    {
+      "id": "risks-1",
+      "likelihood": "低",
+      "description": "自然灾害等不可抗力中断进度",
+      "response": "灾害结束后调整计划并继续执行",
+      "affectedActivities": "入户调研、宣教与集中培训"
+    },
+    {
+      "id": "risks-2",
+      "likelihood": "中",
+      "description": "社区基础设施薄弱，可能无法提供食宿发票",
+      "response": "通过签到及合规佐证材料完成财务流程",
+      "affectedActivities": "财务合规"
+    }
+  ],
+  "monitoring": [
+    {
+      "id": "monitoring-1",
+      "purpose": "评估培训效力",
+      "method": "培训结束前由执行人员发放问卷，对比项目执行前后的认知与行为变化。"
+    },
+    {
+      "id": "monitoring-2",
+      "purpose": "监督项目计划实施",
+      "method": "依据逻辑框架设定指标，按季度汇总执行记录并向项目团队反馈。"
+    }
+  ],
+  "budget": {
+    "tabs": [
+      "预算及执行明细表",
+      "人力及成本分摊表",
+      "预算及执行汇总表",
+      "费用类型分析表",
+      "预算调整历史"
+    ],
+    "widths": [
+      90,
+      120,
+      210,
+      80,
+      80,
+      80,
+      80,
+      80,
+      100,
+      100,
+      60,
+      210,
+      100,
+      100,
+      60
+    ],
+    "columns": [
+      "预算编号",
+      "预算科目",
+      "预算明细（单价*数量）",
+      "费用类型",
+      "第一期预算",
+      "第二期预算",
+      "第三期预算",
+      "第四期预算",
+      "预算合计金额",
+      "预算调整金额",
+      "预算变动比例",
+      "预算调整明细",
+      "调整后预算",
+      "执行金额",
+      "执行比例"
+    ],
+    "rows": [
+      {
+        "id": "budget-1",
+        "kind": "total",
+        "total": "2500.00",
+        "quarters": [
+          "500.00",
+          "500.00",
+          "500.00",
+          "500.00"
+        ],
+        "adjustment": null,
+        "adjustmentRatio": null,
+        "adjustmentDetail": null,
+        "adjustedBudget": null,
+        "executed": null,
+        "executionRatio": null
+      },
+      {
+        "id": "budget-2",
+        "kind": "group",
+        "code": "1-支撑",
+        "name": "项目支撑费用",
+        "total": "400.00",
+        "quarters": [
+          "100.00",
+          "100.00",
+          "100.00",
+          "100.00"
+        ],
+        "adjustment": null,
+        "adjustmentRatio": null,
+        "adjustmentDetail": null,
+        "adjustedBudget": null,
+        "executed": null,
+        "executionRatio": null
+      },
+      {
+        "id": "budget-3",
+        "kind": "detail",
+        "code": "1-支撑",
+        "name": "办公室房租",
+        "detail": "100.00元*4.00\n\n季度运行费",
+        "type": "办公运行费",
+        "total": "400.00",
+        "quarters": [
+          "100.00",
+          "100.00",
+          "100.00",
+          "100.00"
+        ],
+        "adjustment": null,
+        "adjustmentRatio": null,
+        "adjustmentDetail": null,
+        "adjustedBudget": null,
+        "executed": null,
+        "executionRatio": null
+      },
+      {
+        "id": "budget-4",
+        "kind": "group",
+        "code": "2-人力",
+        "name": "项目执行团队人力成本",
+        "total": "400.00",
+        "quarters": [
+          "100.00",
+          "100.00",
+          "100.00",
+          "100.00"
+        ],
+        "adjustment": null,
+        "adjustmentRatio": null,
+        "adjustmentDetail": null,
+        "adjustedBudget": null,
+        "executed": null,
+        "executionRatio": null
+      },
+      {
+        "id": "budget-5",
+        "kind": "detail",
+        "code": "2-人力",
+        "name": "项目人员人力成本",
+        "detail": "详见人力成本分摊表",
+        "type": "工资薪金",
+        "total": "400.00",
+        "quarters": [
+          "100.00",
+          "100.00",
+          "100.00",
+          "100.00"
+        ],
+        "adjustment": null,
+        "adjustmentRatio": null,
+        "adjustmentDetail": null,
+        "adjustedBudget": null,
+        "executed": null,
+        "executionRatio": null
+      },
+      {
+        "id": "budget-6",
+        "kind": "group",
+        "code": "产出1",
+        "name": "鸟类栖息地巡护-掌握地块基础信息",
+        "total": "800.00",
+        "quarters": [
+          "200.00",
+          "200.00",
+          "200.00",
+          "200.00"
+        ],
+        "adjustment": null,
+        "adjustmentRatio": null,
+        "adjustmentDetail": null,
+        "adjustedBudget": null,
+        "executed": null,
+        "executionRatio": null
+      },
+      {
+        "id": "budget-7",
+        "kind": "activity",
+        "code": "产出活动1.1",
+        "name": "掌握地块基础信息，由于陆地的点位已经比较清楚了，拟探索一下境内的海岛。比如獐岛和大鹿岛。",
+        "total": "800.00",
+        "quarters": [
+          "200.00",
+          "200.00",
+          "200.00",
+          "200.00"
+        ],
+        "adjustment": null,
+        "adjustmentRatio": null,
+        "adjustmentDetail": null,
+        "adjustedBudget": null,
+        "executed": null,
+        "executionRatio": null
+      },
+      {
+        "id": "budget-8",
+        "kind": "detail",
+        "code": "1.1.1",
+        "name": "交通差旅费",
+        "detail": "860.00元*36.00\n\n交通费180元/百公里*2百公里*36天=12960，住宿费（2人）*36天*150=10800元，餐饮费2*36*100=7200元。",
+        "type": "交通差旅费",
+        "total": "400.00",
+        "quarters": [
+          "100.00",
+          "100.00",
+          "100.00",
+          "100.00"
+        ],
+        "adjustment": null,
+        "adjustmentRatio": null,
+        "adjustmentDetail": null,
+        "adjustedBudget": null,
+        "executed": null,
+        "executionRatio": null
+      },
+      {
+        "id": "budget-9",
+        "kind": "detail",
+        "code": "1.1.2",
+        "name": "劳务费",
+        "detail": "200元*36\n\n劳务费每天100元*36天*2人=7200元",
+        "type": "交通差旅费",
+        "total": "400.00",
+        "quarters": [
+          "100.00",
+          "100.00",
+          "100.00",
+          "100.00"
+        ],
+        "adjustment": null,
+        "adjustmentRatio": null,
+        "adjustmentDetail": null,
+        "adjustedBudget": null,
+        "executed": null,
+        "executionRatio": null
+      },
+      {
+        "id": "budget-10",
+        "kind": "activity",
+        "code": "产出活动2.1",
+        "name": "该活动无需预算",
+        "total": "0.00",
+        "quarters": [
+          "0.00",
+          "0.00",
+          "0.00",
+          "0.00"
+        ],
+        "adjustment": null,
+        "adjustmentRatio": null,
+        "adjustmentDetail": null,
+        "adjustedBudget": null,
+        "executed": null,
+        "executionRatio": null
+      },
+      {
+        "id": "budget-11",
+        "kind": "detail",
+        "code": "1.1.1",
+        "name": "无",
+        "detail": "无",
+        "type": "/",
+        "total": "0.00",
+        "quarters": [
+          "0.00",
+          "0.00",
+          "0.00",
+          "0.00"
+        ],
+        "adjustment": null,
+        "adjustmentRatio": null,
+        "adjustmentDetail": null,
+        "adjustedBudget": null,
+        "executed": null,
+        "executionRatio": null
+      },
+      {
+        "id": "budget-12",
+        "kind": "group",
+        "code": "产出2",
+        "name": "鸟类调查-获得鸟类监测与调查数据",
+        "total": "400.00",
+        "quarters": [
+          "100.00",
+          "100.00",
+          "100.00",
+          "100.00"
+        ],
+        "adjustment": null,
+        "adjustmentRatio": null,
+        "adjustmentDetail": null,
+        "adjustedBudget": null,
+        "executed": null,
+        "executionRatio": null
+      },
+      {
+        "id": "budget-13",
+        "kind": "activity",
+        "code": "产出活动2.1",
+        "name": "围绕湿地开展保育工作，提升湿地环境",
+        "total": "400.00",
+        "quarters": [
+          "100.00",
+          "100.00",
+          "100.00",
+          "100.00"
+        ],
+        "adjustment": null,
+        "adjustmentRatio": null,
+        "adjustmentDetail": null,
+        "adjustedBudget": null,
+        "executed": null,
+        "executionRatio": null
+      },
+      {
+        "id": "budget-14",
+        "kind": "detail",
+        "code": "2.1.1",
+        "name": "产出报告",
+        "detail": "65800.00元*1.00\n\n开展深圳湾区域鸟类调查与监测，形成调查报告，费用：65800元",
+        "type": "资助款",
+        "total": "200.00",
+        "quarters": [
+          "50.00",
+          "50.00",
+          "50.00",
+          "50.00"
+        ],
+        "adjustment": null,
+        "adjustmentRatio": null,
+        "adjustmentDetail": null,
+        "adjustedBudget": null,
+        "executed": null,
+        "executionRatio": null
+      },
+      {
+        "id": "budget-15",
+        "kind": "detail",
+        "code": "2.1.2",
+        "name": "行业交流",
+        "detail": "8225.00元*2.00\n\n2742元人次/处（交通费1242元，食宿500元/天*3天）*3人次*2处=16450元",
+        "type": "交通差旅费",
+        "total": "200.00",
+        "quarters": [
+          "50.00",
+          "50.00",
+          "50.00",
+          "50.00"
+        ],
+        "adjustment": null,
+        "adjustmentRatio": null,
+        "adjustmentDetail": null,
+        "adjustedBudget": null,
+        "executed": null,
+        "executionRatio": null
+      }
+    ],
+    "organization": "武汉市武昌区道大自然观察工作室（自动获取）",
+    "period": "2023年01月01日 至 2023年12月31日（自动获取）",
+    "partners": "无（自动获取）",
+    "executionCutoff": "无（提交中期、末期财务进度报告时填写）"
+  }
+}
