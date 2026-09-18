@@ -13,6 +13,7 @@ const router = new VueRouter({
     { path: '/dashboard', name: 'dashboard', component: () => import('../views/Dashboard.vue') },
     { path: '/dashboard-see', name: 'dashboard-see', component: () => import('../views/SeeDashboard.vue') },
     { path: '/projects/available', name: 'available-projects', component: () => import('../views/AvailableProjects.vue') },
+    { path: '/projects/available/new', name: 'recruitment-form', component: () => import('../views/RecruitmentForm.vue') },
     { path: '/projects/available/:id', name: 'recruitment-detail', component: () => import('../views/RecruitmentDetail.vue'),
       props: route => ({ recruitmentId: route.params.id })
     },

@@ -79,8 +79,20 @@
               <a-button type="primary" @click="search"><a-icon type="search" /> 搜索</a-button>
             </div>
 
-            <article v-for="item in filteredRecruitments" :key="item.id" class="recruit-row">
-              <div class="project-cover ocean"><span></span></div>
+            <article
+              v-for="item in filteredRecruitments"
+              :key="item.id"
+              :class="['recruit-row', { 'is-clickable': item.detailAvailable }]"
+              :role="item.detailAvailable ? 'button' : null"
+              :tabindex="item.detailAvailable ? 0 : null"
+              @click="openRecruitment(item)"
+              @keydown.enter="openRecruitment(item)"
+              @keydown.space.prevent="openRecruitment(item)"
+            >
+              <div class="project-cover ocean">
+                <img v-if="item.image" :src="item.image" :alt="item.title" />
+                <span v-else></span>
+              </div>
               <div class="recruit-info">
                 <h3>{{ item.title }}</h3>
                 <p>{{ item.description }}</p>
@@ -91,7 +103,7 @@
                   <span><a-icon type="cluster" /> {{ item.group }}</span>
                 </div>
               </div>
-              <a-button type="primary" :class="['recruit-action', 'action-button', `action-${item.actionTone}`]" @click="notify(item.action)"><a-icon :type="item.actionIcon" /> {{ item.action }}</a-button>
+              <a-button type="primary" :class="['recruit-action', 'action-button', `action-${item.actionTone}`]" @click.stop="notify(item.action)"><a-icon :type="item.actionIcon" /> {{ item.action }}</a-button>
             </article>
 
             <div class="pagination"><a-pagination :current="1" :total="50" :page-size="10" /></div>
@@ -177,6 +189,10 @@ export default {
     }
   },
   methods: {
+    openRecruitment (item) {
+      if (!item.detailAvailable) return
+      this.$router.push({ name: 'recruitment-detail', params: { id: String(item.id) } })
+    },
     handleProjectAction (project, action) {
       if (project.id === 1 && action.label === '提交进展') {
         this.$router.push({ name: 'report-form', params: { id: project.id }, query: { type: 'progress' } }); return

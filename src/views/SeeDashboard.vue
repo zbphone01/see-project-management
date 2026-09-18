@@ -86,6 +86,10 @@ export default {
   methods: {
     openInformation (title, content, date = '') { this.dialog = { visible: true, title, content, date, project: '' } },
     previewAction (action, project) {
+      if (action === '发起招募') {
+        this.$router.push({ name: 'recruitment-form', query: { from: 'dashboard-see' } })
+        return
+      }
       if (action === '审核' && project && project.status === '申请待审' && project.auditProjectId) {
         this.$router.push({ name: 'project-detail', params: { id: String(project.auditProjectId) }, query: { mode: 'audit' } })
         return

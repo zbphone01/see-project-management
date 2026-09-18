@@ -304,6 +304,9 @@ button { cursor: pointer; }
 #detail-audit .ant-select-selection, #detail-audit #audit-amount, #detail-audit #audit-remark { background-color: #fff; }
 .project-audit-form { padding: 26px 34px 30px; background: #fff; }
 .latest-header .search-input .ant-input, .latest-header .ant-btn { border-radius: 4px; }
+.recruit-row.is-clickable { cursor: pointer; }
+.recruit-row.is-clickable:focus-visible { outline: 2px solid #1677ff; outline-offset: -2px; }
+.recruit-row .project-cover img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .audit-form-grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); column-gap: clamp(48px,8vw,160px); }
 .audit-form-column { min-width: 0; }
 .audit-form-row { margin-bottom: 28px; display: grid; align-items: start; gap: 8px; }

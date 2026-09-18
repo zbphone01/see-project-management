@@ -24,7 +24,7 @@
     { "id": 3, "title": "募捐申请书的项目名称募捐申请书的项目名称", "status": "募捐申请通过", "statusTone": "approved", "cover": "mangrove", "updatedAt": "2026-03-03 12:59:59", "action": "申请项目", "actionIcon": "file-add", "actionTone": "approved" }
   ],
   "recruitments": [
-    { "id": 1, "title": "这里是招募名称", "description": "海龟是著名的“活化石”物种，对海洋生态系统具有至关重要的作用。南海是海龟的重要分布区和基因交流通道，也是海龟在中国最大的产卵场和避难所。", "date": "2023-02-03 至 2023-02-20", "phone": "13518074869", "email": "test@see.org.cn", "group": "项目组 - 荒漠化防治", "action": "申请项目", "actionIcon": "file-add", "actionTone": "approved" },
+    { "id": 506306, "title": "大熊猫国家公园四川片区药用植物保护与可持续利用项目招募", "description": "面向具备植物调查、生态保护及社区工作经验的伙伴机构，开展药用植物种类、分布与利用现状调查，识别资源保护与利用中的关键问题，并提出兼顾生态保护和社区发展的可持续利用建议。", "date": "2025-12-01 至 2026-12-31", "phone": "12345678901", "email": "test@see.org.cn", "group": "项目组 - 生态保护与自然教育", "image": "/assets/recommend-ecology.jpg", "action": "申请项目", "actionIcon": "file-add", "actionTone": "approved", "detailAvailable": true },
     { "id": 2, "title": "招募名称超长时的样式招募名称超长时的样式招募名称超长时的样式", "description": "简述简短时的样式", "date": "2023-02-03 至 2023-02-20", "phone": "13518074869", "email": "test@see.org.cn", "group": "联合公益", "action": "募捐申请", "actionIcon": "file-add", "actionTone": "fundraising" }
   ]
 }
