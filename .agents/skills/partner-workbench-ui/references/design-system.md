@@ -1,6 +1,10 @@
 # 伙伴端工作台设计约束
 
-本参考基于当前 `src/App.vue` 伙伴端工作台总结。它描述默认视觉语言；有明确原型时，原型决定页面内容与模块结构，本参考负责保持视觉一致。
+本规范维护伙伴端页面的视觉、交互和审核意见契约。原型决定产品内容与模块结构；通用视觉遵循本规范，用户明确指定的例外优先。现有实现不自动覆盖规范。
+
+阅读导航：基础视觉与布局见第 1–5 节；列表、状态和操作见第 6–7 节；特殊工作台模块见第 8–9 节；原型与人工验收见第 10–11 节；报告详情及警示弹窗见第 12 节；审核意见见第 13 节；填写页提示、日期及成果入口见第 14 节。第 13 节编号保持稳定，供 `AGENTS.md` 引用。
+
+实现参考：`src/layouts/PartnerLayout.vue`、`src/views/Dashboard.vue`、`src/styles/common.css` 提供工作台骨架；`src/views/ProjectForm.vue`、`src/views/ReportForm.vue` 提供填写页；`src/views/ReportDetail.vue` 提供报告详情。修改前核对实际代码及当前需求，不直接照搬历史差异。
 
 ## 1. 设计基调
 
@@ -27,6 +31,7 @@
 | 主文字 | `#18253c` |
 | 次级文字 | `#718095` |
 | 主操作蓝 | `#1677ff` |
+| 输入提醒蓝 | `#5b8ff9` |
 | 品牌绿 | `#18a66a` / `#18b875` |
 | 通用边框 | `#e6ebf2` |
 | 内容分隔线 | `#edf1f5` |
@@ -142,10 +147,11 @@
 
 ### 表单弹窗
 
+- 填写页的提示字号与颜色遵循第 14 节。
 - 项目申请填写页的标准录入弹窗统一使用 `550px` 宽度，当前包括项目实施区域、执行团队、增加或编辑产出、增加或编辑活动；同一业务对象的新增态与编辑态必须保持相同宽度。
 - 弹窗内容按既定表单栅格和字段顺序自然排布，不得通过放大同类弹窗宽度掩盖字段对齐或间距问题。桌面视口不足时沿用 Ant Design Vue 的安全边距与自适应行为，不设置超出视口的固定最小宽度。
 - 附件预览、复杂名单选择、审核警示等具有不同信息密度或专项交互的弹窗，不强制套用 `550px`；优先遵循对应模块的既有实现或本规范中的专项规则。
-- 所有新增或修改的弹窗仍须遵循 `$partner-workbench-ui` 的遮罩不可关闭规则，显式设置 `:mask-closable="false"`。
+- 所有新增或修改的模态弹窗默认禁止点击遮罩关闭：`a-modal` 显式设置 `:mask-closable="false"`，命令式 Modal 设置 `maskClosable: false`，自定义模态弹窗遵循相同规则。关闭图标、Esc、确定、取消等沿用既定行为；用户明确要求的例外优先。
 
 ## 8. 侧栏信息模块
 
@@ -314,15 +320,16 @@ reviewComment (key) {
   const value = (this.reviewComments || {})[key]
   return typeof value === 'string' ? value.trim() : ''
 },
-rowReviewComment (sectionKey, rowId) {
+rowReviewComment (sectionKey, rowId, fieldKeys = []) {
   const prefix = `${sectionKey}.${rowId}`
-  const direct = this.reviewComment(prefix)
-  if (direct) return direct
-  return Object.keys(this.reviewComments || {})
-    .filter(key => key.indexOf(prefix + '.') === 0)
+  const knownKeys = fieldKeys.map(key => prefix + '.' + key)
+  const extraKeys = Object.keys(this.reviewComments || {})
+    .filter(key => key.indexOf(prefix + '.') === 0 && !knownKeys.includes(key))
+    .sort()
+  return [prefix].concat(knownKeys, extraKeys)
     .map(key => this.reviewComment(key))
     .filter(Boolean)
-    .join('；')
+    .join('\n')
 },
 saveReviewComment (key, value) {
   const text = typeof value === 'string' ? value.trim() : ''
@@ -331,6 +338,7 @@ saveReviewComment (key, value) {
 }
 ```
 
+- 调用行级读取方法时，按表格显示顺序传入 `fieldKeys`；合并展示整行意见及所有有效单元格意见，未知字段键追加展示。该拼接仅用于展示，不回写到原始意见正文。
 - 修改页加载数据时使用 `{ ...defaults.reviewComments, ...(payload.reviewComments || {}) }` 合并，确保新增键可直接生效。
 - `reviewComments` 的对象引用必须保持响应式；接口返回后整体替换时使用新对象，局部增删时使用 `$set`/`$delete`。
 - 页面提交或保存草稿时将 `reviewComments` 与业务表单 JSON 一并提交，不建立只存在于 DOM、组件内部或 CSS 中的意见状态。
@@ -345,3 +353,26 @@ saveReviewComment (key, value) {
 - 模块无有效意见时不显示修改提示；有任意有效意见时显示与模块交互方式匹配的提示文案。
 - 长意见、换行、连续英文或数字在弹层中完整换行，不溢出；遮罩点击不能关闭编辑弹窗。
 - 修改申请页只允许查看审核意见，不意外改写意见；保存业务内容时原有 `reviewComments` 不被清空。
+
+## 14. 填写页提示与报告表单
+
+### 输入提示与空状态入口
+
+- 项目申请草稿及进展/结项填写页（含录入弹窗）的蓝色输入提醒统一使用 `14px`、`#5b8ff9`。覆盖输入框、文本域 placeholder、下拉占位、富文本空内容提示及字段旁空值提醒；须显式设置提示字号，避免继承输入正文的 `16px`。
+- 提示样式仅作用于占位文本或提示节点；填写正文、字段标签、校验错误、普通说明和工具栏按各自层级显示。原生 placeholder 使用 `opacity: 1`。
+- 项目草稿的“点击添加产出”“点击添加附件”、进展/结项的“点击添加附件”空状态文案使用 `#5b8ff9`。仅针对描述文字设置颜色，不将空状态图片、容器及所有蓝色按钮一并改色。
+- 新增同类填写页面复用上述提示规则；提示在用户填写内容后按原交互消失。空状态添加入口保留鼠标、Enter 和 Space 操作。
+
+### 进展/结项填写页
+
+- “报告填写日期”在新建报告或加载无日期草稿时默认取浏览器本地今日，使用 `YYYY-MM-DD`，允许修改；已保存日期须原样回显。不得硬编码今日或使用 UTC 日期截取导致跨时区偏差，也不得在用户编辑过程中反复重置。
+- 日期标签和输入框占左侧半行，与其他半行字段对齐；外层字段仍跨整行，保留整行 `#edf1f5` 灰色底部分隔线。
+- 收益指标成果各类型表格末行使用链接按钮“添加更多成果”，不带加号图标，调用该类型的新增成果操作。“添加更多类型的收益”是独立操作，保留其既有文案与加号。
+- 复用 `src/mock/report-drafts.js` 时注意当前存储属于本地演示，不能当作已接入后端的数据流程。
+
+### 人工验收
+
+- 在项目草稿、提交进展、提交结项的相关空字段与弹窗中核对提示字号、颜色；输入后确认正文层级及提示消失行为。
+- 在无产出或无附件时核对添加文案颜色与点击、键盘入口；有数据时确认列表正常。
+- 分别检查报告新建默认日期、手动改日期、保存后重进回显、半行控件与整行灰线。
+- 核对各成果类型的“添加更多成果”无图标且打开正确新增入口。

@@ -390,11 +390,11 @@ export default {
 .project-form-page >>> textarea::placeholder,
 .modal-form >>> input::placeholder,
 .modal-form >>> textarea::placeholder,
-.ant-input-search >>> input::placeholder { color: #5b8ff9; opacity: 1; }
+.ant-input-search >>> input::placeholder { color: #5b8ff9; font-size: 14px; opacity: 1; }
 .project-form-page >>> .ant-select-selection__placeholder,
 .modal-form >>> .ant-select-selection__placeholder,
 .empty-hint,
-.field >>> .rich-editable:empty::before { color: #5b8ff9; }
+.field >>> .rich-editable:empty::before { color: #5b8ff9; font-size: 14px; }
 
 /* 基本信息填写态与查看态对齐：无水平缩进，已填文字使用同一颜色和字重。 */
 .form-fields >>> input.ant-input {
@@ -504,6 +504,7 @@ export default {
 .team-picker .ant-input { width: 100%; }
 .team-picker > .form-error { margin-left: 108px; }
 .output-empty-add { margin: 22px; padding: 24px 0; cursor: pointer; border-radius: 8px; }
+.output-empty-add >>> .ant-empty-description { color: #5b8ff9; }
 .output-empty-add:focus-visible { outline: 2px solid #1677ff; outline-offset: 4px; }
 .modal-field { grid-template-columns: 110px minmax(0, 1fr); }
 .output-modal-form { gap: 14px; }

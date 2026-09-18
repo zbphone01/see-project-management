@@ -1,55 +1,33 @@
 ---
 name: partner-workbench-ui
-description: Design and implement style-focused partner-side frontend pages with Vue 2.6 and Ant Design Vue 1.7.8, preserving every product function, title, and module from supplied prototypes while matching the current partner workbench. Use for new partner pages, dashboard modules, UI restyling, and layout adjustments; do not use for backend-only work.
+description: 使用 Vue 2.6 与 Ant Design Vue 1.7.8 开发或调整本项目伙伴端页面、表单、列表、详情和审核交互，遵循现有工作台设计系统。适用于新页面、原型实现、样式与布局修正；不用于纯后端任务。
 ---
 
-# Partner Workbench UI
+# 伙伴端页面开发
 
-Create polished frontend demonstrations that look and behave like the existing partner workbench. Treat visual completeness and consistency as the primary deliverable; do not infer backend integration unless the request includes it.
+## 开始前
 
-Before designing or editing a page:
+1. 读取项目根目录 `AGENTS.md`，遵循其中的修改流程、技术环境、验证与交付约束。用户已有的明确授权适用于其指定范围，执行前简述具体修改文件、影响和人工验收要点。
+2. 阅读 [设计系统](references/design-system.md)：所有页面使用第 1–7 节基础规则；填写页增加第 14 节；报告详情和审核警示增加第 12 节；涉及审核意见必须完整阅读第 13 节及第 13.9 节验收要求。工作台特殊模块按第 8–9 节执行；所有页面交付遵循第 10–11 节。
+3. 检查目标页面、公共组件、样式及数据来源。现有代码是复用参考，若与明确规范冲突，在当前需求范围内修正并说明；不顺带扩展至其他历史页面。
 
-1. Read the repository-root `AGENTS.md` and follow it as the authoritative project policy.
-2. Read [references/design-system.md](references/design-system.md) for the current workbench's visual rules.
-3. Inspect the current implementation when it may have changed since the reference was written. Prefer established components and styles over creating a parallel visual language.
+## 设计与实现
 
-## Preserve the Prototype
+- 新页面或全新视觉方案按 `AGENTS.md` 优先使用 Canva；不可用或不适合当前设计任务时说明原因，并沿用项目视觉。已有页面的小范围文案、颜色、字号、间距和尺寸修正直接复用设计系统。
+- 有原型时保留全部产品功能、标题、模块、字段、状态及操作，移除尺寸标注、参考线、按钮样例等原型注释；有歧义的内容保留其功能并列为待确认项。
+- 使用 Vue 2.6 Options API 和 Ant Design Vue 1.7.x 兼容写法。复用项目公共组件、样式和布局；状态标签、业务按钮、列表列宽、返回按钮及输入提醒使用设计系统精确规则。
+- 填写、修改、只读查看与审核模式分别处理，不能把编辑入口或审核标红带入普通查看页。审核意见字段键、稳定行 ID、响应式写入与交互按第 13 节执行。
+- 新增或修改模态弹窗遵循设计系统第 7 节遮罩不可关闭规则。输入提示、空状态入口、报告日期和成果添加按钮遵循第 14 节。
+- 原型演示可沿用本地数据和演示交互；明确实际存储或接口边界，不宣称已连接真实后端。
 
-- Inventory every function, heading, module, field, status, and action in the supplied prototype before implementation.
-- Preserve all product content. Do not delete, merge, hide, rename, or downgrade a prototype item merely to simplify the layout.
-- Remove prototype-only presentation aids from the finished page: dimensions, rulers, guide lines, component specimen galleries, button or status enumerations, explanatory annotations, and placeholder footnotes.
-- Treat ambiguity conservatively. Keep the corresponding function and call it out for human confirmation instead of removing it.
-- Use Canva first for genuinely new UI design as required by `AGENTS.md`. Small changes to an established page can follow the existing system directly.
+## 检查与交付
 
-## Implement the Frontend
+- 纯 UI 修改只做代码与差异检查，不新增或运行自动化测试，不执行视觉测试、浏览器自动化或截图对比。页面视觉与交互由用户人工验收。
+- 涉及业务逻辑、数据、接口、权限或构建配置时，按 `AGENTS.md` 进行相应技术验证。安装、构建和启动均须遵循实际 Node 10.24.0 / pnpm 5.18.10 环境核验规则。
+- 交付说明修改结果、实际检查与未验证项，并给出本次涉及页面、空值/已填状态、长内容和关键操作的人工验收要点。不得将代码检查表述为页面验收通过。
+- 只有用户明确要求“打包文件”时，才按根目录 `AGENTS.md` 的完整源码包、干净安装、构建及 HTTP 验证流程交付；普通页面修改不自动打包。
 
-- Use Vue 2.6 Options API and Ant Design Vue 1.7.x-compatible components, props, events, and slots.
-- Focus on credible visual states using representative display data. A control may use a lightweight local demonstration interaction when no backend behavior is requested, but never present fabricated connectivity as production functionality.
-- Reuse the shell, spacing rhythm, card treatment, semantic status colors, type hierarchy, overflow behavior, and responsive rules documented in the design-system reference.
-- Whenever a project status is displayed, use the exact project-status label groups, colors, geometry, and ambiguity rule in the design-system reference. Do not substitute Ant Design preset tag colors or visually similar values.
-- Extend styles by semantic role. Do not choose unrelated colors or unique component geometry merely to make a new module look different.
-- Keep exceptional visual treatments, such as the purple AI assistant styling, scoped to their feature; they are not general page colors.
+## 规范维护
 
-## Modal Dismissal
-
-- 本项目后续新增或修改模态弹窗时，默认禁止点击弹窗外部或遮罩关闭，以免误操作丢失输入内容。
-- Ant Design Vue 1.7.x 的 `a-modal` 必须显式设置 `:mask-closable="false"`；命令式 Modal 使用 `maskClosable: false`，自定义模态弹窗遵循相同交互。
-- 此规则仅约束外部点击关闭，不改变关闭图标、Esc 键及确定、取消、删除等按钮各自的既定行为；如用户明确要求例外，以用户要求为准。
-- 人工验收时，输入内容后点击遮罩，确认弹窗保持打开且内容保留，再检查原有关闭入口和按钮。
-
-## Finish and Hand Off
-
-- Remove all prototype annotations and design-system specimen content from the product UI.
-- Do not add or run automated tests for a pure UI or layout task. Perform manual visual and interaction review instead.
-- In the handoff, list the pages, important states, long-content cases, and interactions that a person should verify.
-- If the change also affects business logic, APIs, permissions, data processing, or build configuration, follow the broader validation rule in `AGENTS.md`.
-
-## Package on Explicit Request
-
-Apply this section only when the user explicitly says “打包文件”. Do not create an archive as part of an ordinary UI task.
-
-- Produce a complete frontend source archive that another developer can open and continue implementing business logic. Never substitute a `dist`-only deployment archive or a collection of screenshots.
-- Include every page and component source, shared styles, required static assets, application entry files, `package.json`, the dependency lockfile, build configuration, and the repository's developer and agent guidance.
-- Exclude `node_modules`, `dist`, caches, logs, version-control metadata, previous archives, the package-output tree, and secret-bearing environment files. Include only sanitized environment examples when needed.
-- Put each archive in its own repository-root `packages/<package-name>/` directory. Choose a descriptive, collision-resistant source-package name; do not overwrite an earlier delivery.
-- Inspect the completed archive before handoff. Confirm that it opens and contains `package.json`, the lockfile, all of `src`, required `public` assets, and build configuration, then return the exact archive path to the user.
+- 用户要求记录通用规则时更新 `references/design-system.md` 对应章节，说明适用范围；技能入口仅维护工作流和阅读指引，环境及交付规则留在 `AGENTS.md`。
+- 核对正文、示例代码和人工验收要求一致，保持引用路径及第 13 节编号有效。文档改动本身不表示所有历史页面已完成整改。

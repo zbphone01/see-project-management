@@ -1,0 +1,61 @@
+{
+  "506306": {
+    "department": "项目组-生态保护与自然教育",
+    "fundingSource": "资助",
+    "applicationCount": 12,
+    "description": [
+      "大熊猫国家公园四川片区拥有丰富的药用植物资源，是生物多样性保护的重要区域。本次招募面向具有植物调查、生态保护及社区工作经验的伙伴，开展药用植物种类、分布与利用现状调查，为保护与可持续利用提供依据。",
+      "项目拟通过文献梳理、实地调查和社区访谈，记录重点药用植物的生境、分布与利用情况，识别资源利用中面临的主要问题，并结合保护地管理和社区需求提出可行建议。",
+      "欢迎相关机构结合自身经验提交项目方案，说明调查方法、执行团队、工作计划、预期成果及预算安排。期待与伙伴共同推进区域药用植物资源保护和可持续利用。"
+    ],
+    "contact": {
+      "name": "张三",
+      "phone": "12345678901",
+      "landline": "010-12345678",
+      "email": "test@see.org.cn"
+    },
+    "attachments": [
+      {
+        "id": "recruitment-guide",
+        "name": "药用植物调查项目招募说明.pdf"
+      },
+      {
+        "id": "budget-requirements",
+        "name": "项目预算与执行要求.pdf"
+      }
+    ]
+  },
+  "896257": {
+    "department": "公募机构管理费：5%",
+    "departmentIcon": "percentage",
+    "fundingSource": "联合公益筹资",
+    "applicationCount": 8,
+    "description": [
+      "本次招募面向具备公益项目执行经验的伙伴机构，围绕云山地区生态保护与社区发展需求，共同开展联合公益公募筹资项目。",
+      "该条数据用于展示联合公益类型、无附件及招募已结束状态。"
+    ],
+    "contact": {
+      "name": "李老师",
+      "phone": "13800000000",
+      "landline": "",
+      "email": "contact@see.org.cn"
+    },
+    "attachments": []
+  },
+  "896258": {
+    "department": "通用项目",
+    "fundingSource": "联合公益筹资",
+    "applicationCount": 0,
+    "description": [
+      "本次招募面向伙伴机构开展联合公益公募筹资项目合作，支持机构结合自身业务方向提交项目方案。",
+      "该条数据用于展示招募尚未开始时的详情状态。"
+    ],
+    "contact": {
+      "name": "王老师",
+      "phone": "13900000000",
+      "landline": "",
+      "email": "partner@see.org.cn"
+    },
+    "attachments": []
+  }
+}

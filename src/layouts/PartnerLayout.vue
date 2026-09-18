@@ -26,7 +26,7 @@
               :key="child.key"
               :title="child.label"
               class="nav-child"
-              :class="{ active: activeNav === child.key || (['project-detail', 'project-form'].includes(activeNav) && child.key === 'applied-projects') || (activeNav === 'report-detail' && child.key === 'project-reports') }"
+              :class="{ active: activeNav === child.key || (['project-detail', 'project-form'].includes(activeNav) && child.key === 'applied-projects') || (activeNav === 'report-detail' && child.key === 'project-reports') || (activeNav === 'recruitment-detail' && child.key === 'available-projects') }"
               @click="selectNav(child)"
             >
               <span>{{ child.label }}</span>
@@ -48,12 +48,14 @@
         <button v-if="activeNav === 'project-form'" class="breadcrumb-link" type="button" @click="navigate('dashboard')">工作台</button>
         <button v-else-if="activeNav === 'project-detail'" class="breadcrumb-link" type="button" @click="backToAppliedProjects">已申请项目</button>
         <button v-else-if="activeNav === 'report-detail'" class="breadcrumb-link" type="button" @click="navigate('project-reports')">进展/结项</button>
+        <button v-else-if="activeNav === 'recruitment-detail'" class="breadcrumb-link" type="button" @click="navigate('available-projects')">可申请项目</button>
         <span v-else>{{ breadcrumbLeaf }}</span>
         <template v-if="activeNav === 'project-detail'">
           <span>/</span>
           <span>项目详情</span>
         </template>
         <template v-if="activeNav === 'report-detail'"><span>/</span><span>{{ $route.query.mode === 'audit' ? '审核进展/结项' : '报告详情' }}</span></template>
+        <template v-if="activeNav === 'recruitment-detail'"><span>/</span><span>招募详情</span></template>
         <template v-if="activeNav === 'project-form'"><span>/</span><span>填写项目申请</span></template>
       </div>
       <div class="top-actions">
@@ -108,7 +110,7 @@ export default {
         { key: 'dashboard', label: '工作台', icon: 'desktop' },
         { key: 'dashboard-see', label: '工作台-SEE', icon: 'dashboard' },
         { key: 'organization', label: '机构管理', icon: 'bank' },
-        { key: 'projects', label: '项目管理', icon: 'project', children: [{ key: 'applied-projects', label: '已申请项目' }, { key: 'project-reports', label: '进展/结项' }] },
+        { key: 'projects', label: '项目管理', icon: 'project', children: [{ key: 'available-projects', label: '可申请项目' }, { key: 'applied-projects', label: '已申请项目' }, { key: 'project-reports', label: '进展/结项' }] },
         { key: 'donation', label: '透明捐', icon: 'safety-certificate' },
         { key: 'download', label: '数据下载', icon: 'download' },
         { key: 'benefit', label: '受益数据', icon: 'database' },
@@ -124,17 +126,17 @@ export default {
     pagedNotices () { return this.historyNotices.slice((this.noticePage - 1) * 5, this.noticePage * 5) },
     activeNav () { return this.$route.name },
     breadcrumbRoot () {
-      return ['applied-projects', 'project-detail', 'project-form', 'project-reports', 'report-detail'].includes(this.activeNav) ? '项目管理' : '工作台'
+      return ['available-projects', 'recruitment-detail', 'applied-projects', 'project-detail', 'project-form', 'project-reports', 'report-detail'].includes(this.activeNav) ? '项目管理' : '工作台'
     },
     breadcrumbLeaf () {
-      return this.activeNav === 'project-reports' ? '进展/结项' : this.activeNav === 'dashboard-see' ? 'SEE首页' : this.activeNav === 'applied-projects' ? '已申请项目' : '伙伴首页'
+      return this.activeNav === 'project-reports' ? '进展/结项' : this.activeNav === 'dashboard-see' ? 'SEE首页' : this.activeNav === 'available-projects' ? '可申请项目' : this.activeNav === 'applied-projects' ? '已申请项目' : '伙伴首页'
     }
   },
   watch: {
     '$route.name': {
       immediate: true,
       handler () {
-      if (['applied-projects', 'project-detail', 'project-form', 'project-reports', 'report-detail'].includes(this.activeNav)) {
+      if (['available-projects', 'recruitment-detail', 'applied-projects', 'project-detail', 'project-form', 'project-reports', 'report-detail'].includes(this.activeNav)) {
         this.$set(this.expandedNav, 'projects', true)
       }
       }
@@ -151,7 +153,7 @@ export default {
     selectNav (item) {
       if (item.children) {
         this.$set(this.expandedNav, item.key, !this.expandedNav[item.key])
-      } else if (['dashboard', 'dashboard-see', 'applied-projects', 'project-reports'].includes(item.key)) this.navigate(item.key)
+      } else if (['dashboard', 'dashboard-see', 'available-projects', 'applied-projects', 'project-reports'].includes(item.key)) this.navigate(item.key)
       else this.notify(item.label)
     },
     notify (label) { this.$message.info(label) }

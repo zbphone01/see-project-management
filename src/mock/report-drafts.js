@@ -1,5 +1,10 @@
 const storageKey = (projectId, type) => `see-report-draft-example-v4-${projectId}-${type}`
 const clone = value => JSON.parse(JSON.stringify(value))
+const today = () => {
+  const date = new Date()
+  const pad = value => String(value).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}
 
 const progressOutputs = [
   {
@@ -50,7 +55,7 @@ const createReportDraft = (projectId, type) => {
     aidCompleted: undefined,
     reporter: '',
     contact: '',
-    filledAt: '',
+    filledAt: today(),
     overview: '',
     outputs: clone(progressOutputs).map(output => ({ ...output, progress: '', activities: output.activities.map(activity => ({ ...activity, progress: '' })) })),
     communication: '',
@@ -73,6 +78,7 @@ export function loadReportDraft (projectId, type) {
     const saved = JSON.parse(raw)
     const merged = { ...defaults, ...saved, outputs: Array.isArray(saved.outputs) ? saved.outputs : defaults.outputs, attachments: Array.isArray(saved.attachments) ? saved.attachments : [], benefits: Array.isArray(saved.benefits) ? saved.benefits : defaults.benefits, budget: saved.budget || defaults.budget, reviewComments: { ...defaults.reviewComments, ...(saved.reviewComments || {}) } }
     merged.beneficiaryAid = defaults.beneficiaryAid
+    if (!merged.filledAt) merged.filledAt = defaults.filledAt
     if (typeof merged.contact === 'string' && merged.contact.includes('*')) merged.contact = defaults.contact
     if (saved.schemaVersion !== defaults.schemaVersion) { merged.schemaVersion = defaults.schemaVersion; merged.requestNeeded = false; merged.requested = 0 }
     merged.outputs = defaults.outputs.map((defaultOutput, outputIndex) => {

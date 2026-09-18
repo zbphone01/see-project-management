@@ -1,17 +1,29 @@
 # 伙伴端项目管理系统
 
-技术栈：Vue 2.6.14、Ant Design Vue 1.7.8、Vue Router 3.6.5、Vite 2。
+技术栈：Vue 2.6.14、Ant Design Vue 1.7.8、Vue Router 3.6.5、Webpack 4。
 
 ## 本地开发
 
+开发和构建使用 Node.js **10.24.x**（基准实测版本 10.24.0）及 **pnpm 5.18.10**。
+使用版本管理器切换 Node 后执行以下命令；Windows nvm 请显式执行 `nvm use 10.24.0`，不要依赖自动读取 `.nvmrc`。
+
 ```sh
+node --version
+npm install -g pnpm@5.18.10
 pnpm install --frozen-lockfile
+pnpm check:env
 pnpm dev
 pnpm build
 pnpm preview
 ```
 
 开发地址为 http://127.0.0.1:4173/。
+`dev` 和 `preview` 使用同一端口，请分别启动。环境检查会拒绝非 10.24.x 的 Node，安装过程也会检查依赖的 Node 引擎要求。
+
+`pnpm build` 输出 `dist`，其中包含全部路由分包和 `public` 静态资源。生产环境应由 Web 服务器托管 `dist`；`pnpm preview` 仅用于本地验证，并只监听 `127.0.0.1`。
+本项目是浏览器端 Vue 应用，没有 Node 后端或 SSR；浏览器端的 DOM、IndexedDB 等 API 不在 Node 中执行。部署服务器使用 Node 10.24 时，需要兼容的是依赖安装、构建与工具脚本。
+修改依赖后应在 Node 10.24 下更新并提交 `pnpm-lock.yaml`，不要使用新版 pnpm 重写锁文件。
+`package.json` 的 `pnpm.overrides` 固定了 `sockjs-client`、`source-map@^0.7.3` 和 `@types/minimatch`，用于避免间接依赖自动更新到不支持 Node 10 的版本。兼容性实测结果见 [Node 10.24 验证记录](docs/node10-compatibility.md)。
 
 ## 源码结构
 
@@ -54,7 +66,7 @@ pnpm preview
 - 顶栏面包屑、菜单高亮、修改密码弹窗、AI 面板打开与拖动。
 - 桌面不同宽度下的侧栏折叠、长标题、横向表格与工作台右栏滚动。
 
-构建可能提示 Moment 导出和主包体积警告，现有 Ant Design Vue 依赖仍较大；页面自身已按路由独立加载。
+构建会提示主包及背景图体积偏大，现有 Ant Design Vue 依赖仍较大；页面自身已按路由独立加载。
 
 ## 环保 NGO 调研数据库
 
