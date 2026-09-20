@@ -62,8 +62,9 @@
                 </div>
               </div>
             </template>
-            <template slot="status" slot-scope="status">
+            <template slot="status" slot-scope="status, project">
               <span :class="['status-chip', appliedStatusTone(status)]">{{ status }}</span>
+              <span v-if="project.overdue" class="applied-overdue-label"><a-icon type="exclamation-circle" /> 已逾期</span>
             </template>
             <template slot="type" slot-scope="type">
               <span :class="['project-type-chip', projectTypeTone(type)]">
@@ -127,7 +128,7 @@ export default {
     appliedColumns: [
         { title: '项目名称', dataIndex: 'name', key: 'project', scopedSlots: { customRender: 'project' } },
         { title: '项目类型', dataIndex: 'type', key: 'type', width: 110, align: 'center', scopedSlots: { customRender: 'type' } },
-        { title: '申请状态', dataIndex: 'status', key: 'status', width: 150, align: 'center', scopedSlots: { customRender: 'status' } },
+        { title: '项目状态', dataIndex: 'status', key: 'status', width: 150, align: 'center', scopedSlots: { customRender: 'status' } },
         { title: '筹款状态', dataIndex: 'fundraising', key: 'fundraising', width: 110, align: 'center', scopedSlots: { customRender: 'fundraising' } },
         { title: '状态更新时间', dataIndex: 'updatedAt', key: 'updatedAt', width: 120, align: 'center', scopedSlots: { customRender: 'updatedAt' } },
         { title: '操作', key: 'operation', fixed: 'right', width: 90, align: 'center', scopedSlots: { customRender: 'operation' } }
@@ -227,4 +228,5 @@ export default {
 .applied-projects-page ::v-deep .operation-button { gap: 2px; }
 .applied-projects-page ::v-deep .operation-button > span + .anticon { margin-left: 0; }
 .applied-projects-page ::v-deep .ant-table-scroll table { width: 100% !important; min-width: 1140px !important; }
+.applied-overdue-label { display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: 8px; color: #d48806; line-height: 1.5; }
 </style>
