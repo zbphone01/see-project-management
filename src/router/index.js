@@ -12,6 +12,8 @@ const router = new VueRouter({
     { path: '/', redirect: '/dashboard' },
     { path: '/dashboard', name: 'dashboard', component: () => import('../views/Dashboard.vue') },
     { path: '/dashboard-see', name: 'dashboard-see', component: () => import('../views/SeeDashboard.vue') },
+    { path: '/organizations', name: 'organization-list', component: () => import('../views/OrganizationList.vue') },
+    { path: '/projects/recruitment-summary', name: 'recruitment-summary', component: () => import('../views/RecruitmentSummary.vue') },
     { path: '/projects/available', name: 'available-projects', component: () => import('../views/AvailableProjects.vue') },
     { path: '/projects/available/new', name: 'recruitment-form', component: () => import('../views/RecruitmentForm.vue') },
     { path: '/projects/available/:id', name: 'recruitment-detail', component: () => import('../views/RecruitmentDetail.vue'),

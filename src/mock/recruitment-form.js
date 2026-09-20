@@ -44,9 +44,9 @@ export function validateRecruitmentForm (form) {
   if (form.type && !hasValidDirection) errors.push('请选择与项目类型对应的策略和议题')
   if (form.type === '联合公益' && !recruitmentAccount.functionalDepartment) errors.push('只有职能部门可选择联合公益')
   const validAmount = value => value !== null && value !== '' && Number.isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 999999999.99 && Math.abs(Number(value) * 100 - Math.round(Number(value) * 100)) < 0.0001
-  if (form.type === '资助项目' && !['项目', '项目+筹款'].includes(form.fundingSource)) errors.push('请选择资金来源')
-  if (form.type === '资助项目' && !validAmount(form.grantAmount)) errors.push('请填写有效的资助金额（最多两位小数）')
-  const fundraisingEnabled = form.type === '联合公益' || (form.type === '资助项目' && form.fundingSource === '项目+筹款')
+  if (form.type === '项目' && !['项目', '项目+筹款'].includes(form.fundingSource)) errors.push('请选择资金来源')
+  if (form.type === '项目' && !validAmount(form.grantAmount)) errors.push('请填写有效的资助金额（最多两位小数）')
+  const fundraisingEnabled = form.type === '联合公益' || (form.type === '项目' && form.fundingSource === '项目+筹款')
   if (fundraisingEnabled && form.fundraisingAmount !== null && form.fundraisingAmount !== '' && !validAmount(form.fundraisingAmount)) errors.push('请填写有效的筹款金额（最多两位小数）')
   if (form.startDate && form.endDate && form.endDate < form.startDate) errors.push('招募结束日期不能早于开始日期')
   const phone = form.phone.trim()

@@ -38,7 +38,7 @@ const createReportDraft = (projectId, type) => {
     projectName: '闲鱼红树林-海草生境演替项目',
     projectCode: 'ZZ-1764740216',
     reportCode: isCompletion ? 'P-EXAMPLE-002' : 'P-EXAMPLE-001',
-    projectType: '资助项目',
+    projectType: '项目',
     strategy: '海洋保护',
     issue: '滨海湿地生态系统保护与修复',
     organization: '湛江市霞山区文化旅游体育局',

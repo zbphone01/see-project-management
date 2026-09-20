@@ -74,6 +74,7 @@ button { cursor: pointer; }
 .applied-table .ant-table-thead > tr > th { height: 54px; color: #506177; font-weight: 700; background: #f7f9fc; border-bottom-color: #e8edf3; }
 .applied-table .ant-table-tbody > tr > td { padding-top: 18px; padding-bottom: 18px; border-bottom-color: #edf1f5; vertical-align: middle; }
 .applied-table .ant-table-tbody > tr:hover > td { background: #f8fbff; }
+.applied-table .business-id-column { box-sizing: border-box; width: 92px !important; min-width: 92px !important; max-width: 92px !important; }
 .dashboard-grid .project-row:not(.overdue):hover,
 .dashboard-grid .donation-row:hover,
 .dashboard-grid .recruit-row:hover,

@@ -17,7 +17,7 @@
         :columns="columns"
         :data-source="filteredProjects"
         :pagination="pagination"
-        :scroll="{ x: 1180 }"
+        :scroll="{ x: true }"
         row-key="id"
         @change="handleTableChange"
       >
@@ -68,12 +68,12 @@ export default {
       appliedKeyword: '',
       page: 1,
       columns: [
-        { title: '招募ID', dataIndex: 'code', key: 'code', width: 92, align: 'center' },
-        { title: '招募项目', dataIndex: 'name', key: 'recruitment', width: 568, scopedSlots: { customRender: 'recruitment' } },
-        { title: '项目类型', dataIndex: 'type', key: 'type', width: 140, align: 'center', scopedSlots: { customRender: 'type' } },
-        { title: '发起部门', dataIndex: 'department', key: 'department', width: 180, align: 'center' },
-        { title: '起止时间', key: 'period', width: 110, align: 'center', scopedSlots: { customRender: 'period' } },
-        { title: '操作', key: 'operation', fixed: 'right', width: 100, align: 'center', scopedSlots: { customRender: 'operation' } }
+        { title: '招募ID', dataIndex: 'code', key: 'code', width: 110, align: 'center', className: 'business-id-column' },
+        { title: '招募项目', dataIndex: 'name', key: 'recruitment', scopedSlots: { customRender: 'recruitment' } },
+        { title: '项目类型', dataIndex: 'type', key: 'type', width: 110, align: 'center', scopedSlots: { customRender: 'type' } },
+        { title: '发起部门', dataIndex: 'department', key: 'department', width: 150, align: 'center' },
+        { title: '起止时间', key: 'period', width: 120, align: 'center', scopedSlots: { customRender: 'period' } },
+        { title: '操作', key: 'operation', fixed: 'right', width: 90, align: 'center', scopedSlots: { customRender: 'operation' } }
       ]
     }
   },
@@ -135,13 +135,14 @@ export default {
 .recruitment-search ::v-deep .launch-recruitment-button:hover,
 .recruitment-search ::v-deep .launch-recruitment-button:focus,
 .recruitment-search ::v-deep .launch-recruitment-button:active { border-color: #1677ff; color: #1677ff; background: #fff; }
-.project-attributes { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 6px; line-height: 1.4; text-align: left; }
+.project-attributes { margin-top: 11px; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 6px; line-height: 1.4; text-align: left; }
 .attribute-tag { max-width: 100%; padding: 3px 8px; border-radius: 4px; white-space: normal; overflow-wrap: anywhere; }
 .strategy-tag { color: #08979c; background: #e6fffb; }
 .topic-tag { color: #d48806; background: #fffbe6; }
-.available-table ::v-deep .table-project > div:last-child { row-gap: 10px; }
+.available-table ::v-deep .table-project > div:last-child { row-gap: 5px; }
 .available-table ::v-deep .ant-table-thead > tr > th,
 .available-table ::v-deep .ant-table-tbody > tr > td { padding-right: 8px; padding-left: 8px; }
+.available-table ::v-deep .ant-table-scroll table { width: 100% !important; min-width: 1140px !important; table-layout: fixed; }
 .available-row-actions { display: grid; justify-items: center; gap: 0; }
 .available-row-actions button { min-height: 24px; padding: 0 2px; border: 0; border-radius: 5px; color: #1677ff; background: transparent; cursor: pointer; }
 .available-row-actions button:hover, .available-row-actions button:focus { color: #0958d9; background: #f0f7ff; }

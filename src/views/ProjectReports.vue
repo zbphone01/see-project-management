@@ -12,7 +12,7 @@
       </div>
     </section>
     <section class="panel applied-table-panel">
-      <a-table class="applied-table" :columns="columns" :data-source="filteredReports" :pagination="pagination" :scroll="{ x: 1156 }" row-key="id" @change="changePage">
+      <a-table class="applied-table" :columns="columns" :data-source="filteredReports" :pagination="pagination" :scroll="{ x: true }" row-key="id" @change="changePage">
         <template slot="project" slot-scope="text, report">
           <div class="table-project">
             <div :class="['table-project-cover', report.cover]"><img v-if="report.image" :src="report.image" :alt="report.name" /><a-icon v-else :type="report.icon" /></div>
@@ -55,14 +55,14 @@ export default {
       projectReports, reportTypes, reportStatuses,
       filters: emptyFilters(), appliedFilters: emptyFilters(), page: 1, pageSize: 10,
       columns: [
-        { title: '进展编码', dataIndex: 'reportCode', width: 92, align: 'center' },
-        { title: '项目名称', dataIndex: 'name', width: 499, scopedSlots: { customRender: 'project' } },
-        { title: '报告类型', dataIndex: 'reportType', width: 88, align: 'center', scopedSlots: { customRender: 'reportType' } },
-        { title: '状态', dataIndex: 'status', width: 128, align: 'center', scopedSlots: { customRender: 'status' } },
-        { title: '报告周期', key: 'period', width: 96, align: 'center', scopedSlots: { customRender: 'period' } },
-        { title: '提交时间', dataIndex: 'submittedAt', width: 96, align: 'center', scopedSlots: { customRender: 'submittedAt' } },
-        { title: '成果指标', dataIndex: 'outcome', width: 72, align: 'center', scopedSlots: { customRender: 'outcome' } },
-        { title: '操作', key: 'operation', width: 85, fixed: 'right', align: 'center', scopedSlots: { customRender: 'operation' } }
+        { title: '进展ID', dataIndex: 'reportCode', width: 110, align: 'center', className: 'report-id-column' },
+        { title: '项目名称', dataIndex: 'name', scopedSlots: { customRender: 'project' } },
+        { title: '报告类型', dataIndex: 'reportType', width: 110, align: 'center', scopedSlots: { customRender: 'reportType' } },
+        { title: '状态', dataIndex: 'status', width: 150, align: 'center', scopedSlots: { customRender: 'status' } },
+        { title: '报告周期', key: 'period', width: 120, align: 'center', scopedSlots: { customRender: 'period' } },
+        { title: '提交时间', dataIndex: 'submittedAt', width: 120, align: 'center', scopedSlots: { customRender: 'submittedAt' } },
+        { title: '成果指标', dataIndex: 'outcome', width: 90, align: 'center', scopedSlots: { customRender: 'outcome' } },
+        { title: '操作', key: 'operation', width: 90, fixed: 'right', align: 'center', scopedSlots: { customRender: 'operation' } }
       ]
     }
   },
@@ -113,6 +113,8 @@ export default {
 .reports-filters .filter-actions .ant-btn { flex: none; width: 92px; }
 .reports-page ::v-deep .applied-table .ant-table-thead > tr > th,
 .reports-page ::v-deep .applied-table .ant-table-tbody > tr > td { padding-right: 8px; padding-left: 8px; }
+.reports-page ::v-deep .applied-table .report-id-column { box-sizing: border-box; width: 110px !important; min-width: 110px !important; max-width: 110px !important; }
+.reports-page ::v-deep .applied-table .ant-table-scroll table { width: 100% !important; min-width: 1140px !important; table-layout: fixed; }
 .reports-page ::v-deep .operation-button { gap: 2px; }
 .reports-page ::v-deep .operation-button > span + .anticon { margin-left: 0; }
 .report-project-link { max-width: 100%; min-width: 0; padding: 0; margin-bottom: 5px; border: 0; background: none; color: #18253c; font-size: 16px; text-align: left; white-space: normal; overflow-wrap: anywhere; line-height: 1.5; cursor: pointer; }

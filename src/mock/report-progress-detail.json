@@ -10,7 +10,7 @@
       "projectName": "大熊猫栖息地生态监测与社区保护项目",
       "projectCode": "ZZ-1234567895",
       "organization": "荥经县野生动植物保护协会",
-      "projectType": "资助项目",
+      "projectType": "项目",
       "strategy": "生物多样性保护",
       "issue": "大熊猫栖息地保护与社区共建",
       "projectPeriod": "2025年01月01日 至 2026年08月31日",
@@ -25,7 +25,7 @@
       "filledAt": "2026年06月03日",
       "editedAt": "2026-06-03 16:30:00",
       "fields": [
-        { "label": "项目类型", "value": "资助项目" },
+        { "label": "项目类型", "value": "项目" },
         { "label": "项目策略", "value": "生物多样性保护" },
         { "label": "项目议题", "value": "大熊猫栖息地保护与社区共建" },
         { "label": "执行机构", "value": "荥经县野生动植物保护协会" },

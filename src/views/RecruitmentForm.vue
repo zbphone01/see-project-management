@@ -10,10 +10,10 @@
             <div class="field full"><label for="recruitment-name"><em>*</em> 招募名称</label><a-input id="recruitment-name" v-model="form.name" placeholder="请填写招募名称" :max-length="200" /></div>
             <div class="field"><span class="field-label">筹款规划申请名称</span><span class="readonly-value">{{ form.planningName }}</span></div>
             <div class="field"><span class="field-label">所属部门</span><span class="readonly-value">{{ form.department }}</span></div>
-            <div class="field"><label for="recruitment-type"><em>*</em> 项目类型</label><a-select id="recruitment-type" v-model="form.type" placeholder="请选择项目类型" @change="changeType"><a-select-option value="资助项目">项目</a-select-option><a-select-option value="联合公益" :disabled="!account.functionalDepartment">联合公益</a-select-option></a-select></div>
+            <div class="field"><label for="recruitment-type"><em>*</em> 项目类型</label><a-select id="recruitment-type" v-model="form.type" placeholder="请选择项目类型" @change="changeType"><a-select-option value="项目">项目</a-select-option><a-select-option value="联合公益" :disabled="!account.functionalDepartment">联合公益</a-select-option></a-select></div>
             <div class="field"><label for="recruitment-strategy"><em>*</em> 项目策略</label><a-select id="recruitment-strategy" v-model="form.strategy" :disabled="!form.type" placeholder="请选择项目策略" @change="changeStrategy"><a-select-option v-for="option in strategies" :key="option">{{ option }}</a-select-option></a-select></div>
             <div class="field"><label for="recruitment-topic"><em>*</em> 项目议题</label><a-select id="recruitment-topic" v-model="form.topic" :disabled="!form.strategy" placeholder="请选择项目议题" @change="changeTopic"><a-select-option v-for="option in topics" :key="option">{{ option }}</a-select-option></a-select></div>
-            <div class="field"><label for="recruitment-funding"><em>*</em> 资金来源</label><a-select v-if="!isJoint" id="recruitment-funding" v-model="form.fundingSource" :disabled="form.type !== '资助项目'" placeholder="请选择资金来源" @change="changeFundingSource"><a-select-option value="项目">项目</a-select-option><a-select-option value="项目+筹款">项目+筹款</a-select-option></a-select><span v-else class="readonly-value">筹款</span></div>
+            <div class="field"><label for="recruitment-funding"><em>*</em> 资金来源</label><a-select v-if="!isJoint" id="recruitment-funding" v-model="form.fundingSource" :disabled="form.type !== '项目'" placeholder="请选择资金来源" @change="changeFundingSource"><a-select-option value="项目">项目</a-select-option><a-select-option value="项目+筹款">项目+筹款</a-select-option></a-select><span v-else class="readonly-value">筹款</span></div>
             <div class="field"><span class="field-label">筹款方式</span><span :class="['readonly-value', { 'empty-hint': !form.fundraisingMethod }]">{{ form.fundraisingMethod || '选择项目类型后自动带入' }}</span></div>
             <div class="field"><label for="recruitment-fee">公募机构管理费比例</label><span v-if="projectFundingOnly" class="readonly-value">不适用</span><a-select v-else id="recruitment-fee" v-model="form.managementFee"><a-select-option v-for="value in [5, 6, 7, 8, 9, 10]" :key="value" :value="value">{{ value }}%</a-select-option></a-select></div>
             <div class="field"><label for="recruitment-grant"><em v-if="!isJoint">*</em> 资助金额</label><div class="amount-input"><a-input-number id="recruitment-grant" v-model="form.grantAmount" :disabled="!canEditGrant" :min="0" :max="999999999.99" :precision="2" :placeholder="canEditGrant ? '请填写预计支出的总金额' : '当前资金来源不可填写'" /><span>元</span></div><small>大写：{{ uppercaseMoney(form.grantAmount) }}</small></div>
@@ -60,10 +60,10 @@ export default {
   },
   computed: {
     isJoint () { return this.form.type === '联合公益' },
-    projectFundingOnly () { return this.form.type === '资助项目' && this.form.fundingSource === '项目' },
-    canEditGrant () { return this.form.type === '资助项目' && ['项目', '项目+筹款'].includes(this.form.fundingSource) },
-    canEditFundraising () { return this.isJoint || (this.form.type === '资助项目' && this.form.fundingSource === '项目+筹款') },
-    strategies () { return this.form.type === '资助项目' ? projectRecruitmentStrategies : this.isJoint ? [jointRecruitmentStrategy] : [] },
+    projectFundingOnly () { return this.form.type === '项目' && this.form.fundingSource === '项目' },
+    canEditGrant () { return this.form.type === '项目' && ['项目', '项目+筹款'].includes(this.form.fundingSource) },
+    canEditFundraising () { return this.isJoint || (this.form.type === '项目' && this.form.fundingSource === '项目+筹款') },
+    strategies () { return this.form.type === '项目' ? projectRecruitmentStrategies : this.isJoint ? [jointRecruitmentStrategy] : [] },
     topics () { return this.isJoint && this.form.strategy === jointRecruitmentStrategy ? jointRecruitmentTopics : recruitmentDirections.filter(item => item.type === this.form.type && item.strategy === this.form.strategy).map(item => item.topic) },
     visibleOrganizations () { const search = this.organizationSearch.trim().toLowerCase(); return search ? this.organizations.filter(item => item.name.toLowerCase().includes(search)) : [] },
     selectedOrganizationName () { const organization = this.organizations.find(item => item.id === this.form.organizationId); return organization ? organization.name : '不指定' },
@@ -83,7 +83,7 @@ export default {
           this.form.strategy = jointRecruitmentStrategy
           if (!jointRecruitmentTopics.includes(this.form.topic)) this.form.topic = undefined
           this.syncFundraisingMethod()
-        } else if (this.form.type === '资助项目') {
+        } else if (this.form.type === '项目') {
           if (!['项目', '项目+筹款'].includes(this.form.fundingSource)) this.form.fundingSource = '项目'
           if (this.form.fundingSource === '项目') this.form.fundraisingAmount = null
         }

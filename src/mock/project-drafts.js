@@ -9,7 +9,7 @@ export const roundMoney = value => Math.round((Number(value) || 0) * 100) / 100
 export function createDraft (id = draftId) {
   const draft = {
     id, name: '', code: '草稿 · 尚未提交', recruitment: '',
-    type: '资助项目', strategy: '荒漠化防治', issue: '荒漠生态保护', funding: '资助+筹款', fundraising: '月捐',
+    type: '项目', strategy: '荒漠化防治', issue: '荒漠生态保护', funding: '资助+筹款', fundraising: '月捐',
     organization: undefined, thirdParties: [], targets: [],
     start: '', end: '', rural: undefined, aid: undefined, beneficiaries: '',
     publicBenefit: '', total: null, requested: null, matching: null, leader: '', phone: '',
@@ -31,7 +31,7 @@ export function createDraft (id = draftId) {
       'activities.revision-activity-4': '请补充成果交流活动的目标参与对象、预计覆盖人数、传播渠道及活动成效评估方式。'
     },
     name: '湿地保护伙伴协作项目', code: '申请待修改 · PRJ-2026-005', recruitment: '湿地生态系统保护与社区共管项目招募',
-    type: '资助项目', strategy: '湿地保护与修复', issue: '湿地生态保护', funding: '资助+筹款', fundraising: '月捐',
+    type: '项目', strategy: '湿地保护与修复', issue: '湿地生态保护', funding: '资助+筹款', fundraising: '月捐',
     organization: '青海省三江源生态环境保护协会', thirdParties: ['武汉观鸟会'], targets: ['物种', '保护地', '水'],
     start: '2026-04-01', end: '2027-03-31', rural: '是', aid: '否', beneficiaries: '项目地湿地周边社区居民、基层保护人员以及依赖湿地栖息的候鸟和其他野生动物。',
     publicBenefit: '项目以湿地生态系统恢复和社区共管能力提升为公益目的，成果将通过监测报告、社区培训和公众传播向社会共享。', total: 200000, requested: 150000, matching: 50000, leader: '张三', phone: '13800138000',

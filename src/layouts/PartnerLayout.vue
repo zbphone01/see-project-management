@@ -110,8 +110,8 @@ export default {
     navigation: [
         { key: 'dashboard', label: '工作台', icon: 'desktop' },
         { key: 'dashboard-see', label: '工作台-SEE', icon: 'dashboard' },
-        { key: 'organization', label: '机构管理', icon: 'bank' },
-        { key: 'projects', label: '项目管理', icon: 'project', children: [{ key: 'available-projects', label: '可申请项目' }, { key: 'applied-projects', label: '已申请项目' }, { key: 'project-reports', label: '进展/结项' }] },
+        { key: 'organization', label: '机构管理', icon: 'bank', children: [{ key: 'organization-list', label: '机构列表' }] },
+        { key: 'projects', label: '项目管理', icon: 'project', children: [{ key: 'recruitment-summary', label: '招募汇总' }, { key: 'available-projects', label: '可申请项目' }, { key: 'applied-projects', label: '已申请项目' }, { key: 'project-reports', label: '进展/结项' }] },
         { key: 'donation', label: '透明捐', icon: 'safety-certificate' },
         { key: 'download', label: '数据下载', icon: 'download' },
         { key: 'benefit', label: '受益数据', icon: 'database' },
@@ -127,17 +127,20 @@ export default {
     pagedNotices () { return this.historyNotices.slice((this.noticePage - 1) * 5, this.noticePage * 5) },
     activeNav () { return this.$route.name },
     breadcrumbRoot () {
-      return ['available-projects', 'recruitment-detail', 'recruitment-form', 'applied-projects', 'project-detail', 'project-form', 'project-reports', 'report-detail'].includes(this.activeNav) ? '项目管理' : '工作台'
+      if (this.activeNav === 'organization-list') return '机构管理'
+      return ['recruitment-summary', 'available-projects', 'recruitment-detail', 'recruitment-form', 'applied-projects', 'project-detail', 'project-form', 'project-reports', 'report-detail'].includes(this.activeNav) ? '项目管理' : '工作台'
     },
     breadcrumbLeaf () {
-      return this.activeNav === 'project-reports' ? '进展/结项' : this.activeNav === 'dashboard-see' ? 'SEE首页' : this.activeNav === 'available-projects' ? '可申请项目' : this.activeNav === 'applied-projects' ? '已申请项目' : '伙伴首页'
+      if (this.activeNav === 'organization-list') return '机构列表'
+      return this.activeNav === 'recruitment-summary' ? '招募汇总' : this.activeNav === 'project-reports' ? '进展/结项' : this.activeNav === 'dashboard-see' ? 'SEE首页' : this.activeNav === 'available-projects' ? '可申请项目' : this.activeNav === 'applied-projects' ? '已申请项目' : '伙伴首页'
     }
   },
   watch: {
     '$route.name': {
       immediate: true,
       handler () {
-      if (['available-projects', 'recruitment-detail', 'recruitment-form', 'applied-projects', 'project-detail', 'project-form', 'project-reports', 'report-detail'].includes(this.activeNav)) {
+      if (this.activeNav === 'organization-list') this.$set(this.expandedNav, 'organization', true)
+      if (['recruitment-summary', 'available-projects', 'recruitment-detail', 'recruitment-form', 'applied-projects', 'project-detail', 'project-form', 'project-reports', 'report-detail'].includes(this.activeNav)) {
         this.$set(this.expandedNav, 'projects', true)
       }
       }
@@ -152,9 +155,10 @@ export default {
     navigate (name) { if (this.$route.name !== name) this.$router.push({ name }) },
     backToAppliedProjects () { this.navigate('applied-projects') },
     selectNav (item) {
+      if (item.key === 'organization-list') { this.navigate(item.key); return }
       if (item.children) {
         this.$set(this.expandedNav, item.key, !this.expandedNav[item.key])
-      } else if (['dashboard', 'dashboard-see', 'available-projects', 'applied-projects', 'project-reports'].includes(item.key)) this.navigate(item.key)
+      } else if (['dashboard', 'dashboard-see', 'recruitment-summary', 'available-projects', 'applied-projects', 'project-reports'].includes(item.key)) this.navigate(item.key)
       else this.notify(item.label)
     },
     notify (label) { this.$message.info(label) }

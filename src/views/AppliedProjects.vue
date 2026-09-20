@@ -42,7 +42,7 @@
             :data-source="filteredAppliedProjects"
             :row-selection="appliedRowSelection"
             :pagination="appliedPagination"
-            :scroll="{ x: 1156 }"
+            :scroll="{ x: true }"
             row-key="id"
             @change="handleAppliedTableChange"
           >
@@ -125,12 +125,12 @@ export default {
       },
     appliedStatuses: ['审核流程中', '申请待审', '进展待审', '执行中', '修订中', '正常结项', '异常结项'],
     appliedColumns: [
-        { title: '项目名称', dataIndex: 'name', key: 'project', width: 615, scopedSlots: { customRender: 'project' } },
-        { title: '项目类型', dataIndex: 'type', key: 'type', width: 88, align: 'center', scopedSlots: { customRender: 'type' } },
-        { title: '申请状态', dataIndex: 'status', key: 'status', width: 128, align: 'center', scopedSlots: { customRender: 'status' } },
-        { title: '筹款状态', dataIndex: 'fundraising', key: 'fundraising', width: 96, align: 'center', scopedSlots: { customRender: 'fundraising' } },
-        { title: '状态变更时间', dataIndex: 'updatedAt', key: 'updatedAt', width: 96, align: 'center', scopedSlots: { customRender: 'updatedAt' } },
-        { title: '操作', key: 'operation', fixed: 'right', width: 85, align: 'center', scopedSlots: { customRender: 'operation' } }
+        { title: '项目名称', dataIndex: 'name', key: 'project', scopedSlots: { customRender: 'project' } },
+        { title: '项目类型', dataIndex: 'type', key: 'type', width: 110, align: 'center', scopedSlots: { customRender: 'type' } },
+        { title: '申请状态', dataIndex: 'status', key: 'status', width: 150, align: 'center', scopedSlots: { customRender: 'status' } },
+        { title: '筹款状态', dataIndex: 'fundraising', key: 'fundraising', width: 110, align: 'center', scopedSlots: { customRender: 'fundraising' } },
+        { title: '状态更新时间', dataIndex: 'updatedAt', key: 'updatedAt', width: 120, align: 'center', scopedSlots: { customRender: 'updatedAt' } },
+        { title: '操作', key: 'operation', fixed: 'right', width: 90, align: 'center', scopedSlots: { customRender: 'operation' } }
       ]
   } },
   computed: {
@@ -147,6 +147,7 @@ export default {
     },
     appliedRowSelection () {
       return {
+        columnWidth: 60,
         selectedRowKeys: this.selectedProjectKeys,
         onChange: keys => { this.selectedProjectKeys = keys }
       }
@@ -225,10 +226,5 @@ export default {
 .applied-projects-page ::v-deep .applied-table .ant-table-tbody > tr > td { padding-right: 8px; padding-left: 8px; }
 .applied-projects-page ::v-deep .operation-button { gap: 2px; }
 .applied-projects-page ::v-deep .operation-button > span + .anticon { margin-left: 0; }
-@media (min-width: 1367px) and (max-width: 1439px) {
-  .applied-projects-page ::v-deep .ant-table-scroll table { min-width: 1164px !important; }
-}
-@media (max-width: 1366px) {
-  .applied-projects-page ::v-deep .ant-table-scroll table { min-width: calc(100vw - 120px) !important; }
-}
+.applied-projects-page ::v-deep .ant-table-scroll table { width: 100% !important; min-width: 1140px !important; }
 </style>

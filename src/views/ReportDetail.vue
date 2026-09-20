@@ -149,7 +149,7 @@ import progressReportDetails from '../mock/report-progress-detail.json'
 // P-001006：需请款的进展报告；P-001007：无需请款且涉及款物资助的结项报告。
 const project = {
   projectName: '大熊猫栖息地生态监测与社区保护项目', projectCode: 'ZZ-1234567895',
-  organization: '荥经县野生动植物保护协会', projectType: '资助项目',
+  organization: '荥经县野生动植物保护协会', projectType: '项目',
   strategy: '生物多样性保护', issue: '大熊猫栖息地保护与社区共建',
   projectPeriod: '2025年01月01日 至 2026年08月31日', fundingCents: 50000000,
   reporter: '陈晓', contact: '138****5608', beneficiaryAid: true, aidCompleted: true,
