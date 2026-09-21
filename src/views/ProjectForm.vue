@@ -47,9 +47,9 @@
 
     <footer class="form-footer"><span><a-icon type="info-circle" /> {{ dirty ? '填写内容尚未保存' : draft.savedAt ? '草稿内容已保留' : '请填写项目信息，可随时存为草稿' }}</span><div><a-button @click="goBack">取消</a-button><a-button icon="save" :disabled="uploading > 0" @click="save">存为草稿</a-button><a-button type="primary" :disabled="uploading > 0" @click="submit">提交申请</a-button></div></footer>
 
-    <a-modal v-model="modal.visible" :title="modal.title" :width="modal.kind === 'team' || modal.kind === 'output' || modal.kind === 'activity' ? 550 : 620" :mask-closable="false" :body-style="modal.kind === 'output' ? { overflowY: 'visible' } : { maxHeight: '65vh', overflowY: 'auto' }">
+    <a-modal v-model="modal.visible" :title="modal.title" :width="modal.kind === 'team' || modal.kind === 'output' || modal.kind === 'activity' || modal.kind === 'stakeholders' || modal.kind === 'monitoring' || modal.kind === 'risks' ? 550 : 620" :mask-closable="false" :body-style="modal.kind === 'output' ? { overflowY: 'visible' } : { maxHeight: '65vh', overflowY: 'auto' }">
       <div v-if="modal.kind === 'team'" class="area-picker team-picker"><div v-for="field in modal.fields" :key="field.key" class="area-picker-row"><label :for="'dialog-team-' + field.key">{{ field.label }}：</label><a-select v-if="field.options" :id="'dialog-team-' + field.key" v-model="modal.value[field.key]" placeholder="请选择..."><a-select-option v-for="option in field.options" :key="option">{{ option }}</a-select-option></a-select><a-textarea v-else-if="field.type === 'textarea'" :id="'dialog-team-' + field.key" v-model="modal.value[field.key]" :rows="3" :placeholder="'请填写' + field.label" /><a-input v-else :id="'dialog-team-' + field.key" v-model="modal.value[field.key]" :placeholder="'请填写' + field.label" /></div><p v-if="modal.error" class="form-error" role="alert">{{ modal.error }}</p></div>
-      <div v-else class="modal-form" :class="{ 'output-modal-form': modal.kind === 'output' }"><div v-for="field in modal.fields" v-if="field.key !== 'end'" :key="field.key" class="modal-field" :class="{ 'activity-divider': field.key === 'name' && modal.kind === 'output' }"><label :for="'dialog-' + field.key">{{ field.key === 'start' ? '开展时间' : field.label }}</label>
+      <div v-else class="modal-form" :class="{ 'output-modal-form': modal.kind === 'output', 'compact-modal-form': modal.kind === 'stakeholders' || modal.kind === 'monitoring', 'area-standard-modal-form': modal.kind === 'risks' }"><div v-for="field in modal.fields" v-if="field.key !== 'end'" :key="field.key" class="modal-field" :class="{ 'activity-divider': field.key === 'name' && modal.kind === 'output' }"><label :for="'dialog-' + field.key">{{ field.key === 'start' ? '开展时间' : field.label }}</label>
         <a-select v-if="field.key === 'people'" :id="'dialog-' + field.key" v-model="modal.value[field.key]" class="people-select" mode="multiple" :disabled="!teamMemberOptions.length" :placeholder="teamMemberOptions.length ? '请选择活动执行人员' : '请先添加执行团队成员'"><a-select-option v-for="name in teamMemberOptions" :key="name" :value="name">{{ name }}</a-select-option></a-select>
         <a-select v-else-if="field.options" :id="'dialog-' + field.key" v-model="modal.value[field.key]" placeholder="请选择"><a-select-option v-for="option in field.options" :key="option">{{ option }}</a-select-option></a-select>
         <div v-else-if="field.key === 'start'" class="activity-period-inputs"><input id="dialog-start" v-model="modal.value.start" type="month" class="ant-input" /><span>至</span><input id="dialog-end" v-model="modal.value.end" type="month" class="ant-input" /></div>
@@ -139,13 +139,13 @@ const RichEditor = {
   }
 }
 const textField = (key, label, type = 'textarea', extra = {}) => ({ key, label, type, ...extra })
-const activityFields = [textField('name', '产出活动', 'textarea', { rows: 2 }), textField('start', '开始月份', 'month'), textField('end', '结束月份', 'month'), textField('location', '活动地点', 'input'), textField('people', '活动执行人员', 'input'), textField('content', '活动具体内容', 'textarea', { rows: 3 })]
+const activityFields = [textField('name', '产出活动', 'textarea', { rows: 2 }), textField('start', '开始月份', 'month'), textField('end', '结束月份', 'month'), textField('location', '活动地点', 'input'), textField('people', '活动执行人员', 'input'), textField('content', '活动具体内容', 'textarea', { rows: 2 })]
 const tableSections = [
   { key: 'areas', title: '项目实施区域', icon: 'environment', tone: 'cyan', description: '可按全国、省市或具体行政区填写', fields: [textField('province', '省 / 直辖市', 'input'), textField('city', '地级市 / 直辖市区', 'input', { optional: true }), textField('district', '行政区', 'input', { optional: true })] },
   { key: 'team', title: '执行团队', icon: 'team', tone: 'violet', description: '填写团队成员、职位与工作内容', fields: [textField('name', '姓名', 'input'), textField('position', '职位', 'select', { options: ['正式员工', '兼职', '专家', '志愿者', '实习生'] }), textField('responsibilities', '工作内容')] },
-  { key: 'stakeholders', title: '项目相关方', description: '分析与项目有利益关系的组织或群体，明确其利益、影响及管理方式。', fields: [textField('party', '利益相关方', 'input'), textField('interest', '利益内容'), textField('impact', '产生影响', 'select', { options: ['积极', '消极'] }), textField('management', '管理内容')] },
-  { key: 'risks', title: '项目风险', description: '列明项目实施过程中可能出现的困难或风险，并制定应对措施。', fields: [textField('likelihood', '风险发生可能性', 'select', { options: ['低', '中', '高'] }), textField('description', '风险内容'), textField('response', '应对措施'), textField('affectedActivities', '风险影响的目标或活动')] },
-  { key: 'monitoring', title: '监测评估计划', description: '帮助团队管理项目目标和指标、了解项目成果；请说明由谁实施、评估频率，以及如何反馈、汇总和分享。', fields: [textField('purpose', '监测评估目的'), textField('method', '如何监测评估')] }
+  { key: 'stakeholders', title: '项目相关方', description: '分析与项目有利益关系的组织或群体，明确其利益、影响及管理方式。', fields: [textField('party', '利益相关方', 'input'), textField('interest', '利益内容', 'textarea', { rows: 3 }), textField('impact', '产生影响', 'select', { options: ['积极', '消极'] }), textField('management', '管理内容', 'textarea', { rows: 3 })] },
+  { key: 'risks', title: '项目风险', description: '列明项目实施过程中可能出现的困难或风险，并制定应对措施。', fields: [textField('likelihood', '风险发生可能性', 'select', { options: ['低', '中', '高'] }), textField('description', '风险内容', 'textarea', { rows: 3 }), textField('response', '应对措施', 'textarea', { rows: 3 }), textField('affectedActivities', '风险影响的目标或活动', 'textarea', { rows: 3 })] },
+  { key: 'monitoring', title: '监测评估计划', description: '帮助团队管理项目目标和指标、了解项目成果；请说明由谁实施、评估频率，以及如何反馈、汇总和分享。', fields: [textField('purpose', '监测评估目的', 'textarea', { rows: 3 }), textField('method', '如何监测评估', 'textarea', { rows: 3 })] }
 ]
 export default {
   name: 'ProjectForm', components: { ProjectBudgetEditor, RichEditor, ReviewCommentLabel },
@@ -506,9 +506,46 @@ export default {
 .output-empty-add { margin: 22px; padding: 24px 0; cursor: pointer; border-radius: 8px; }
 .output-empty-add >>> .ant-empty-description { color: #5b8ff9; }
 .output-empty-add:focus-visible { outline: 2px solid #1677ff; outline-offset: 4px; }
-.modal-field { grid-template-columns: 110px minmax(0, 1fr); }
-.output-modal-form { gap: 14px; }
-.modal-field.activity-divider { margin-top: 2px; padding-top: 16px; border-top: 1px dashed #d9e1eb; }
+.output-modal-form { width: 470px; max-width: 100%; gap: 16px; margin: 0 auto; padding: 16px 0; }
+.output-modal-form .modal-field { grid-template-columns: 90px minmax(0, 1fr); gap: 18px; align-items: start; }
+.output-modal-form .modal-field label { padding-top: 5px; line-height: 22px; }
+.output-modal-form .modal-field.activity-divider { padding-top: 16px; border-top: 1px dashed #d9e1eb; }
+.output-modal-form >>> input.ant-input,
+.output-modal-form >>> textarea.ant-input,
+.output-modal-form >>> .ant-select { font-size: 14px; }
+.output-modal-form >>> input.ant-input,
+.output-modal-form >>> .ant-select-selection--single { height: 32px; }
+.output-modal-form >>> .ant-select-selection--single .ant-select-selection__rendered { line-height: 30px; }
+.output-modal-form >>> .ant-select-selection--multiple,
+.output-modal-form >>> .ant-select-selection--multiple .ant-select-selection__rendered { min-height: 32px; }
+.output-modal-form >>> .ant-select-selection--multiple .ant-select-search--inline { height: 30px; }
+.output-modal-form >>> input::placeholder,
+.output-modal-form >>> textarea::placeholder,
+.output-modal-form >>> .ant-select-selection__placeholder { color: #bfbfbf; }
+.compact-modal-form { width: 470px; max-width: 100%; gap: 16px; margin: 0 auto; padding: 16px 0; }
+.compact-modal-form .modal-field { grid-template-columns: 90px minmax(0, 1fr); gap: 18px; align-items: start; }
+.compact-modal-form .modal-field label { padding-top: 5px; line-height: 22px; }
+.compact-modal-form >>> input.ant-input,
+.compact-modal-form >>> textarea.ant-input,
+.compact-modal-form >>> .ant-select { font-size: 14px; }
+.compact-modal-form >>> input.ant-input,
+.compact-modal-form >>> .ant-select-selection--single { height: 32px; }
+.compact-modal-form >>> .ant-select-selection--single .ant-select-selection__rendered { line-height: 30px; }
+.compact-modal-form >>> input::placeholder,
+.compact-modal-form >>> textarea::placeholder,
+.compact-modal-form >>> .ant-select-selection__placeholder { color: #bfbfbf; }
+.area-standard-modal-form { width: 470px; max-width: 100%; gap: 16px; margin: 0 auto; padding: 16px 0 12px; }
+.area-standard-modal-form .modal-field { grid-template-columns: 140px minmax(0, 1fr); gap: 18px; align-items: center; }
+.area-standard-modal-form .modal-field label { display: flex; min-height: 32px; align-items: center; justify-content: flex-end; line-height: 1.6; white-space: nowrap; }
+.area-standard-modal-form >>> input.ant-input,
+.area-standard-modal-form >>> textarea.ant-input,
+.area-standard-modal-form >>> .ant-select { font-size: 14px; }
+.area-standard-modal-form >>> input.ant-input,
+.area-standard-modal-form >>> .ant-select-selection--single { height: 32px; }
+.area-standard-modal-form >>> .ant-select-selection--single .ant-select-selection__rendered { line-height: 30px; }
+.area-standard-modal-form >>> input::placeholder,
+.area-standard-modal-form >>> textarea::placeholder,
+.area-standard-modal-form >>> .ant-select-selection__placeholder { color: #bfbfbf; }
 .activity-period-inputs { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 10px; }
 .activity-period-inputs .ant-input { min-width: 0; }
 .activity-period-inputs span { color: #718095; }

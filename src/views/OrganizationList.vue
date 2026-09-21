@@ -29,14 +29,13 @@
       </div>
     </section>
     <a-modal v-model="reportVisible" title="上传年报" :width="550" :mask-closable="false" ok-text="确定" cancel-text="取消" @ok="saveReport" @cancel="clearReport">
-      <a-form-model ref="reportForm" :model="report" :rules="reportRules" :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }">
-        <a-form-model-item label="报告年份" prop="year"><a-select v-model="report.year" placeholder="请选择报告年份"><a-select-option v-for="year in reportYears" :key="year" :value="year">{{ year }}年</a-select-option></a-select></a-form-model-item>
-        <a-form-model-item label="报告评级" prop="rating"><a-select v-model="report.rating" placeholder="请选择报告评级"><a-select-option v-for="rating in ['达标', '基本达标', '不达标']" :key="rating" :value="rating">{{ rating }}</a-select-option></a-select></a-form-model-item>
-        <a-form-model-item label="年报类型" prop="type"><a-select v-model="report.type" placeholder="请选择年报类型"><a-select-option v-for="type in ['年检报告', '机构年报', '审计报告']" :key="type" :value="type">{{ type }}</a-select-option></a-select></a-form-model-item>
-        <a-form-model-item label="报告文件" prop="fileName">
-          <a-upload :before-upload="selectFile" :file-list="fileList" :remove="removeFile"><a-button icon="upload">点击上传</a-button></a-upload>
-        </a-form-model-item>
-      </a-form-model>
+      <div class="area-picker team-picker report-picker">
+        <div class="area-picker-row"><label for="report-year">报告年份：</label><a-select id="report-year" v-model="report.year" placeholder="请选择报告年份"><a-select-option v-for="year in reportYears" :key="year" :value="year">{{ year }}年</a-select-option></a-select></div>
+        <div class="area-picker-row"><label for="report-type">年报类型：</label><a-select id="report-type" v-model="report.type" placeholder="请选择年报类型" @change="changeReportType"><a-select-option v-for="type in ['年检年报', '机构年报', '审计报告']" :key="type" :value="type">{{ type }}</a-select-option></a-select></div>
+        <div v-if="report.type === '年检年报'" class="area-picker-row"><label for="report-civil-status">已上报民政：</label><a-select id="report-civil-status" v-model="report.civilStatus" placeholder="请选择上报状态"><a-select-option v-for="status in ['已上报', '未上报']" :key="status" :value="status">{{ status }}</a-select-option></a-select></div>
+        <div class="area-picker-row"><label>报告文件：</label><a-upload :before-upload="selectFile" :file-list="fileList" :remove="removeFile"><a-button icon="upload">点击上传</a-button></a-upload></div>
+        <p v-if="reportError" class="form-error" role="alert">{{ reportError }}</p>
+      </div>
     </a-modal>
   </section>
 </template>
@@ -57,14 +56,9 @@ export default {
       pageSize: 50,
       reportVisible: false,
       selectedOrganization: null,
-      report: { year: undefined, rating: undefined, type: undefined, fileName: '' },
+      report: { year: undefined, type: undefined, civilStatus: undefined, fileName: '' },
       fileList: [],
-      reportRules: {
-        year: [{ required: true, message: '请选择报告年份', trigger: 'change', type: 'number' }],
-        rating: [{ required: true, message: '请选择报告评级', trigger: 'change' }],
-        type: [{ required: true, message: '请选择年报类型', trigger: 'change' }],
-        fileName: [{ required: true, message: '请选择报告文件', trigger: 'change' }]
-      },
+      reportError: '',
       columns: [
         { title: '头像 / Logo', key: 'logo', width: 140, scopedSlots: { customRender: 'logo' } },
         { title: '机构及组织', dataIndex: 'name', scopedSlots: { customRender: 'name' } },
@@ -80,7 +74,7 @@ export default {
   computed: {
     filteredOrganizations () { return filterOrganizations(this.organizations, this.appliedFilters) },
     pagination () { return { current: this.page, pageSize: this.pageSize, pageSizeOptions: ['50', '100'], showSizeChanger: true, showTotal: total => `共有 ${total} 条数据` } },
-    reportYears () { const year = new Date().getFullYear(); return [1, 2, 3, 4, 5].map(offset => year - offset) }
+    reportYears () { const year = new Date().getFullYear(); return [0, 1, 2, 3, 4].map(offset => year - offset) }
   },
   methods: {
     queryOrganizations () { this.appliedFilters = Object.assign({}, this.filters); this.page = 1 },
@@ -93,27 +87,28 @@ export default {
         this.selectedOrganization = item
         this.report.year = this.reportYears[0]
         this.reportVisible = true
-        this.$nextTick(() => { if (this.$refs.reportForm) this.$refs.reportForm.clearValidate() })
       } else if (action === '放弃变更') {
         this.$confirm({ title: '确认放弃本次变更？', content: '本地演示将恢复为通过状态，不会向后台提交。', maskClosable: false, okText: '确认放弃', cancelText: '取消', onOk: () => { item.status = '通过'; this.page = 1; this.$message.info('已在本次演示中放弃变更') } })
       } else this.openExternalPage(action)
     },
-    clearReport () { this.report = { year: undefined, rating: undefined, type: undefined, fileName: '' }; this.fileList = []; this.selectedOrganization = null },
+    clearReport () { this.report = { year: undefined, type: undefined, civilStatus: undefined, fileName: '' }; this.reportError = ''; this.fileList = []; this.selectedOrganization = null },
+    changeReportType () { this.report.civilStatus = undefined; this.reportError = '' },
     selectFile (file) {
       this.fileList = [file]
       this.report.fileName = file.name
-      this.$nextTick(() => this.$refs.reportForm.validateField('fileName'))
+      this.reportError = ''
       return false
     },
     removeFile () { this.fileList = []; this.report.fileName = ''; return true },
     saveReport () {
-      this.$refs.reportForm.validate(valid => {
-        if (!valid || !this.selectedOrganization) return
-        this.selectedOrganization.reports.push(Object.assign({}, this.report))
-        this.reportVisible = false
-        this.clearReport()
-        this.$message.info('年报信息已记录在本次演示中，文件尚未上传至服务器')
-      })
+      const labels = { year: '报告年份', type: '年报类型', civilStatus: '上报状态', fileName: '报告文件' }
+      const required = ['year', 'type', 'fileName'].concat(this.report.type === '年检年报' ? ['civilStatus'] : [])
+      const missing = required.filter(key => !this.report[key])
+      if (missing.length || !this.selectedOrganization) { this.reportError = '请填写：' + missing.map(key => labels[key]).join('、'); return }
+      this.selectedOrganization.reports.push(Object.assign({}, this.report))
+      this.reportVisible = false
+      this.clearReport()
+      this.$message.info('年报信息已记录在本次演示中，文件尚未上传至服务器')
     }
   }
 }
@@ -140,6 +135,11 @@ export default {
 .organization-subline .sub-account-tag { display: inline-block; margin: 0; }
 .organization-contact { display: grid; gap: 6px; overflow-wrap: anywhere; }
 .organization-contact span + span { color: #718095; }
+.report-picker { display: grid; width: 470px; max-width: 100%; gap: 16px; margin: 0 auto; padding: 16px 0 12px; }
+.report-picker .area-picker-row { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 18px; align-items: start; }
+.report-picker .area-picker-row label { display: flex; min-height: 32px; align-items: center; justify-content: flex-end; padding-top: 5px; color: #27384e; line-height: 22px; text-align: right; white-space: nowrap; }
+.report-picker .area-picker-row .ant-select { width: 100%; }
+.report-picker > .form-error { margin: -4px 0 0 108px; }
 .operation-button { border: 0; background: transparent; padding: 0; height: 32px; box-shadow: none; }
 .operation-button >>> .anticon { margin-left: 2px !important; }
 @media (max-width: 1439px) { .organization-table { min-width: 1200px; } }
