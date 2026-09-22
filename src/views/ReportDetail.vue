@@ -17,7 +17,7 @@
           <template v-if="isAudit">
             <p>这是待审核的进展报告，内容在审核通过前不会入库存档。如果报告需要请款，在OA流程完成后报告状态才会更新为“进展通过”。</p>
             <p class="ai-initial-review"><strong>AI初审结果</strong></p>
-            <p v-for="item in report.aiInitialReview" :key="item.section"><span>{{ item.section }}：</span>{{ item.content }}</p>
+            <p v-for="item in report.aiInitialReview" :key="item.section" class="ai-initial-review-item"><span>{{ item.section }}：</span>{{ item.content }}</p>
           </template>
           <template v-else>
             <p>本报告除公开信息外，还可能包含联系人、联系方式、财务票据及受益人资料等敏感信息。</p>
