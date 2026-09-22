@@ -56,7 +56,7 @@
 
     <section class="panel form-section benefits-section">
       <div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="environment" /></span><div><h2>收益指标成果</h2></div></div>
-      <div class="benefit-groups"><section v-for="section in benefitSections" :key="section.key" class="benefit-group"><table class="detail-table benefits-table"><colgroup><col class="benefit-indicator" /><col v-for="column in section.columns" :key="column.key" /><col class="benefit-actions" /></colgroup><thead><tr><th>收益指标</th><th v-for="column in section.columns" :key="column.key">{{ column.label }}</th><th>操作</th></tr></thead><tbody><tr v-for="row in section.rows" :key="row.id"><td>{{ section.title }}</td><td v-for="column in section.columns" :key="column.key">{{ row[column.key] || '—' }}</td><td><a-button type="link" @click="editBenefitExample(section, row)">编辑</a-button><a-button type="link" class="danger-link" @click="removeBenefitExample(section, row)">删除</a-button></td></tr><tr class="benefit-add-row"><td :colspan="section.columns.length + 2"><a-button type="link" @click="addBenefitExample(section)">添加更多成果</a-button></td></tr></tbody></table></section><a-button class="add-benefit-type" type="dashed" icon="plus" @click="addBenefitType">添加更多类型的收益</a-button></div>
+      <div class="benefit-groups"><a-button class="add-benefit-type" type="dashed" icon="plus" @click="addBenefitType">新增收益</a-button><section v-for="section in benefitSections" :key="section.key" class="benefit-group"><table class="detail-table benefits-table"><colgroup><col class="benefit-indicator" /><col v-for="column in section.columns" :key="column.key" /><col class="benefit-actions" /></colgroup><thead><tr><th>收益指标</th><th v-for="column in section.columns" :key="column.key">{{ column.label }}</th><th>操作</th></tr></thead><tbody><tr v-for="row in section.rows" :key="row.id"><td>{{ section.title }}</td><td v-for="column in section.columns" :key="column.key">{{ row[column.key] || '—' }}</td><td><a-button type="link" @click="editBenefitExample(section, row)">编辑</a-button><a-button type="link" class="danger-link" @click="removeBenefitExample(section, row)">删除</a-button></td></tr><tr class="benefit-add-row"><td :colspan="section.columns.length + 2"><a-button type="link" @click="addBenefitExample(section)">添加更多成果</a-button></td></tr></tbody></table></section></div>
     </section>
 
     <section class="panel form-section attachment-section">
@@ -166,7 +166,7 @@ export default {
     ,addBenefitExample (section) { this.$message.info(`“${section.title}”收益新增入口示例`) }
     ,editBenefitExample (section) { this.$message.info(`“${section.title}”收益编辑入口示例`) }
     ,removeBenefitExample (section, row) { section.rows = section.rows.filter(item => item.id !== row.id) }
-    ,addBenefitType () { this.$message.info('添加更多类型的收益入口示例') }
+    ,addBenefitType () { this.$message.info('新增收益入口示例') }
   }
 }
 </script>

@@ -211,7 +211,9 @@ export default {
         return
       }
       if (key === 'detail' || key === 'project-detail' || key === 'audit') {
-        this.$router.push({ name: 'project-detail', params: { id: String(record.id) }, query: key === 'audit' ? { mode: 'audit' } : {} })
+        const query = key === 'audit' ? { mode: 'audit' } : {}
+        if (record.detailType) query.detailType = record.detailType
+        this.$router.push({ name: 'project-detail', params: { id: String(record.id) }, query })
         return
       }
       this.$message.info(`${labels[key]}：${record.name}`)

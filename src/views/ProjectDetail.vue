@@ -18,7 +18,7 @@
               <template v-if="detailMode === 'audit'">
                 <p>这是待审核的项目申请书，内容在审核通过前不会入库存档，下载用于线下审核时，资料会带有“待审核”相关标注。</p>
                 <p class="ai-initial-review"><strong>AI初审结果</strong></p>
-                <p v-for="item in tableData.aiInitialReview" :key="item.section"><span>{{ item.section }}：</span>{{ item.content }}</p>
+                <p v-for="item in detailTableData.aiInitialReview" :key="item.section" class="ai-initial-review-item"><span>{{ item.section }}：</span>{{ item.content }}</p>
               </template>
               <template v-else>
                 <p>这是审核通过的项目申请书，查看和使用资料时，需遵循机构信息安全与保密要求！</p>
@@ -29,17 +29,17 @@
         </section>
 
         <section id="detail-basic" class="panel detail-section">
-          <div class="detail-section-header"><span class="detail-section-icon"><a-icon type="profile" /></span><div><h2>项目基本信息</h2><p v-if="detailMode === 'audit'">点击字段内容可添加审核意见</p><div class="detail-basic-meta"><span class="project-code"><a-icon type="flag" /> {{ basicInfo.code }}</span><button class="project-recruitment" type="button" :title="basicInfo.recruitment" @click="notify(`打开招募详情：${basicInfo.recruitment}`)"><a-icon type="notification" /> {{ basicInfo.recruitment }}</button></div></div></div>
+          <div class="detail-section-header"><span class="detail-section-icon"><a-icon type="profile" /></span><div><h2>项目基本信息</h2><p v-if="detailMode === 'audit'">【合理】点击字段内容可添加审核意见</p><div class="detail-basic-meta"><span class="project-code"><a-icon type="flag" /> {{ basicInfo.code }}</span><button class="project-recruitment" type="button" :title="basicInfo.recruitment" @click="notify(`打开招募详情：${basicInfo.recruitment}`)"><a-icon type="notification" /> {{ basicInfo.recruitment }}</button></div></div></div>
           <div class="description-grid">
             <div class="description-item wide project-name-item" :class="basicReviewClass('name')" :role="detailMode === 'audit' ? 'button' : undefined" :tabindex="detailMode === 'audit' ? 0 : undefined" @click="openBasicReview('name')" @keydown.enter.prevent="openBasicReview('name')" @keydown.space.prevent="openBasicReview('name')"><span>项目名称</span><strong>{{ basicInfo.name }}</strong></div>
             <div class="description-item"><span>项目类型</span><strong>{{ basicInfo.type }}</strong></div>
             <div class="description-item"><span>项目策略</span><strong>{{ basicInfo.strategy }}</strong></div>
             <div class="description-item"><span>项目议题</span><strong>{{ basicInfo.issue }}</strong></div>
-            <div class="description-item"><span>资金来源</span><strong>{{ basicInfo.funding }}</strong></div>
+            <div v-if="basicInfo.funding" class="description-item"><span>资金来源</span><strong>{{ basicInfo.funding }}</strong></div>
             <div class="description-item" :class="basicReviewClass('targets')" :role="detailMode === 'audit' ? 'button' : undefined" :tabindex="detailMode === 'audit' ? 0 : undefined" @click="openBasicReview('targets')" @keydown.enter.prevent="openBasicReview('targets')" @keydown.space.prevent="openBasicReview('targets')">
               <span>项目目标板块</span><strong>{{ basicInfo.targets }}</strong>
             </div>
-            <div v-for="field in basicReviewFields.slice(2)" :key="field.key" class="description-item" :class="[field.wide ? 'wide' : '', basicReviewClass(field.key)]" :role="detailMode === 'audit' ? 'button' : undefined" :tabindex="detailMode === 'audit' ? 0 : undefined" @click="openBasicReview(field.key)" @keydown.enter.prevent="openBasicReview(field.key)" @keydown.space.prevent="openBasicReview(field.key)"><span>{{ field.label }}</span><strong>{{ basicInfo[field.valueKey] }}</strong></div>
+            <div v-for="field in basicReviewFields.slice(2)" :key="field.key" class="description-item" :class="[field.wide ? 'wide' : '', basicReviewClass(field.key)]" :role="detailMode === 'audit' ? 'button' : undefined" :tabindex="detailMode === 'audit' ? 0 : undefined" @click="openBasicReview(field.key)" @keydown.enter.prevent="openBasicReview(field.key)" @keydown.space.prevent="openBasicReview(field.key)"><span>{{ field.label }}</span><strong :class="{ 'basic-field-multiline': field.multiline }">{{ basicInfo[field.valueKey] }}</strong></div>
           </div>
         </section>
 
@@ -77,7 +77,7 @@
 
         <section id="detail-area" class="panel detail-section">
           <div class="detail-section-header"><span class="detail-section-icon cyan"><a-icon type="environment" /></span><div><h2>项目实施区域</h2><p v-if="detailMode === 'audit'">点击行任意位置可添加审核意见</p></div></div>
-          <div class="detail-table-wrap"><table class="detail-table project-area-table"><colgroup><col class="project-detail-index-col" /><col /><col /><col /></colgroup><thead><tr><th>序号</th><th>省 / 直辖市</th><th>地级市 / 直辖市区</th><th>行政区</th></tr></thead><tbody><tr v-for="(row, rowIndex) in tableData.areas" :key="row.id" :class="reviewRowClass('areas', row.id)" :role="detailMode === 'audit' ? 'button' : undefined" :tabindex="detailMode === 'audit' ? 0 : undefined" @click="openRowReview('areas', row.id)" @keydown.enter.prevent="openRowReview('areas', row.id)" @keydown.space.prevent="openRowReview('areas', row.id)"><td>{{ rowIndex + 1 }}</td><td>{{ row.province }}</td><td>{{ row.city }}</td><td>{{ row.district }}</td></tr></tbody></table></div>
+          <div class="detail-table-wrap"><table class="detail-table project-area-table"><colgroup><col class="project-detail-index-col" /><col /><col /><col /></colgroup><thead><tr><th>序号</th><th>省 / 直辖市</th><th>地级市 / 直辖市区</th><th>行政区</th></tr></thead><tbody><tr v-for="(row, rowIndex) in detailTableData.areas" :key="row.id" :class="reviewRowClass('areas', row.id)" :role="detailMode === 'audit' ? 'button' : undefined" :tabindex="detailMode === 'audit' ? 0 : undefined" @click="openRowReview('areas', row.id)" @keydown.enter.prevent="openRowReview('areas', row.id)" @keydown.space.prevent="openRowReview('areas', row.id)"><td>{{ rowIndex + 1 }}</td><td>{{ row.province }}</td><td>{{ row.city }}</td><td>{{ row.district }}</td></tr></tbody></table></div>
         </section>
 
         <section id="detail-team" class="panel detail-section">
@@ -86,7 +86,7 @@
             <table class="detail-table team-table">
               <colgroup><col class="project-detail-index-col" /><col class="team-col-name" /><col class="team-col-role" /><col /></colgroup>
               <thead><tr><th>序号</th><th>姓名</th><th>职位</th><th>工作内容</th></tr></thead>
-              <tbody><tr v-for="(row, rowIndex) in tableData.team" :key="row.id" :class="reviewRowClass('team', row.id)" :role="detailMode === 'audit' ? 'button' : undefined" :tabindex="detailMode === 'audit' ? 0 : undefined" @click="openRowReview('team', row.id)" @keydown.enter.prevent="openRowReview('team', row.id)" @keydown.space.prevent="openRowReview('team', row.id)"><td>{{ rowIndex + 1 }}</td><td>{{ row.name }}</td><td>{{ row.position }}</td><td>{{ row.responsibilities }}</td></tr></tbody>
+              <tbody><tr v-for="(row, rowIndex) in detailTableData.team" :key="row.id" :class="reviewRowClass('team', row.id)" :role="detailMode === 'audit' ? 'button' : undefined" :tabindex="detailMode === 'audit' ? 0 : undefined" @click="openRowReview('team', row.id)" @keydown.enter.prevent="openRowReview('team', row.id)" @keydown.space.prevent="openRowReview('team', row.id)"><td>{{ rowIndex + 1 }}</td><td>{{ row.name }}</td><td>{{ row.position }}</td><td>{{ row.responsibilities }}</td></tr></tbody>
             </table>
           </div>
           <article class="rich-content team-rich-content">
@@ -102,7 +102,7 @@
 
         <section id="detail-output" class="panel detail-section">
           <div class="detail-section-header"><span class="detail-section-icon orange"><a-icon type="project" /></span><div><h2>项目产出 / 活动</h2><p v-if="detailMode === 'audit'">点击产出或活动序号可添加审核意见</p></div></div>
-          <div v-for="(output, outputIndex) in tableData.outputs" :key="output.id" class="output-block" :class="{ 'review-has-comment': hasReviewComment(outputReviewComments[outputReviewKey('output', output.id)]) }">
+          <div v-for="(output, outputIndex) in detailTableData.outputs" :key="output.id" class="output-block" :class="{ 'review-has-comment': hasReviewComment(outputReviewComments[outputReviewKey('output', output.id)]) }">
             <div class="output-title"><span :class="{ 'review-label-trigger': detailMode === 'audit' }" :role="detailMode === 'audit' ? 'button' : undefined" :tabindex="detailMode === 'audit' ? 0 : undefined" @click="openOutputReview('output', output.id)" @keydown.enter.prevent="openOutputReview('output', output.id)" @keydown.space.prevent="openOutputReview('output', output.id)">产出 {{ outputIndex + 1 }}</span><strong>{{ output.name }}</strong></div>
             <div class="output-standard"><span>产出衡量标准</span><div><p v-for="(paragraph, paragraphIndex) in output.standard.split('\n')" :key="paragraphIndex">{{ paragraph }}</p></div></div>
             <div v-for="(activity, activityIndex) in output.activities" :key="activity.id" class="activity-card" :class="{ 'review-has-comment': hasReviewComment(outputReviewComments[outputReviewKey('activity', activity.id)]) }"><div><span :class="{ 'review-label-trigger': detailMode === 'audit' }" :role="detailMode === 'audit' ? 'button' : undefined" :tabindex="detailMode === 'audit' ? 0 : undefined" @click="openOutputReview('activity', activity.id)" @keydown.enter.prevent="openOutputReview('activity', activity.id)" @keydown.space.prevent="openOutputReview('activity', activity.id)">活动 {{ outputIndex + 1 }}.{{ activityIndex + 1 }}</span><strong>{{ activity.name }}</strong></div><dl><div><dt>活动时间</dt><dd>{{ activity.start }} 至 {{ activity.end }}</dd></div><div><dt>活动地点</dt><dd>{{ activity.location }}</dd></div><div><dt>执行人员</dt><dd>{{ activity.people }}</dd></div></dl><p>{{ activity.content }}</p></div>
@@ -116,18 +116,18 @@
             <table class="detail-table stakeholder-table">
               <colgroup><col class="stakeholder-col-index" /><col class="stakeholder-col-party" /><col class="stakeholder-col-interest" /><col class="stakeholder-col-impact" /><col /></colgroup>
               <thead><tr><th>序号</th><th>利益相关方</th><th>利益内容</th><th>产生影响</th><th>管理内容</th></tr></thead>
-              <tbody><tr v-for="(row, rowIndex) in tableData.stakeholders" :key="row.id" :class="reviewRowClass('stakeholders', row.id)" :role="detailMode === 'audit' ? 'button' : undefined" :tabindex="detailMode === 'audit' ? 0 : undefined" @click="openRowReview('stakeholders', row.id)" @keydown.enter.prevent="openRowReview('stakeholders', row.id)" @keydown.space.prevent="openRowReview('stakeholders', row.id)"><td>{{ rowIndex + 1 }}</td><td>{{ row.party }}</td><td>{{ row.interest }}</td><td><span :class="{ 'positive-tag': row.impact === '积极', 'negative-tag': row.impact === '消极' }">{{ row.impact }}</span></td><td>{{ row.management }}</td></tr></tbody>
+              <tbody><tr v-for="(row, rowIndex) in detailTableData.stakeholders" :key="row.id" :class="reviewRowClass('stakeholders', row.id)" :role="detailMode === 'audit' ? 'button' : undefined" :tabindex="detailMode === 'audit' ? 0 : undefined" @click="openRowReview('stakeholders', row.id)" @keydown.enter.prevent="openRowReview('stakeholders', row.id)" @keydown.space.prevent="openRowReview('stakeholders', row.id)"><td>{{ rowIndex + 1 }}</td><td>{{ row.party }}</td><td>{{ row.interest }}</td><td><span :class="{ 'positive-tag': row.impact === '积极', 'negative-tag': row.impact === '消极' }">{{ row.impact }}</span></td><td>{{ row.management }}</td></tr></tbody>
             </table>
           </div>
           <h3 class="table-subtitle">项目风险</h3>
-          <div class="detail-table-wrap"><table class="detail-table risk-table"><colgroup><col class="compact-index-col" /><col class="risk-level-col" /><col /><col /><col /></colgroup><thead><tr><th>序号</th><th>可能性</th><th>风险内容</th><th>应对措施</th><th>影响目标或活动</th></tr></thead><tbody><tr v-for="(row, rowIndex) in tableData.risks" :key="row.id" :class="reviewRowClass('risks', row.id)" :role="detailMode === 'audit' ? 'button' : undefined" :tabindex="detailMode === 'audit' ? 0 : undefined" @click="openRowReview('risks', row.id)" @keydown.enter.prevent="openRowReview('risks', row.id)" @keydown.space.prevent="openRowReview('risks', row.id)"><td>{{ rowIndex + 1 }}</td><td>{{ row.likelihood }}</td><td>{{ row.description }}</td><td>{{ row.response }}</td><td>{{ row.affectedActivities }}</td></tr></tbody></table></div>
+          <div class="detail-table-wrap"><table class="detail-table risk-table"><colgroup><col class="compact-index-col" /><col class="risk-level-col" /><col /><col /><col /></colgroup><thead><tr><th>序号</th><th>可能性</th><th>风险内容</th><th>应对措施</th><th>影响目标或活动</th></tr></thead><tbody><tr v-for="(row, rowIndex) in detailTableData.risks" :key="row.id" :class="reviewRowClass('risks', row.id)" :role="detailMode === 'audit' ? 'button' : undefined" :tabindex="detailMode === 'audit' ? 0 : undefined" @click="openRowReview('risks', row.id)" @keydown.enter.prevent="openRowReview('risks', row.id)" @keydown.space.prevent="openRowReview('risks', row.id)"><td>{{ rowIndex + 1 }}</td><td>{{ row.likelihood }}</td><td>{{ row.description }}</td><td>{{ row.response }}</td><td>{{ row.affectedActivities }}</td></tr></tbody></table></div>
           <h3 class="table-subtitle">监测评估计划</h3>
-          <div class="detail-table-wrap"><table class="detail-table monitoring-table"><colgroup><col class="compact-index-col" /><col /><col /></colgroup><thead><tr><th>序号</th><th>监测评估目的</th><th>监测评估方法</th></tr></thead><tbody><tr v-for="(row, rowIndex) in tableData.monitoring" :key="row.id" :class="reviewRowClass('monitoring', row.id)" :role="detailMode === 'audit' ? 'button' : undefined" :tabindex="detailMode === 'audit' ? 0 : undefined" @click="openRowReview('monitoring', row.id)" @keydown.enter.prevent="openRowReview('monitoring', row.id)" @keydown.space.prevent="openRowReview('monitoring', row.id)"><td>{{ rowIndex + 1 }}</td><td>{{ row.purpose }}</td><td>{{ row.method }}</td></tr></tbody></table></div>
+          <div class="detail-table-wrap"><table class="detail-table monitoring-table"><colgroup><col class="compact-index-col" /><col /><col /></colgroup><thead><tr><th>序号</th><th>监测评估目的</th><th>监测评估方法</th></tr></thead><tbody><tr v-for="(row, rowIndex) in detailTableData.monitoring" :key="row.id" :class="reviewRowClass('monitoring', row.id)" :role="detailMode === 'audit' ? 'button' : undefined" :tabindex="detailMode === 'audit' ? 0 : undefined" @click="openRowReview('monitoring', row.id)" @keydown.enter.prevent="openRowReview('monitoring', row.id)" @keydown.space.prevent="openRowReview('monitoring', row.id)"><td>{{ rowIndex + 1 }}</td><td>{{ row.purpose }}</td><td>{{ row.method }}</td></tr></tbody></table></div>
         </section>
 
         <section id="detail-budget" class="panel detail-section">
           <div class="detail-section-header"><span class="detail-section-icon gold"><a-icon type="fund" /></span><div><h2>在线预算表</h2><p>项目预算及执行情况概览</p></div></div>
-          <budget-prototype :project-name="detailProject.name" :budget="tableData.budget" />
+          <budget-prototype :project-name="detailProject.name" :budget="detailTableData.budget" />
         </section>
 
         <section id="detail-attachments" class="panel detail-section">
@@ -179,7 +179,7 @@
         <section v-else id="detail-history" class="panel detail-section">
           <div class="detail-section-header"><span class="detail-section-icon gray"><a-icon type="history" /></span><div><h2>审核信息</h2></div></div>
           <a-timeline class="audit-timeline">
-            <a-timeline-item v-for="entry in tableData.auditHistory" :key="entry.id" color="blue">
+            <a-timeline-item v-for="entry in detailTableData.auditHistory" :key="entry.id" color="blue">
               <div class="audit-entry">
                 <strong>审核结果：{{ entry.result }}</strong>
                 <div class="audit-result-row">
@@ -209,6 +209,7 @@
 
 <script>
 import defaultTableData from '../mock/project-tables.json'
+import greenHomeTableData from '../mock/project-green-home-detail.json'
 import BudgetPrototype from '../components/BudgetPrototype.vue'
 import { appliedProjects } from '../mock/projects'
 const basicReviewFields = [
@@ -227,20 +228,43 @@ const basicReviewFields = [
   { key: 'leader', label: '负责人', valueKey: 'leader' },
   { key: 'phone', label: '联系方式', valueKey: 'phone' }
 ]
+const detailFieldVariants = {
+  default: basicReviewFields,
+  'green-home': (() => {
+    const fields = basicReviewFields.map(field => {
+      if (field.key === 'executionPeriod') return { ...field, label: '资助周期' }
+      if (field.key === 'organization') return { ...field, label: '申请机构' }
+      if (field.key === 'total') return { ...field, wide: false }
+      if (field.key === 'matching') return { ...field, key: 'otherLocalFunding', label: '其他地方资助', valueKey: 'otherLocalFunding', multiline: true }
+      return field
+    }).filter(field => field.key !== 'beneficiaries' && field.key !== 'publicBenefit')
+    fields.splice(fields.findIndex(field => field.key === 'organization') + 1, 0, { key: 'organizationCode', label: '机构信息编码', valueKey: 'organizationCode' })
+    fields.splice(fields.findIndex(field => field.key === 'aid') + 1, 0, { key: 'environmentalFields', label: '从事的环保领域', valueKey: 'environmentalFields' })
+    return fields
+  })(),
+  grass: basicReviewFields,
+  'one-time-donation': basicReviewFields,
+  'monthly-donation': basicReviewFields
+}
+const detailTableDataByType = {
+  default: defaultTableData,
+  'green-home': greenHomeTableData
+}
 export default {
   name: 'ProjectDetail',
   props: {
     projectId: { type: Number, required: true },
     mode: { type: String, default: 'view' },
+    detailType: { type: String, default: 'default' },
     // 接口返回同结构 JSON 后可通过路由容器传入，或在此接入请求。
-    tableData: { type: Object, default: () => JSON.parse(JSON.stringify(defaultTableData)) }
+    tableData: { type: Object, default: null }
   },
   data () { return {
+    detailTableData: JSON.parse(JSON.stringify(this.tableData || detailTableDataByType[this.detailType] || defaultTableData)),
     targetReviewVisible: false,
     targetReviewDraft: '',
-    basicReviewFields,
-    basicReviewComments: { targets: '请补充各项目目标板块对应的成果指标及衡量方式。', ...(this.tableData.reviewComments || {}) },
-    contentReviewComments: { overview: '请补充项目受益范围和社区参与方式。', ...(this.tableData.reviewComments || {}) },
+    basicReviewComments: { targets: '请补充各项目目标板块对应的成果指标及衡量方式。', ...((this.tableData || detailTableDataByType[this.detailType] || defaultTableData).reviewComments || {}) },
+    contentReviewComments: { overview: '请补充项目受益范围和社区参与方式。', ...((this.tableData || detailTableDataByType[this.detailType] || defaultTableData).reviewComments || {}) },
     rowReviewComments: { [`${this.projectId}:areas:areas-1`]: '请核实实施区域与活动地点的一致性。' },
     outputReviewComments: { [`${this.projectId}:output:output-1`]: '请明确产出的数量、完成时间和验收依据。', [`${this.projectId}:activity:activity-2-1`]: '请补充活动实施安排及执行人员分工。' },
     reviewField: 'basic:targets',
@@ -253,9 +277,10 @@ export default {
     auditFundingTotal: 10000
   } },
   computed: {
+    basicReviewFields () { return detailFieldVariants[this.detailType] || detailFieldVariants.default },
     selectedProjectId () { return this.projectId },
     detailMode () { return this.mode },
-    basicInfo () { return this.tableData.basic },
+    basicInfo () { return this.detailTableData.basic },
     auditFundingBalance () {
       const value = this.auditForm.approvedAmount.trim()
       return /^\d{1,12}(\.\d{1,2})?$/.test(value) ? this.auditFundingTotal - Number(value) : null

@@ -7,6 +7,10 @@ export const appliedProjects = [
         { id: 3, name: '西南山地生物多样性保护与社区共建项目', recruitment: '2026年联合公益公募筹资项目招募', organization: '重庆江北飞地猫盟生态科普保护中心', code: 'LH-1772259480', status: '修订中', type: '联合公益', fundraising: '筹款中', updatedAt: '2025-12-19 09:26:15', initiator: 'mine', cover: 'forest-table', icon: 'environment', editable: true, overdue: true },
         { id: 4, name: '候鸟迁飞通道湿地恢复与公众参与计划', recruitment: '2025—2027年湿地保护伙伴计划', organization: '重庆江北飞地猫盟生态科普保护中心', code: 'ZZ-1764740227', status: '正常结项', type: '项目', fundraising: '-', updatedAt: '2025-11-08 18:20:03', initiator: 'department', cover: 'wetland', icon: 'cloud' },
         { id: 5, name: '城市零废弃社区行动网络建设项目', recruitment: '绿色社区创新项目招募', organization: '北京市朝阳区自然之友环境研究所', code: 'ZZ-1764740241', status: '异常结项', type: '项目', fundraising: '-', updatedAt: '2025-10-16 14:02:48', initiator: 'mine', cover: 'city', icon: 'home' },
+        { id: 8, name: '创绿家示例', recruitment: '创绿家项目招募', organization: '创绿家示例机构', code: 'ZZ-1764740242', status: '执行中', type: '项目', fundraising: '-', updatedAt: '2026-09-21 10:00:00', initiator: 'department', cover: 'forest-table', icon: 'environment', detailType: 'green-home' },
+        { id: 9, name: 'xxxxx-劲草示例', recruitment: '劲草项目招募', organization: '劲草示例机构', code: 'ZZ-1764740243', status: '执行中', type: '项目', fundraising: '-', updatedAt: '2026-09-21 10:00:00', initiator: 'department', cover: 'plateau', icon: 'deployment-unit', detailType: 'grass' },
+        { id: 10, name: 'xxxxx-次捐示例', recruitment: '次捐项目招募', organization: '次捐示例机构', code: 'ZZ-1764740244', status: '执行中', type: '联合公益', fundraising: '筹款中', updatedAt: '2026-09-21 10:00:00', initiator: 'department', cover: 'wildlife', icon: 'heart', detailType: 'one-time-donation' },
+        { id: 11, name: 'xxxxx-月捐示例', recruitment: '月捐项目招募', organization: '月捐示例机构', code: 'ZZ-1764740245', status: '执行中', type: '联合公益', fundraising: '筹款中', updatedAt: '2026-09-21 10:00:00', initiator: 'department', cover: 'city', icon: 'heart', detailType: 'monthly-donation' },
       ]
 
 // 可申请项目列表演示数据；后续接入招募接口时保持相同稳定字段。

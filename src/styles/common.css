@@ -160,6 +160,8 @@ button { cursor: pointer; }
 .privacy-reminder-copy p { margin: 0; line-height: 1.75; }
 .privacy-reminder-copy p + p { margin-top: 3px; }
 .privacy-reminder-copy .ai-initial-review { margin-top: 16px; }
+.privacy-reminder-copy .ai-initial-review-item { line-height: 1.5; overflow-wrap: anywhere; }
+.privacy-reminder-copy .ai-initial-review-item + .ai-initial-review-item { margin-top: 10px; }
 .detail-section { scroll-margin-top: 144px; }
 .detail-section-header { min-height: 76px; padding: 16px 22px; display: flex; align-items: center; gap: 13px; border-bottom: 1px solid #edf1f5; }
 .detail-section-header > div { min-width: 0; flex: 1; }
@@ -190,6 +192,7 @@ button { cursor: pointer; }
 .description-item.wide { grid-column: 1 / -1; }
 .description-item span { color: #7b899b; }
 .description-item strong { color: #27384e; font-weight: 500; line-height: 1.6; }
+.description-item .basic-field-multiline { white-space: pre-line; }
 .project-name-item strong { font-size: 16px; font-weight: 600; line-height: 1.55; }
 .rich-content { width: 100%; max-width: none; box-sizing: border-box; padding: 28px 34px 34px; color: #35455a; line-height: 1.86; }
 .rich-content h3 { position: relative; margin: 30px 0 12px; padding-left: 12px; border-left: 4px solid #18a66a; color: #18253c; font-size: 18px; }
