@@ -29,7 +29,7 @@
         </section>
 
         <section id="detail-basic" class="panel detail-section">
-          <div class="detail-section-header"><span class="detail-section-icon"><a-icon type="profile" /></span><div><h2>项目基本信息</h2><p v-if="detailMode === 'audit'">【合理】点击字段内容可添加审核意见</p><div class="detail-basic-meta"><span class="project-code"><a-icon type="flag" /> {{ basicInfo.code }}</span><button class="project-recruitment" type="button" :title="basicInfo.recruitment" @click="notify(`打开招募详情：${basicInfo.recruitment}`)"><a-icon type="notification" /> {{ basicInfo.recruitment }}</button></div></div></div>
+          <div class="detail-section-header"><span class="detail-section-icon"><a-icon type="profile" /></span><div><h2>项目基本信息</h2><div class="detail-basic-meta"><span class="project-code"><a-icon type="flag" /> {{ basicInfo.code }}</span><button class="project-recruitment" type="button" :title="basicInfo.recruitment" @click="notify(`打开招募详情：${basicInfo.recruitment}`)"><a-icon type="notification" /> {{ basicInfo.recruitment }}</button></div></div></div>
           <div class="description-grid">
             <div class="description-item wide project-name-item" :class="basicReviewClass('name')" :role="detailMode === 'audit' ? 'button' : undefined" :tabindex="detailMode === 'audit' ? 0 : undefined" @click="openBasicReview('name')" @keydown.enter.prevent="openBasicReview('name')" @keydown.space.prevent="openBasicReview('name')"><span>项目名称</span><strong>{{ basicInfo.name }}</strong></div>
             <div class="description-item"><span>项目类型</span><strong>{{ basicInfo.type }}</strong></div>
@@ -43,7 +43,43 @@
           </div>
         </section>
 
-        <section id="detail-content" class="panel detail-section">
+        <section v-if="detailType === 'green-home' && detailTableData.organizationBasicInfo" id="detail-organization-basic" class="panel detail-section">
+          <div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="bank" /></span><div><h2>机构基本信息</h2></div></div>
+          <div class="description-grid">
+            <div class="description-item wide"><span>创业概述</span><strong class="basic-field-multiline">{{ detailTableData.organizationBasicInfo.entrepreneurshipOverview }}</strong></div>
+            <div v-for="item in detailTableData.organizationBasicInfo.staffCounts" :key="item.label" class="description-item"><span>{{ item.label }}</span><strong>{{ item.count }}</strong></div>
+          </div>
+          <h3 class="table-subtitle">组织信息</h3>
+          <div class="detail-table-wrap">
+            <table class="detail-table team-table">
+              <colgroup><col class="project-detail-index-col" /><col class="team-col-name" /><col class="team-col-role" /><col /><col class="organization-work-type-col" /></colgroup>
+              <thead><tr><th>序号</th><th>姓名</th><th>职位</th><th>团队分工</th><th>工作性质</th></tr></thead>
+              <tbody><tr v-for="(member, index) in detailTableData.organizationBasicInfo.members" :key="member.id"><td>{{ index + 1 }}</td><td>{{ member.name }}</td><td>{{ member.position }}</td><td>{{ member.responsibilities }}</td><td>{{ member.workType }}</td></tr></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section v-if="detailType === 'green-home' && detailTableData.organizationDevelopment" id="detail-organization-background" class="panel detail-section">
+          <div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="solution" /></span><div><h2>创业背景 / 机构成长需求分析</h2></div></div>
+          <article class="rich-content">
+            <section v-for="item in detailTableData.organizationDevelopment.background" :key="item.title" class="rich-text-section">
+              <h3>{{ item.title }}</h3>
+              <div class="rich-text-field"><p v-for="(paragraph, index) in item.paragraphs" :key="index">{{ paragraph }}</p></div>
+            </section>
+          </article>
+        </section>
+
+        <section v-if="detailType === 'green-home' && detailTableData.organizationDevelopment" id="detail-organization-plan" class="panel detail-section">
+          <div class="detail-section-header"><span class="detail-section-icon blue"><a-icon type="compass" /></span><div><h2>发展目标与实施计划</h2></div></div>
+          <article class="rich-content">
+            <section v-for="item in detailTableData.organizationDevelopment.plan" :key="item.title" class="rich-text-section">
+              <h3>{{ item.title }}</h3>
+              <div class="rich-text-field"><p v-for="(paragraph, index) in item.paragraphs" :key="index">{{ paragraph }}</p></div>
+            </section>
+          </article>
+        </section>
+
+        <section v-if="detailType !== 'green-home'" id="detail-content" class="panel detail-section">
           <div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="read" /></span><div><h2>附加信息</h2><p v-if="detailMode === 'audit'">点击信息小标题可添加审核意见</p></div></div>
           <article class="rich-content">
             <section class="rich-text-section" data-field="projectOverview">
@@ -75,12 +111,12 @@
           </article>
         </section>
 
-        <section id="detail-area" class="panel detail-section">
+        <section v-if="detailType !== 'green-home'" id="detail-area" class="panel detail-section">
           <div class="detail-section-header"><span class="detail-section-icon cyan"><a-icon type="environment" /></span><div><h2>项目实施区域</h2><p v-if="detailMode === 'audit'">点击行任意位置可添加审核意见</p></div></div>
           <div class="detail-table-wrap"><table class="detail-table project-area-table"><colgroup><col class="project-detail-index-col" /><col /><col /><col /></colgroup><thead><tr><th>序号</th><th>省 / 直辖市</th><th>地级市 / 直辖市区</th><th>行政区</th></tr></thead><tbody><tr v-for="(row, rowIndex) in detailTableData.areas" :key="row.id" :class="reviewRowClass('areas', row.id)" :role="detailMode === 'audit' ? 'button' : undefined" :tabindex="detailMode === 'audit' ? 0 : undefined" @click="openRowReview('areas', row.id)" @keydown.enter.prevent="openRowReview('areas', row.id)" @keydown.space.prevent="openRowReview('areas', row.id)"><td>{{ rowIndex + 1 }}</td><td>{{ row.province }}</td><td>{{ row.city }}</td><td>{{ row.district }}</td></tr></tbody></table></div>
         </section>
 
-        <section id="detail-team" class="panel detail-section">
+        <section v-if="detailType !== 'green-home'" id="detail-team" class="panel detail-section">
           <div class="detail-section-header"><span class="detail-section-icon violet"><a-icon type="team" /></span><div><h2>执行团队</h2><p v-if="detailMode === 'audit'">点击信息小标题或行任意位置可添加审核意见</p></div></div>
           <div class="detail-table-wrap">
             <table class="detail-table team-table">
@@ -101,7 +137,7 @@
         </section>
 
         <section id="detail-output" class="panel detail-section">
-          <div class="detail-section-header"><span class="detail-section-icon orange"><a-icon type="project" /></span><div><h2>项目产出 / 活动</h2><p v-if="detailMode === 'audit'">点击产出或活动序号可添加审核意见</p></div></div>
+          <div class="detail-section-header"><span class="detail-section-icon orange"><a-icon type="project" /></span><div><h2>{{ detailType === 'green-home' ? '机构发展衡量指标及活动' : '项目产出 / 活动' }}</h2><p v-if="detailMode === 'audit'">点击产出或活动序号可添加审核意见</p></div></div>
           <div v-for="(output, outputIndex) in detailTableData.outputs" :key="output.id" class="output-block" :class="{ 'review-has-comment': hasReviewComment(outputReviewComments[outputReviewKey('output', output.id)]) }">
             <div class="output-title"><span :class="{ 'review-label-trigger': detailMode === 'audit' }" :role="detailMode === 'audit' ? 'button' : undefined" :tabindex="detailMode === 'audit' ? 0 : undefined" @click="openOutputReview('output', output.id)" @keydown.enter.prevent="openOutputReview('output', output.id)" @keydown.space.prevent="openOutputReview('output', output.id)">产出 {{ outputIndex + 1 }}</span><strong>{{ output.name }}</strong></div>
             <div class="output-standard"><span>产出衡量标准</span><div><p v-for="(paragraph, paragraphIndex) in output.standard.split('\n')" :key="paragraphIndex">{{ paragraph }}</p></div></div>
@@ -111,18 +147,22 @@
 
         <section id="detail-management" class="panel detail-section">
           <div class="detail-section-header"><span class="detail-section-icon red"><a-icon type="safety-certificate" /></span><div><h2>项目管理计划</h2><p v-if="detailMode === 'audit'">点击行任意位置可添加审核意见</p></div></div>
-          <h3 class="table-subtitle">项目相关方</h3>
-          <div class="detail-table-wrap">
-            <table class="detail-table stakeholder-table">
-              <colgroup><col class="stakeholder-col-index" /><col class="stakeholder-col-party" /><col class="stakeholder-col-interest" /><col class="stakeholder-col-impact" /><col /></colgroup>
-              <thead><tr><th>序号</th><th>利益相关方</th><th>利益内容</th><th>产生影响</th><th>管理内容</th></tr></thead>
-              <tbody><tr v-for="(row, rowIndex) in detailTableData.stakeholders" :key="row.id" :class="reviewRowClass('stakeholders', row.id)" :role="detailMode === 'audit' ? 'button' : undefined" :tabindex="detailMode === 'audit' ? 0 : undefined" @click="openRowReview('stakeholders', row.id)" @keydown.enter.prevent="openRowReview('stakeholders', row.id)" @keydown.space.prevent="openRowReview('stakeholders', row.id)"><td>{{ rowIndex + 1 }}</td><td>{{ row.party }}</td><td>{{ row.interest }}</td><td><span :class="{ 'positive-tag': row.impact === '积极', 'negative-tag': row.impact === '消极' }">{{ row.impact }}</span></td><td>{{ row.management }}</td></tr></tbody>
-            </table>
-          </div>
+          <template v-if="detailType !== 'green-home'">
+            <h3 class="table-subtitle">项目相关方</h3>
+            <div class="detail-table-wrap">
+              <table class="detail-table stakeholder-table">
+                <colgroup><col class="stakeholder-col-index" /><col class="stakeholder-col-party" /><col class="stakeholder-col-interest" /><col class="stakeholder-col-impact" /><col /></colgroup>
+                <thead><tr><th>序号</th><th>利益相关方</th><th>利益内容</th><th>产生影响</th><th>管理内容</th></tr></thead>
+                <tbody><tr v-for="(row, rowIndex) in detailTableData.stakeholders" :key="row.id" :class="reviewRowClass('stakeholders', row.id)" :role="detailMode === 'audit' ? 'button' : undefined" :tabindex="detailMode === 'audit' ? 0 : undefined" @click="openRowReview('stakeholders', row.id)" @keydown.enter.prevent="openRowReview('stakeholders', row.id)" @keydown.space.prevent="openRowReview('stakeholders', row.id)"><td>{{ rowIndex + 1 }}</td><td>{{ row.party }}</td><td>{{ row.interest }}</td><td><span :class="{ 'positive-tag': row.impact === '积极', 'negative-tag': row.impact === '消极' }">{{ row.impact }}</span></td><td>{{ row.management }}</td></tr></tbody>
+              </table>
+            </div>
+          </template>
           <h3 class="table-subtitle">项目风险</h3>
           <div class="detail-table-wrap"><table class="detail-table risk-table"><colgroup><col class="compact-index-col" /><col class="risk-level-col" /><col /><col /><col /></colgroup><thead><tr><th>序号</th><th>可能性</th><th>风险内容</th><th>应对措施</th><th>影响目标或活动</th></tr></thead><tbody><tr v-for="(row, rowIndex) in detailTableData.risks" :key="row.id" :class="reviewRowClass('risks', row.id)" :role="detailMode === 'audit' ? 'button' : undefined" :tabindex="detailMode === 'audit' ? 0 : undefined" @click="openRowReview('risks', row.id)" @keydown.enter.prevent="openRowReview('risks', row.id)" @keydown.space.prevent="openRowReview('risks', row.id)"><td>{{ rowIndex + 1 }}</td><td>{{ row.likelihood }}</td><td>{{ row.description }}</td><td>{{ row.response }}</td><td>{{ row.affectedActivities }}</td></tr></tbody></table></div>
-          <h3 class="table-subtitle">监测评估计划</h3>
-          <div class="detail-table-wrap"><table class="detail-table monitoring-table"><colgroup><col class="compact-index-col" /><col /><col /></colgroup><thead><tr><th>序号</th><th>监测评估目的</th><th>监测评估方法</th></tr></thead><tbody><tr v-for="(row, rowIndex) in detailTableData.monitoring" :key="row.id" :class="reviewRowClass('monitoring', row.id)" :role="detailMode === 'audit' ? 'button' : undefined" :tabindex="detailMode === 'audit' ? 0 : undefined" @click="openRowReview('monitoring', row.id)" @keydown.enter.prevent="openRowReview('monitoring', row.id)" @keydown.space.prevent="openRowReview('monitoring', row.id)"><td>{{ rowIndex + 1 }}</td><td>{{ row.purpose }}</td><td>{{ row.method }}</td></tr></tbody></table></div>
+          <template v-if="detailType !== 'green-home'">
+            <h3 class="table-subtitle">监测评估计划</h3>
+            <div class="detail-table-wrap"><table class="detail-table monitoring-table"><colgroup><col class="compact-index-col" /><col /><col /></colgroup><thead><tr><th>序号</th><th>监测评估目的</th><th>监测评估方法</th></tr></thead><tbody><tr v-for="(row, rowIndex) in detailTableData.monitoring" :key="row.id" :class="reviewRowClass('monitoring', row.id)" :role="detailMode === 'audit' ? 'button' : undefined" :tabindex="detailMode === 'audit' ? 0 : undefined" @click="openRowReview('monitoring', row.id)" @keydown.enter.prevent="openRowReview('monitoring', row.id)" @keydown.space.prevent="openRowReview('monitoring', row.id)"><td>{{ rowIndex + 1 }}</td><td>{{ row.purpose }}</td><td>{{ row.method }}</td></tr></tbody></table></div>
+          </template>
         </section>
 
         <section id="detail-budget" class="panel detail-section">
@@ -130,7 +170,7 @@
           <budget-prototype :project-name="detailProject.name" :budget="detailTableData.budget" />
         </section>
 
-        <section id="detail-attachments" class="panel detail-section">
+        <section v-if="detailType !== 'green-home'" id="detail-attachments" class="panel detail-section">
           <div class="detail-section-header"><span class="detail-section-icon blue"><a-icon type="paper-clip" /></span><div><h2>附件</h2><p>项目相关附件，如有需要请下载留存</p></div></div>
           <div class="attachment-list"><div><div><strong>项目预算表.xlsx</strong><span>预算表 · 2025-12-28 23:59</span></div><a-button type="link" @click="notify('预览项目预算表')">预览</a-button><a-button type="link" @click="notify('下载项目预算表')">下载</a-button></div><div><div><strong>项目实施方案.pdf</strong><span>其他附件 · 2025-12-28 23:59</span></div><a-button type="link" @click="notify('预览项目实施方案')">预览</a-button><a-button type="link" @click="notify('下载项目实施方案')">下载</a-button></div></div>
         </section>
@@ -259,14 +299,17 @@ export default {
     // 接口返回同结构 JSON 后可通过路由容器传入，或在此接入请求。
     tableData: { type: Object, default: null }
   },
-  data () { return {
-    detailTableData: JSON.parse(JSON.stringify(this.tableData || detailTableDataByType[this.detailType] || defaultTableData)),
+  data () {
+    const sourceTableData = this.tableData || detailTableDataByType[this.detailType] || defaultTableData
+    const usesJsonReviewComments = Object.prototype.hasOwnProperty.call(sourceTableData, 'reviewComments')
+    return {
+    detailTableData: JSON.parse(JSON.stringify(sourceTableData)),
     targetReviewVisible: false,
     targetReviewDraft: '',
-    basicReviewComments: { targets: '请补充各项目目标板块对应的成果指标及衡量方式。', ...((this.tableData || detailTableDataByType[this.detailType] || defaultTableData).reviewComments || {}) },
-    contentReviewComments: { overview: '请补充项目受益范围和社区参与方式。', ...((this.tableData || detailTableDataByType[this.detailType] || defaultTableData).reviewComments || {}) },
-    rowReviewComments: { [`${this.projectId}:areas:areas-1`]: '请核实实施区域与活动地点的一致性。' },
-    outputReviewComments: { [`${this.projectId}:output:output-1`]: '请明确产出的数量、完成时间和验收依据。', [`${this.projectId}:activity:activity-2-1`]: '请补充活动实施安排及执行人员分工。' },
+    basicReviewComments: usesJsonReviewComments ? { ...sourceTableData.reviewComments } : { targets: '请补充各项目目标板块对应的成果指标及衡量方式。' },
+    contentReviewComments: usesJsonReviewComments ? { ...sourceTableData.reviewComments } : { overview: '请补充项目受益范围和社区参与方式。' },
+    rowReviewComments: usesJsonReviewComments ? {} : { [`${this.projectId}:areas:areas-1`]: '请核实实施区域与活动地点的一致性。' },
+    outputReviewComments: usesJsonReviewComments ? {} : { [`${this.projectId}:output:output-1`]: '请明确产出的数量、完成时间和验收依据。', [`${this.projectId}:activity:activity-2-1`]: '请补充活动实施安排及执行人员分工。' },
     reviewField: 'basic:targets',
     auditForm: {
         result: 'approved',
@@ -407,6 +450,7 @@ export default {
 </script>
 
 <style scoped>
+.organization-work-type-col { width: 150px; }
 .detail-table tr.review-row-trigger { cursor: pointer; }
 .detail-table tr.review-row-trigger:hover > td { background: #f8fbff; }
 .detail-table tr.review-row-has-comment > td { background: #fff1f0; }

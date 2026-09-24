@@ -96,6 +96,11 @@
                     <a-menu-item key="project-detail">查看项目详情</a-menu-item>
                     <a-menu-item key="download-project-files">下载项目资料</a-menu-item>
                   </template>
+                  <template v-else-if="record.detailType === 'green-home'">
+                    <a-menu-item key="edit-green-home">编辑</a-menu-item>
+                    <a-menu-item key="audit">审核</a-menu-item>
+                    <a-menu-item key="detail">查看详情</a-menu-item>
+                  </template>
                   <template v-else>
                     <a-menu-item key="detail">查看详情</a-menu-item>
                     <a-menu-item v-if="record.editable" key="edit">修改申请</a-menu-item>
@@ -198,6 +203,7 @@ export default {
       const labels = {
         detail: '查看详情',
         edit: '修改申请',
+        'edit-green-home': '编辑入口暂未配置',
         history: '变更记录',
         'audit-progress': '审核进展',
         'project-detail': '查看项目详情',
