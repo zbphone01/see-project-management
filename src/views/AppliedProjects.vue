@@ -101,6 +101,11 @@
                     <a-menu-item key="audit">审核</a-menu-item>
                     <a-menu-item key="detail">查看详情</a-menu-item>
                   </template>
+                  <template v-else-if="record.detailType === 'grass'">
+                    <a-menu-item key="edit-grass">编辑</a-menu-item>
+                    <a-menu-item key="audit">审核</a-menu-item>
+                    <a-menu-item key="detail">查看详情</a-menu-item>
+                  </template>
                   <template v-else>
                     <a-menu-item key="detail">查看详情</a-menu-item>
                     <a-menu-item v-if="record.editable" key="edit">修改申请</a-menu-item>
@@ -204,6 +209,7 @@ export default {
         detail: '查看详情',
         edit: '修改申请',
         'edit-green-home': '编辑入口暂未配置',
+        'edit-grass': '编辑入口暂未配置',
         history: '变更记录',
         'audit-progress': '审核进展',
         'project-detail': '查看项目详情',

@@ -39,14 +39,14 @@
             <div class="description-item" :class="basicReviewClass('targets')" :role="detailMode === 'audit' ? 'button' : undefined" :tabindex="detailMode === 'audit' ? 0 : undefined" @click="openBasicReview('targets')" @keydown.enter.prevent="openBasicReview('targets')" @keydown.space.prevent="openBasicReview('targets')">
               <span>项目目标板块</span><strong>{{ basicInfo.targets }}</strong>
             </div>
-            <div v-for="field in basicReviewFields.slice(2)" :key="field.key" class="description-item" :class="[field.wide ? 'wide' : '', basicReviewClass(field.key)]" :role="detailMode === 'audit' ? 'button' : undefined" :tabindex="detailMode === 'audit' ? 0 : undefined" @click="openBasicReview(field.key)" @keydown.enter.prevent="openBasicReview(field.key)" @keydown.space.prevent="openBasicReview(field.key)"><span>{{ field.label }}</span><strong :class="{ 'basic-field-multiline': field.multiline }">{{ basicInfo[field.valueKey] }}</strong></div>
+            <div v-for="field in basicReviewFields.slice(2)" :key="field.key" class="description-item" :class="[field.wide ? 'wide' : '', basicReviewClass(field.key)]" :role="detailMode === 'audit' ? 'button' : undefined" :tabindex="detailMode === 'audit' ? 0 : undefined" @click="openBasicReview(field.key)" @keydown.enter.prevent="openBasicReview(field.key)" @keydown.space.prevent="openBasicReview(field.key)"><span>{{ field.label }}</span><strong v-if="field.key === 'mailingAddress'" class="basic-field-multiline">{{ basicInfo.mailingAddress }}<br>邮编：{{ basicInfo.postalCode }}</strong><strong v-else :class="{ 'basic-field-multiline': field.multiline }">{{ basicInfo[field.valueKey] }}</strong></div>
           </div>
         </section>
 
-        <section v-if="detailType === 'green-home' && detailTableData.organizationBasicInfo" id="detail-organization-basic" class="panel detail-section">
+        <section v-if="isGreenHomeExample && detailTableData.organizationBasicInfo" id="detail-organization-basic" class="panel detail-section">
           <div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="bank" /></span><div><h2>机构基本信息</h2></div></div>
           <div class="description-grid">
-            <div class="description-item wide"><span>创业概述</span><strong class="basic-field-multiline">{{ detailTableData.organizationBasicInfo.entrepreneurshipOverview }}</strong></div>
+            <div class="description-item wide"><span>机构简介</span><strong class="basic-field-multiline">{{ detailTableData.organizationBasicInfo.entrepreneurshipOverview }}</strong></div>
             <div v-for="item in detailTableData.organizationBasicInfo.staffCounts" :key="item.label" class="description-item"><span>{{ item.label }}</span><strong>{{ item.count }}</strong></div>
           </div>
           <h3 class="table-subtitle">组织信息</h3>
@@ -57,11 +57,26 @@
               <tbody><tr v-for="(member, index) in detailTableData.organizationBasicInfo.members" :key="member.id"><td>{{ index + 1 }}</td><td>{{ member.name }}</td><td>{{ member.position }}</td><td>{{ member.responsibilities }}</td><td>{{ member.workType }}</td></tr></tbody>
             </table>
           </div>
+          <article class="rich-content">
+            <section class="rich-text-section"><h3>业务逻辑</h3><div class="rich-text-field"><p v-for="(paragraph, index) in detailTableData.organizationBasicInfo.businessLogic" :key="index">{{ paragraph }}</p></div></section>
+            <section class="rich-text-section"><h3>核心项目/产品简介</h3><div class="rich-text-field"><p v-for="(paragraph, index) in detailTableData.organizationBasicInfo.coreProjects" :key="index">{{ paragraph }}</p></div></section>
+            <section v-if="detailType === 'grass' && detailTableData.organizationBasicInfo.governanceStructure" class="rich-text-section"><h3>工作 / 管理 / 治理结构图</h3><div class="rich-text-field"><p v-for="(paragraph, index) in detailTableData.organizationBasicInfo.governanceStructure.paragraphs" :key="index">{{ paragraph }}</p><img :src="detailTableData.organizationBasicInfo.governanceStructure.image" alt="示例结构图：理事会下设机构负责人，机构负责人管理项目执行组和行政财务组" style="display: block; width: 100%; max-width: 680px; height: auto; margin: 16px auto;" /></div></section>
+          </article>
+          <div v-if="detailType === 'grass' && detailTableData.organizationBasicInfo.highestDecisionMakingBody" class="detail-table-wrap">
+            <table class="detail-table"><thead><tr><th>机构最高决策层</th></tr></thead><tbody><tr v-for="item in detailTableData.organizationBasicInfo.highestDecisionMakingBody" :key="item"><td>{{ item }}</td></tr></tbody></table>
+          </div>
+          <template v-if="detailType === 'grass' && detailTableData.organizationBasicInfo.fundraising">
+            <h3 class="table-subtitle">筹资情况</h3>
+            <div class="detail-table-wrap"><table class="detail-table organization-fundraising-table"><colgroup><col style="width: 100px;" /><col /><col style="width: 180px;" /><col style="width: 130px;" /></colgroup><thead><tr><th>年份</th><th>主要资助方</th><th>筹资额度（单位：元）</th><th>支撑费比例</th></tr></thead><tbody><tr v-for="row in detailTableData.organizationBasicInfo.fundraising.rows" :key="row.id"><td>{{ row.year }}</td><td>{{ row.funders }}</td><td>{{ row.amount }}</td><td>{{ row.supportRatio }}</td></tr><tr><td>合计</td><td></td><td>{{ detailTableData.organizationBasicInfo.fundraising.total }}</td><td></td></tr></tbody></table></div>
+          </template>
         </section>
 
-        <section v-if="detailType === 'green-home' && detailTableData.organizationDevelopment" id="detail-organization-background" class="panel detail-section">
-          <div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="solution" /></span><div><h2>创业背景 / 机构成长需求分析</h2></div></div>
-          <article class="rich-content">
+        <section v-if="isGreenHomeExample && detailTableData.organizationDevelopment" id="detail-organization-background" class="panel detail-section">
+          <div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="solution" /></span><div><h2>{{ detailType === 'grass' ? '机构成长需求分析' : '创业背景 / 机构成长需求分析' }}</h2></div></div>
+          <div v-if="detailType === 'grass'" class="description-grid">
+            <div v-for="item in detailTableData.organizationDevelopment.growthNeeds" :key="item.key" class="description-item wide"><span>{{ item.title }}</span><strong class="basic-field-multiline">{{ item.content }}</strong></div>
+          </div>
+          <article v-else class="rich-content">
             <section v-for="item in detailTableData.organizationDevelopment.background" :key="item.title" class="rich-text-section">
               <h3>{{ item.title }}</h3>
               <div class="rich-text-field"><p v-for="(paragraph, index) in item.paragraphs" :key="index">{{ paragraph }}</p></div>
@@ -69,7 +84,7 @@
           </article>
         </section>
 
-        <section v-if="detailType === 'green-home' && detailTableData.organizationDevelopment" id="detail-organization-plan" class="panel detail-section">
+        <section v-if="isGreenHomeExample && detailTableData.organizationDevelopment" id="detail-organization-plan" class="panel detail-section">
           <div class="detail-section-header"><span class="detail-section-icon blue"><a-icon type="compass" /></span><div><h2>发展目标与实施计划</h2></div></div>
           <article class="rich-content">
             <section v-for="item in detailTableData.organizationDevelopment.plan" :key="item.title" class="rich-text-section">
@@ -79,7 +94,7 @@
           </article>
         </section>
 
-        <section v-if="detailType !== 'green-home'" id="detail-content" class="panel detail-section">
+        <section v-if="!isGreenHomeExample" id="detail-content" class="panel detail-section">
           <div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="read" /></span><div><h2>附加信息</h2><p v-if="detailMode === 'audit'">点击信息小标题可添加审核意见</p></div></div>
           <article class="rich-content">
             <section class="rich-text-section" data-field="projectOverview">
@@ -111,12 +126,12 @@
           </article>
         </section>
 
-        <section v-if="detailType !== 'green-home'" id="detail-area" class="panel detail-section">
+        <section v-if="!isGreenHomeExample" id="detail-area" class="panel detail-section">
           <div class="detail-section-header"><span class="detail-section-icon cyan"><a-icon type="environment" /></span><div><h2>项目实施区域</h2><p v-if="detailMode === 'audit'">点击行任意位置可添加审核意见</p></div></div>
           <div class="detail-table-wrap"><table class="detail-table project-area-table"><colgroup><col class="project-detail-index-col" /><col /><col /><col /></colgroup><thead><tr><th>序号</th><th>省 / 直辖市</th><th>地级市 / 直辖市区</th><th>行政区</th></tr></thead><tbody><tr v-for="(row, rowIndex) in detailTableData.areas" :key="row.id" :class="reviewRowClass('areas', row.id)" :role="detailMode === 'audit' ? 'button' : undefined" :tabindex="detailMode === 'audit' ? 0 : undefined" @click="openRowReview('areas', row.id)" @keydown.enter.prevent="openRowReview('areas', row.id)" @keydown.space.prevent="openRowReview('areas', row.id)"><td>{{ rowIndex + 1 }}</td><td>{{ row.province }}</td><td>{{ row.city }}</td><td>{{ row.district }}</td></tr></tbody></table></div>
         </section>
 
-        <section v-if="detailType !== 'green-home'" id="detail-team" class="panel detail-section">
+        <section v-if="!isGreenHomeExample" id="detail-team" class="panel detail-section">
           <div class="detail-section-header"><span class="detail-section-icon violet"><a-icon type="team" /></span><div><h2>执行团队</h2><p v-if="detailMode === 'audit'">点击信息小标题或行任意位置可添加审核意见</p></div></div>
           <div class="detail-table-wrap">
             <table class="detail-table team-table">
@@ -137,7 +152,7 @@
         </section>
 
         <section id="detail-output" class="panel detail-section">
-          <div class="detail-section-header"><span class="detail-section-icon orange"><a-icon type="project" /></span><div><h2>{{ detailType === 'green-home' ? '机构发展衡量指标及活动' : '项目产出 / 活动' }}</h2><p v-if="detailMode === 'audit'">点击产出或活动序号可添加审核意见</p></div></div>
+          <div class="detail-section-header"><span class="detail-section-icon orange"><a-icon type="project" /></span><div><h2>{{ isGreenHomeExample ? '机构发展衡量指标及活动' : '项目产出 / 活动' }}</h2><p v-if="detailMode === 'audit'">点击产出或活动序号可添加审核意见</p></div></div>
           <div v-for="(output, outputIndex) in detailTableData.outputs" :key="output.id" class="output-block" :class="{ 'review-has-comment': hasReviewComment(outputReviewComments[outputReviewKey('output', output.id)]) }">
             <div class="output-title"><span :class="{ 'review-label-trigger': detailMode === 'audit' }" :role="detailMode === 'audit' ? 'button' : undefined" :tabindex="detailMode === 'audit' ? 0 : undefined" @click="openOutputReview('output', output.id)" @keydown.enter.prevent="openOutputReview('output', output.id)" @keydown.space.prevent="openOutputReview('output', output.id)">产出 {{ outputIndex + 1 }}</span><strong>{{ output.name }}</strong></div>
             <div class="output-standard"><span>产出衡量标准</span><div><p v-for="(paragraph, paragraphIndex) in output.standard.split('\n')" :key="paragraphIndex">{{ paragraph }}</p></div></div>
@@ -147,7 +162,7 @@
 
         <section id="detail-management" class="panel detail-section">
           <div class="detail-section-header"><span class="detail-section-icon red"><a-icon type="safety-certificate" /></span><div><h2>项目管理计划</h2><p v-if="detailMode === 'audit'">点击行任意位置可添加审核意见</p></div></div>
-          <template v-if="detailType !== 'green-home'">
+          <template v-if="!isGreenHomeExample">
             <h3 class="table-subtitle">项目相关方</h3>
             <div class="detail-table-wrap">
               <table class="detail-table stakeholder-table">
@@ -159,7 +174,7 @@
           </template>
           <h3 class="table-subtitle">项目风险</h3>
           <div class="detail-table-wrap"><table class="detail-table risk-table"><colgroup><col class="compact-index-col" /><col class="risk-level-col" /><col /><col /><col /></colgroup><thead><tr><th>序号</th><th>可能性</th><th>风险内容</th><th>应对措施</th><th>影响目标或活动</th></tr></thead><tbody><tr v-for="(row, rowIndex) in detailTableData.risks" :key="row.id" :class="reviewRowClass('risks', row.id)" :role="detailMode === 'audit' ? 'button' : undefined" :tabindex="detailMode === 'audit' ? 0 : undefined" @click="openRowReview('risks', row.id)" @keydown.enter.prevent="openRowReview('risks', row.id)" @keydown.space.prevent="openRowReview('risks', row.id)"><td>{{ rowIndex + 1 }}</td><td>{{ row.likelihood }}</td><td>{{ row.description }}</td><td>{{ row.response }}</td><td>{{ row.affectedActivities }}</td></tr></tbody></table></div>
-          <template v-if="detailType !== 'green-home'">
+          <template v-if="!isGreenHomeExample">
             <h3 class="table-subtitle">监测评估计划</h3>
             <div class="detail-table-wrap"><table class="detail-table monitoring-table"><colgroup><col class="compact-index-col" /><col /><col /></colgroup><thead><tr><th>序号</th><th>监测评估目的</th><th>监测评估方法</th></tr></thead><tbody><tr v-for="(row, rowIndex) in detailTableData.monitoring" :key="row.id" :class="reviewRowClass('monitoring', row.id)" :role="detailMode === 'audit' ? 'button' : undefined" :tabindex="detailMode === 'audit' ? 0 : undefined" @click="openRowReview('monitoring', row.id)" @keydown.enter.prevent="openRowReview('monitoring', row.id)" @keydown.space.prevent="openRowReview('monitoring', row.id)"><td>{{ rowIndex + 1 }}</td><td>{{ row.purpose }}</td><td>{{ row.method }}</td></tr></tbody></table></div>
           </template>
@@ -170,7 +185,7 @@
           <budget-prototype :project-name="detailProject.name" :budget="detailTableData.budget" />
         </section>
 
-        <section v-if="detailType !== 'green-home'" id="detail-attachments" class="panel detail-section">
+        <section v-if="!isGreenHomeExample" id="detail-attachments" class="panel detail-section">
           <div class="detail-section-header"><span class="detail-section-icon blue"><a-icon type="paper-clip" /></span><div><h2>附件</h2><p>项目相关附件，如有需要请下载留存</p></div></div>
           <div class="attachment-list"><div><div><strong>项目预算表.xlsx</strong><span>预算表 · 2025-12-28 23:59</span></div><a-button type="link" @click="notify('预览项目预算表')">预览</a-button><a-button type="link" @click="notify('下载项目预算表')">下载</a-button></div><div><div><strong>项目实施方案.pdf</strong><span>其他附件 · 2025-12-28 23:59</span></div><a-button type="link" @click="notify('预览项目实施方案')">预览</a-button><a-button type="link" @click="notify('下载项目实施方案')">下载</a-button></div></div>
         </section>
@@ -250,6 +265,7 @@
 <script>
 import defaultTableData from '../mock/project-tables.json'
 import greenHomeTableData from '../mock/project-green-home-detail.json'
+import grassTableData from '../mock/project-grass-detail.json'
 import BudgetPrototype from '../components/BudgetPrototype.vue'
 import { appliedProjects } from '../mock/projects'
 const basicReviewFields = [
@@ -280,15 +296,29 @@ const detailFieldVariants = {
     }).filter(field => field.key !== 'beneficiaries' && field.key !== 'publicBenefit')
     fields.splice(fields.findIndex(field => field.key === 'organization') + 1, 0, { key: 'organizationCode', label: '机构信息编码', valueKey: 'organizationCode' })
     fields.splice(fields.findIndex(field => field.key === 'aid') + 1, 0, { key: 'environmentalFields', label: '从事的环保领域', valueKey: 'environmentalFields' })
+    fields.push({ key: 'email', label: '电子邮箱', valueKey: 'email' }, { key: 'mailingAddress', label: '邮寄地址', valueKey: 'mailingAddress', multiline: true })
     return fields
   })(),
-  grass: basicReviewFields,
+  grass: (() => {
+    const fields = basicReviewFields.map(field => {
+      if (field.key === 'executionPeriod') return { ...field, label: '资助周期' }
+      if (field.key === 'organization') return { ...field, label: '申请机构' }
+      if (field.key === 'total') return { ...field, wide: false }
+      if (field.key === 'matching') return { ...field, key: 'otherLocalFunding', label: '其他地方资助', valueKey: 'otherLocalFunding', multiline: true }
+      return field
+    }).filter(field => field.key !== 'beneficiaries' && field.key !== 'publicBenefit')
+    fields.splice(fields.findIndex(field => field.key === 'organization') + 1, 0, { key: 'organizationCode', label: '机构信息编码', valueKey: 'organizationCode' })
+    fields.splice(fields.findIndex(field => field.key === 'aid') + 1, 0, { key: 'environmentalFields', label: '从事的环保领域', valueKey: 'environmentalFields' })
+    fields.push({ key: 'email', label: '电子邮箱', valueKey: 'email' }, { key: 'mailingAddress', label: '邮寄地址', valueKey: 'mailingAddress', multiline: true })
+    return fields
+  })(),
   'one-time-donation': basicReviewFields,
   'monthly-donation': basicReviewFields
 }
 const detailTableDataByType = {
   default: defaultTableData,
-  'green-home': greenHomeTableData
+  'green-home': greenHomeTableData,
+  grass: grassTableData
 }
 export default {
   name: 'ProjectDetail',
@@ -321,6 +351,7 @@ export default {
   } },
   computed: {
     basicReviewFields () { return detailFieldVariants[this.detailType] || detailFieldVariants.default },
+    isGreenHomeExample () { return this.detailType === 'green-home' || this.detailType === 'grass' },
     selectedProjectId () { return this.projectId },
     detailMode () { return this.mode },
     basicInfo () { return this.detailTableData.basic },
@@ -451,6 +482,12 @@ export default {
 
 <style scoped>
 .organization-work-type-col { width: 150px; }
+.organization-fundraising-table th:nth-child(1),
+.organization-fundraising-table td:nth-child(1),
+.organization-fundraising-table th:nth-child(3),
+.organization-fundraising-table td:nth-child(3),
+.organization-fundraising-table th:nth-child(4),
+.organization-fundraising-table td:nth-child(4) { text-align: center; }
 .detail-table tr.review-row-trigger { cursor: pointer; }
 .detail-table tr.review-row-trigger:hover > td { background: #f8fbff; }
 .detail-table tr.review-row-has-comment > td { background: #fff1f0; }

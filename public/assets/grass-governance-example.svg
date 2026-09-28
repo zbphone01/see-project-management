@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="680" height="330" viewBox="0 0 680 330" role="img" aria-labelledby="title desc">
+  <title id="title">机构工作、管理与治理结构示例</title>
+  <desc id="desc">理事会下设机构负责人，机构负责人下设项目执行组和行政财务组。</desc>
+  <rect width="680" height="330" rx="16" fill="#f4f7fb"/>
+  <g fill="none" stroke="#91a6bf" stroke-width="2"><path d="M340 90V130M340 190V220M180 220H500M180 220V245M500 220V245"/></g>
+  <g stroke="#d6e4f5" fill="#fff"><rect x="230" y="30" width="220" height="60" rx="10"/><rect x="230" y="130" width="220" height="60" rx="10"/><rect x="70" y="245" width="220" height="60" rx="10"/><rect x="390" y="245" width="220" height="60" rx="10"/></g>
+  <g font-family="Microsoft YaHei, sans-serif" font-size="18" fill="#18253c" text-anchor="middle"><text x="340" y="67">理事会</text><text x="340" y="167">机构负责人</text><text x="180" y="282">项目执行组</text><text x="500" y="282">行政财务组</text></g>
+</svg>
