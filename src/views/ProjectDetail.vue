@@ -265,8 +265,10 @@
       <a-modal v-if="detailMode === 'audit'" v-model="targetReviewVisible" title="编辑审核意见" :width="560" :mask-closable="false" @cancel="targetReviewVisible = false">
       <a-textarea v-model="targetReviewDraft" aria-label="审核意见" placeholder="请输入审核意见" :rows="5" />
       <template slot="footer">
-        <a-button type="danger" @click="deleteTargetReview">删除</a-button>
+        <div class="review-dialog-actions">
+        <a-button v-if="hasReviewComment(getActiveReviewComments()[activeReviewKey()])" type="danger" @click="deleteTargetReview">删除</a-button>
         <a-button type="primary" @click="saveTargetReview">确定</a-button>
+        </div>
       </template>
     </a-modal>
 </section>
@@ -518,6 +520,8 @@ export default {
 </script>
 
 <style scoped>
+.review-dialog-actions { display: flex; justify-content: space-between; align-items: center; }
+.review-dialog-actions > .ant-btn-primary { margin-left: auto; }
 .organization-work-type-col { width: 150px; }
 .organization-fundraising-table th:nth-child(1),
 .organization-fundraising-table td:nth-child(1),

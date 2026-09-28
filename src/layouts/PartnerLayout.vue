@@ -26,7 +26,7 @@
               :key="child.key"
               :title="child.label"
               class="nav-child"
-              :class="{ active: activeNav === child.key || (['project-detail', 'project-form'].includes(activeNav) && child.key === 'applied-projects') || (activeNav === 'report-detail' && child.key === 'project-reports') || (['recruitment-detail', 'recruitment-form'].includes(activeNav) && child.key === 'available-projects') }"
+              :class="{ active: activeNav === child.key || (activeNav === 'organization-detail' && child.key === 'organization-list') || (['project-detail', 'project-form'].includes(activeNav) && child.key === 'applied-projects') || (activeNav === 'report-detail' && child.key === 'project-reports') || (['recruitment-detail', 'recruitment-form'].includes(activeNav) && child.key === 'available-projects') }"
               @click="selectNav(child)"
             >
               <span>{{ child.label }}</span>
@@ -45,7 +45,8 @@
       <div class="breadcrumb">
         <strong>{{ breadcrumbRoot }}</strong>
         <span>/</span>
-        <button v-if="activeNav === 'project-form'" class="breadcrumb-link" type="button" @click="navigate('dashboard')">工作台</button>
+        <button v-if="activeNav === 'organization-detail'" class="breadcrumb-link" type="button" @click="navigate('organization-list')">机构列表</button>
+        <button v-else-if="activeNav === 'project-form'" class="breadcrumb-link" type="button" @click="navigate('dashboard')">工作台</button>
         <button v-else-if="activeNav === 'project-detail'" class="breadcrumb-link" type="button" @click="backToAppliedProjects">已申请项目</button>
         <button v-else-if="activeNav === 'report-detail'" class="breadcrumb-link" type="button" @click="navigate('project-reports')">进展/结项</button>
         <button v-else-if="['recruitment-detail', 'recruitment-form'].includes(activeNav)" class="breadcrumb-link" type="button" @click="navigate('available-projects')">可申请项目</button>
@@ -55,6 +56,7 @@
           <span>项目详情</span>
         </template>
         <template v-if="activeNav === 'report-detail'"><span>/</span><span>{{ $route.query.mode === 'audit' ? '审核进展/结项' : '报告详情' }}</span></template>
+        <template v-if="activeNav === 'organization-detail'"><span>/</span><span>{{ $route.query.mode === 'audit' ? '审核机构' : '机构详情' }}</span></template>
         <template v-if="activeNav === 'recruitment-detail'"><span>/</span><span>招募详情</span></template>
         <template v-if="activeNav === 'recruitment-form'"><span>/</span><span>发布招募</span></template>
         <template v-if="activeNav === 'project-form'"><span>/</span><span>填写项目申请</span></template>
@@ -127,7 +129,7 @@ export default {
     pagedNotices () { return this.historyNotices.slice((this.noticePage - 1) * 5, this.noticePage * 5) },
     activeNav () { return this.$route.name },
     breadcrumbRoot () {
-      if (this.activeNav === 'organization-list') return '机构管理'
+      if (['organization-list', 'organization-detail'].includes(this.activeNav)) return '机构管理'
       return ['recruitment-summary', 'available-projects', 'recruitment-detail', 'recruitment-form', 'applied-projects', 'project-detail', 'project-form', 'project-reports', 'report-detail'].includes(this.activeNav) ? '项目管理' : '工作台'
     },
     breadcrumbLeaf () {
@@ -139,7 +141,7 @@ export default {
     '$route.name': {
       immediate: true,
       handler () {
-      if (this.activeNav === 'organization-list') this.$set(this.expandedNav, 'organization', true)
+      if (['organization-list', 'organization-detail'].includes(this.activeNav)) this.$set(this.expandedNav, 'organization', true)
       if (['recruitment-summary', 'available-projects', 'recruitment-detail', 'recruitment-form', 'applied-projects', 'project-detail', 'project-form', 'project-reports', 'report-detail'].includes(this.activeNav)) {
         this.$set(this.expandedNav, 'projects', true)
       }

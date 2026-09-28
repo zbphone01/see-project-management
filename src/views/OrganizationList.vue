@@ -22,7 +22,7 @@
           <template slot="operation" slot-scope="text, item">
             <a-dropdown :trigger="['click']" placement="bottomRight">
               <a-button class="operation-button" :aria-label="`${item.name}（${item.status}）的操作`">操作<a-icon type="down" /></a-button>
-              <a-menu slot="overlay" @click="handleAction($event.key, item)"><a-menu-item v-for="action in states[item.status].actions" :key="action">{{ action }}</a-menu-item></a-menu>
+              <a-menu slot="overlay" @click="handleAction($event.key, item)"><a-menu-item v-for="action in item.id === 'org-1' ? ['查看详情', '审核', '上传年报'] : states[item.status].actions" :key="action">{{ action }}</a-menu-item></a-menu>
             </a-dropdown>
           </template>
         </a-table>
@@ -42,6 +42,7 @@
 
 <script>
 import { approvalOptions, organizationStates, createOrganizations, filterOrganizations } from '../mock/organizations'
+import { loadOrganizationDetail, saveOrganizationDetail } from '../mock/organization-detail'
 
 export default {
   name: 'OrganizationList',
@@ -82,7 +83,9 @@ export default {
     changePage (pagination) { this.page = this.pageSize === pagination.pageSize ? pagination.current : 1; this.pageSize = pagination.pageSize },
     openExternalPage (action) { this.$message.info(`${action}为独立机构页面，当前尚未接入`) },
     handleAction (action, item) {
-      if (action === '上传年报') {
+      if (action === '查看详情' || (action === '审核' && item.id === 'org-1')) {
+        this.$router.push({ name: 'organization-detail', params: { id: item.id }, query: action === '审核' ? { mode: 'audit' } : {} })
+      } else if (action === '上传年报') {
         this.clearReport()
         this.selectedOrganization = item
         this.report.year = this.reportYears[0]
@@ -106,9 +109,13 @@ export default {
       const missing = required.filter(key => !this.report[key])
       if (missing.length || !this.selectedOrganization) { this.reportError = '请填写：' + missing.map(key => labels[key]).join('、'); return }
       this.selectedOrganization.reports.push(Object.assign({}, this.report))
+      const detail = loadOrganizationDetail(this.selectedOrganization.id)
+      const sectionKey = { '年检年报': 'civilReports', '机构年报': 'annualReports', '审计报告': 'auditReports' }[this.report.type]
+      detail.attachments.find(section => section.key === sectionKey).files.unshift({ id: 'uploaded-' + Date.now(), name: this.report.fileName, year: this.report.year, civilStatus: this.report.civilStatus || '', uploadedAt: new Date().toLocaleString('zh-CN', { hour12: false }), url: '' })
+      const saved = saveOrganizationDetail(detail)
       this.reportVisible = false
       this.clearReport()
-      this.$message.info('年报信息已记录在本次演示中，文件尚未上传至服务器')
+      this.$message.info(saved ? '年报信息已记录在本地演示中，可在机构详情查看；文件尚未上传至服务器' : '浏览器存储不可用，年报信息仅保留在本次列表演示中')
     }
   }
 }

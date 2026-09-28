@@ -3,6 +3,7 @@ import VueRouter from 'vue-router'
 import { appliedProjects } from '../mock/projects'
 import { editableDraftIds } from '../mock/project-drafts'
 import recruitmentDetails from '../mock/recruitment-details.json'
+import { createOrganizations } from '../mock/organizations'
 
 Vue.use(VueRouter)
 
@@ -13,6 +14,9 @@ const router = new VueRouter({
     { path: '/dashboard', name: 'dashboard', component: () => import('../views/Dashboard.vue') },
     { path: '/dashboard-see', name: 'dashboard-see', component: () => import('../views/SeeDashboard.vue') },
     { path: '/organizations', name: 'organization-list', component: () => import('../views/OrganizationList.vue') },
+    { path: '/organizations/:id', name: 'organization-detail', component: () => import('../views/OrganizationDetail.vue'),
+      props: route => ({ organizationId: route.params.id, mode: route.query.mode === 'audit' ? 'audit' : 'view' })
+    },
     { path: '/projects/recruitment-summary', name: 'recruitment-summary', component: () => import('../views/RecruitmentSummary.vue') },
     { path: '/projects/available', name: 'available-projects', component: () => import('../views/AvailableProjects.vue') },
     { path: '/projects/available/new', name: 'recruitment-form', component: () => import('../views/RecruitmentForm.vue') },
@@ -38,6 +42,9 @@ const router = new VueRouter({
 
 // 全局守卫也覆盖详情页之间仅变更项目 ID 的导航。
 router.beforeEach((to, from, next) => {
+  if (to.name === 'organization-detail' && !createOrganizations().some(item => item.id === to.params.id)) {
+    next({ name: 'organization-list', replace: true }); return
+  }
   if (to.name === 'recruitment-detail' && !Object.prototype.hasOwnProperty.call(recruitmentDetails, to.params.id)) {
     next({ name: 'available-projects', replace: true }); return
   }
