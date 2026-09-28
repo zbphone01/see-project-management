@@ -9,7 +9,7 @@ export const appliedProjects = [
         { id: 5, name: '城市零废弃社区行动网络建设项目', recruitment: '绿色社区创新项目招募', organization: '北京市朝阳区自然之友环境研究所', code: 'ZZ-1764740241', status: '异常结项', type: '项目', fundraising: '-', updatedAt: '2025-10-16 14:02:48', initiator: 'mine', cover: 'city', icon: 'home' },
         { id: 8, name: '创绿家示例', recruitment: '创绿家项目招募', organization: '创绿家示例机构', code: 'ZZ-1764740242', status: '执行中', type: '项目', fundraising: '-', updatedAt: '2026-09-21 10:00:00', initiator: 'department', cover: 'forest-table', icon: 'environment', detailType: 'green-home' },
         { id: 9, name: '劲草示例', recruitment: '劲草项目招募', organization: '劲草示例机构', code: 'ZZ-1764740243', status: '执行中', type: '项目', fundraising: '-', updatedAt: '2026-09-21 10:00:00', initiator: 'department', cover: 'plateau', icon: 'deployment-unit', detailType: 'grass' },
-        { id: 10, name: 'xxxxx-次捐示例', recruitment: '次捐项目招募', organization: '次捐示例机构', code: 'ZZ-1764740244', status: '执行中', type: '联合公益', fundraising: '筹款中', updatedAt: '2026-09-21 10:00:00', initiator: 'department', cover: 'wildlife', icon: 'heart', detailType: 'one-time-donation' },
+        { id: 10, name: '联合公益项目示例', recruitment: '次捐项目招募', organization: '次捐示例机构', code: 'ZZ-1764740244', status: '执行中', type: '联合公益', fundraising: '筹款中', updatedAt: '2026-09-21 10:00:00', initiator: 'department', cover: 'wildlife', icon: 'heart', detailType: 'one-time-donation' },
         { id: 11, name: 'xxxxx-月捐示例', recruitment: '月捐项目招募', organization: '月捐示例机构', code: 'ZZ-1764740245', status: '执行中', type: '联合公益', fundraising: '筹款中', updatedAt: '2026-09-21 10:00:00', initiator: 'department', cover: 'city', icon: 'heart', detailType: 'monthly-donation' },
       ]
 

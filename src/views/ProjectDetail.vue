@@ -95,8 +95,14 @@
         </section>
 
         <section v-if="!isGreenHomeExample" id="detail-content" class="panel detail-section">
-          <div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="read" /></span><div><h2>附加信息</h2><p v-if="detailMode === 'audit'">点击信息小标题可添加审核意见</p></div></div>
-          <article class="rich-content">
+          <div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="read" /></span><div><h2>{{ detailType === 'one-time-donation' ? '详细资料' : '附加信息' }}</h2><p v-if="detailMode === 'audit'">点击信息小标题可添加审核意见</p></div></div>
+          <article v-if="detailType === 'one-time-donation'" class="rich-content">
+            <section v-for="field in detailTableData.detailedMaterials" :key="field.key" class="rich-text-section" :data-field="field.key">
+              <h3 :class="{ 'review-heading': detailMode === 'audit' }"><button v-if="detailMode === 'audit'" type="button" @click="openContentReview(field.key)">{{ field.title }}</button><template v-else>{{ field.title }}</template></h3>
+              <div class="rich-text-field" :class="contentReviewClass(field.key)"><p v-for="(paragraph, index) in field.paragraphs" :key="index">{{ paragraph }}</p></div>
+            </section>
+          </article>
+          <article v-else class="rich-content">
             <section class="rich-text-section" data-field="projectOverview">
               <h3 :class="{ 'review-heading': detailMode === 'audit' }"><button v-if="detailMode === 'audit'" type="button" @click="openContentReview('overview')">项目概述</button><template v-else>项目概述</template></h3>
               <div class="rich-text-field" :class="contentReviewClass('overview')">
@@ -160,7 +166,7 @@
           </div>
         </section>
 
-        <section id="detail-management" class="panel detail-section">
+        <section v-if="detailType !== 'one-time-donation'" id="detail-management" class="panel detail-section">
           <div class="detail-section-header"><span class="detail-section-icon red"><a-icon type="safety-certificate" /></span><div><h2>项目管理计划</h2><p v-if="detailMode === 'audit'">点击行任意位置可添加审核意见</p></div></div>
           <template v-if="!isGreenHomeExample">
             <h3 class="table-subtitle">项目相关方</h3>
@@ -202,7 +208,11 @@
                 <a-select-option value="rejected">驳回 - 项目状态将变更为“申请待修改”</a-select-option>
               </a-select>
             </div>
-            <div class="audit-form-row audit-amount-row">
+            <div v-if="basicInfo.type === '联合公益'" class="audit-form-row">
+              <label for="audit-agreement-number"><em>*</em> 框架协议编号：</label>
+              <a-input id="audit-agreement-number" v-model="auditForm.frameworkAgreementNumber" placeholder="请输入框架协议编号" />
+            </div>
+            <div v-else class="audit-form-row audit-amount-row">
               <label for="audit-amount"><em>*</em> 审核通过金额：</label>
               <a-input id="audit-amount" v-model="auditForm.approvedAmount" suffix="元" placeholder="请输入审核通过金额" />
               <div class="audit-amount-uppercase">大写：{{ auditAmountUppercase }}</div>
@@ -219,7 +229,7 @@
             </div>
             <div class="audit-funding-hint">
               <div class="audit-hint-title">提示信息</div>
-              <div><span>招募资助总额</span><strong>{{ auditFundingTotal.toLocaleString('en-US') }} 元</strong></div>
+              <div><span>{{ basicInfo.type === '联合公益' ? '招募筹款目标' : '招募资助总额' }}</span><strong>{{ auditFundingTotal.toLocaleString('en-US') }} 元</strong></div>
               <div><span>本项目通过后招募资助余额</span><strong :class="{ 'audit-balance-negative': auditFundingBalance < 0 }">{{ auditFundingBalance === null ? '—' : auditFundingBalance.toLocaleString('en-US') + ' 元' }}</strong></div>
             </div>
             </div>
@@ -266,6 +276,7 @@
 import defaultTableData from '../mock/project-tables.json'
 import greenHomeTableData from '../mock/project-green-home-detail.json'
 import grassTableData from '../mock/project-grass-detail.json'
+import oneTimeDonationTableData from '../mock/project-one-time-donation-detail.json'
 import BudgetPrototype from '../components/BudgetPrototype.vue'
 import { appliedProjects } from '../mock/projects'
 const basicReviewFields = [
@@ -312,13 +323,33 @@ const detailFieldVariants = {
     fields.push({ key: 'email', label: '电子邮箱', valueKey: 'email' }, { key: 'mailingAddress', label: '邮寄地址', valueKey: 'mailingAddress', multiline: true })
     return fields
   })(),
-  'one-time-donation': basicReviewFields,
+  'one-time-donation': (() => {
+    const fields = basicReviewFields.map(field => {
+      if (field.key === 'total') return { ...field, label: '筹款目标', wide: false }
+      if (field.key === 'requested') return { ...field, label: '协议拨款额' }
+      if (field.key === 'matching') return { ...field, label: '已拨付协议金额' }
+      return field
+    })
+    const executionPeriod = fields.splice(fields.findIndex(field => field.key === 'executionPeriod'), 1)[0]
+    fields.splice(fields.findIndex(field => field.key === 'targets') + 1, 0, executionPeriod)
+    fields.splice(fields.findIndex(field => field.key === 'thirdParties') + 1, 0,
+      { key: 'frameworkAgreementNumber', label: '框架协议编号', valueKey: 'frameworkAgreementNumber' },
+      { key: 'onlineFundraisingPlatform', label: '互联网公开募捐平台', valueKey: 'onlineFundraisingPlatform' })
+    fields.splice(fields.findIndex(field => field.key === 'total') + 1, 0,
+      { key: 'fundraisingPeriod', label: '筹款周期', valueKey: 'fundraisingPeriod' })
+    fields.splice(fields.findIndex(field => field.key === 'matching') + 1, 0,
+      { key: 'minimumExecutionAmount', label: '最低执行额', valueKey: 'minimumExecutionAmount' },
+      { key: 'publicFundraiserManagementFeeRatio', label: '公募机构管理费比例', valueKey: 'publicFundraiserManagementFeeRatio' },
+      { key: 'donationUsePlan', label: '善款使用预案', valueKey: 'donationUsePlan', wide: true, multiline: true })
+    return fields
+  })(),
   'monthly-donation': basicReviewFields
 }
 const detailTableDataByType = {
   default: defaultTableData,
   'green-home': greenHomeTableData,
-  grass: grassTableData
+  grass: grassTableData,
+  'one-time-donation': oneTimeDonationTableData
 }
 export default {
   name: 'ProjectDetail',
@@ -330,7 +361,10 @@ export default {
     tableData: { type: Object, default: null }
   },
   data () {
-    const sourceTableData = this.tableData || detailTableDataByType[this.detailType] || defaultTableData
+    const typeTableData = detailTableDataByType[this.detailType] || defaultTableData
+    const sourceTableData = this.tableData || (this.detailType === 'one-time-donation'
+      ? { ...defaultTableData, ...typeTableData, basic: { ...defaultTableData.basic, ...typeTableData.basic } }
+      : typeTableData)
     const usesJsonReviewComments = Object.prototype.hasOwnProperty.call(sourceTableData, 'reviewComments')
     return {
     detailTableData: JSON.parse(JSON.stringify(sourceTableData)),
@@ -343,6 +377,7 @@ export default {
     reviewField: 'basic:targets',
     auditForm: {
         result: 'approved',
+        frameworkAgreementNumber: sourceTableData.basic.frameworkAgreementNumber || '',
         approvedAmount: '5000',
         remark: ''
       },
@@ -467,7 +502,9 @@ export default {
       if (!this.auditForm.result) return this.$message.warning('请选择审核结果')
       if (this.auditForm.result === 'rejected' && !this.auditForm.remark.trim()) return this.$message.warning('驳回时请填写审核备注')
       if (this.auditForm.result === 'approved') {
-        if (this.auditFundingBalance === null || Number(this.auditForm.approvedAmount) <= 0) return this.$message.warning('请输入大于零的有效审核通过金额，最多两位小数')
+        if (this.basicInfo.type === '联合公益') {
+          if (!this.auditForm.frameworkAgreementNumber.trim()) return this.$message.warning('请输入框架协议编号')
+        } else if (this.auditFundingBalance === null || Number(this.auditForm.approvedAmount) <= 0) return this.$message.warning('请输入大于零的有效审核通过金额，最多两位小数')
         if (!this.auditFiles.length) return this.$message.warning('请上传评审附件')
       }
       const resultLabel = this.auditForm.result === 'approved' ? '审核通过' : '审核驳回'
