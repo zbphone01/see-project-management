@@ -113,7 +113,7 @@ export default {
         { key: 'dashboard', label: '工作台', icon: 'desktop' },
         { key: 'dashboard-see', label: '工作台-SEE', icon: 'dashboard' },
         { key: 'organization', label: '机构管理', icon: 'bank', children: [{ key: 'organization-list', label: '机构列表' }] },
-        { key: 'projects', label: '项目管理', icon: 'project', children: [{ key: 'recruitment-summary', label: '招募汇总' }, { key: 'available-projects', label: '可申请项目' }, { key: 'applied-projects', label: '已申请项目' }, { key: 'project-reports', label: '进展/结项' }] },
+        { key: 'projects', label: '项目管理', icon: 'project', children: [{ key: 'recruitment-summary', label: '招募汇总' }, { key: 'framework-agreements', label: '框架协议' }, { key: 'available-projects', label: '可申请项目' }, { key: 'applied-projects', label: '已申请项目' }, { key: 'project-reports', label: '进展/结项' }] },
         { key: 'donation', label: '透明捐', icon: 'safety-certificate' },
         { key: 'download', label: '数据下载', icon: 'download' },
         { key: 'benefit', label: '受益数据', icon: 'database' },
@@ -127,13 +127,15 @@ export default {
   } },
   computed: {
     pagedNotices () { return this.historyNotices.slice((this.noticePage - 1) * 5, this.noticePage * 5) },
-    activeNav () { return this.$route.name },
+    activeNav () { return this.$route.name === 'fundraising-application-detail' ? 'framework-agreements' : this.$route.name },
     breadcrumbRoot () {
       if (['organization-list', 'organization-detail'].includes(this.activeNav)) return '机构管理'
-      return ['recruitment-summary', 'available-projects', 'recruitment-detail', 'recruitment-form', 'applied-projects', 'project-detail', 'project-form', 'project-reports', 'report-detail'].includes(this.activeNav) ? '项目管理' : '工作台'
+      return ['recruitment-summary', 'available-projects', 'recruitment-detail', 'recruitment-form', 'applied-projects', 'framework-agreements', 'project-detail', 'project-form', 'project-reports', 'report-detail'].includes(this.activeNav) ? '项目管理' : '工作台'
     },
     breadcrumbLeaf () {
+      if (this.$route.name === 'fundraising-application-detail') return this.$route.query.mode === 'audit' ? '审核募捐申请书' : '查看募捐申请书'
       if (this.activeNav === 'organization-list') return '机构列表'
+      if (this.activeNav === 'framework-agreements') return '框架协议'
       return this.activeNav === 'recruitment-summary' ? '招募汇总' : this.activeNav === 'project-reports' ? '进展/结项' : this.activeNav === 'dashboard-see' ? 'SEE首页' : this.activeNav === 'available-projects' ? '可申请项目' : this.activeNav === 'applied-projects' ? '已申请项目' : '伙伴首页'
     }
   },
@@ -142,7 +144,7 @@ export default {
       immediate: true,
       handler () {
       if (['organization-list', 'organization-detail'].includes(this.activeNav)) this.$set(this.expandedNav, 'organization', true)
-      if (['recruitment-summary', 'available-projects', 'recruitment-detail', 'recruitment-form', 'applied-projects', 'project-detail', 'project-form', 'project-reports', 'report-detail'].includes(this.activeNav)) {
+      if (['recruitment-summary', 'available-projects', 'recruitment-detail', 'recruitment-form', 'applied-projects', 'framework-agreements', 'project-detail', 'project-form', 'project-reports', 'report-detail'].includes(this.activeNav)) {
         this.$set(this.expandedNav, 'projects', true)
       }
       }
@@ -160,7 +162,7 @@ export default {
       if (item.key === 'organization-list') { this.navigate(item.key); return }
       if (item.children) {
         this.$set(this.expandedNav, item.key, !this.expandedNav[item.key])
-      } else if (['dashboard', 'dashboard-see', 'recruitment-summary', 'available-projects', 'applied-projects', 'project-reports'].includes(item.key)) this.navigate(item.key)
+      } else if (['dashboard', 'dashboard-see', 'recruitment-summary', 'available-projects', 'applied-projects', 'framework-agreements', 'project-reports'].includes(item.key)) this.navigate(item.key)
       else this.notify(item.label)
     },
     notify (label) { this.$message.info(label) }
