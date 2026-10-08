@@ -1,7 +1,7 @@
 // 独立的本地演示草稿，不改变已申请项目与审核页的数据。
 export const draftId = 3
 export const revisionDraftId = 5
-export const editableDraftIds = [draftId, revisionDraftId]
+export const editableDraftIds = [draftId, revisionDraftId, 506306]
 export const clone = value => JSON.parse(JSON.stringify(value))
 export const money = value => (Number(value) || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 export const roundMoney = value => Math.round((Number(value) || 0) * 100) / 100
@@ -16,11 +16,13 @@ export function createDraft (id = draftId) {
     overview: '', background: '', goal: '', experience: '',
     areas: [], team: [], outputs: [], stakeholders: [], risks: [], monitoring: [],
     budget: { updatedAt: '', personnelUpdatedAt: '', rows: [], personnel: [] },
-    attachments: [], savedAt: '', reviewComments: {}
+    attachments: [], savedAt: '', reviewComments: {}, auditHistory: []
   }
+  if (id === 506306) return { ...draft, recruitment: '大熊猫国家公园四川片区药用植物保护与可持续利用项目招募', strategy: '生态保护与自然教育', issue: '生态系统保护', funding: '资助', fundraising: '-' }
   if (id !== revisionDraftId) return draft
   return {
     ...draft,
+    auditHistory: [{ id: 'project-5-audit-rejected', time: '2026-03-06 10:30', result: '驳回', reviewer: '李四', remark: '请补充湿地保护成果指标、社区参与方式及项目执行安排，按审核意见修改后重新提交。' }],
     reviewComments: {
       targets: '请补充项目目标板块与湿地保护核心活动之间的对应关系，并确认各板块均有可量化的成果指标。',
       overview: '请补充项目受益范围、社区参与方式，以及湿地保护成效如何持续发挥作用。',
@@ -59,7 +61,7 @@ export function loadDraft (id = draftId) {
   const draft = JSON.parse(raw)
   if (draft.id !== id || !['areas', 'team', 'outputs', 'stakeholders', 'risks', 'monitoring', 'attachments', 'targets', 'thirdParties'].every(key => Array.isArray(draft[key])) || !draft.budget || !Array.isArray(draft.budget.rows) || !Array.isArray(draft.budget.personnel)) throw new Error('草稿格式无法读取')
   const defaults = createDraft(id)
-  return { ...defaults, ...draft, reviewComments: { ...defaults.reviewComments, ...(draft.reviewComments || {}) } }
+  return { ...defaults, ...draft, auditHistory: Array.isArray(draft.auditHistory) ? draft.auditHistory : defaults.auditHistory, reviewComments: { ...defaults.reviewComments, ...(draft.reviewComments || {}) } }
 }
 export function saveDraft (draft) {
   const savedAt = new Date().toLocaleString('zh-CN', { hour12: false })

@@ -125,7 +125,7 @@
     <a-modal v-model="auditPreviewVisible" title="本地审核校验完成" :mask-closable="false" :width="520"><p>审核结果：{{ auditForm.result === 'approved' ? '通过' : '驳回' }}</p><p>当前为前端演示，审核信息尚未提交至服务器。</p><template slot="footer"><a-button type="primary" @click="auditPreviewVisible = false">关闭</a-button></template></a-modal>
     <a-modal v-if="isAudit" v-model="reviewVisible" title="编辑审核意见" :width="560" :mask-closable="false" @cancel="reviewVisible = false">
       <a-textarea v-model="reviewDraft" aria-label="审核意见" placeholder="请输入审核意见" :rows="5" />
-      <template slot="footer"><div class="review-dialog-actions"><a-button v-if="reviewComment(reviewField)" type="danger" @click="deleteReview">删除</a-button><a-button type="primary" @click="saveReview">确定</a-button></div></template>
+      <template slot="footer"><div class="review-dialog-actions"><a-button v-if="reviewComment(reviewField)" type="danger" @click="deleteReview">删除</a-button><div class="review-dialog-actions-right"><a-button v-if="!reviewComment(reviewField)" @click="reviewVisible = false">取消</a-button><a-button type="primary" @click="saveReview">{{ reviewComment(reviewField) ? '修改' : '确认' }}</a-button></div></div></template>
     </a-modal>
     <a-modal v-model="attachmentDialog.visible" :title="attachmentDialog.action + '附件'" :mask-closable="false" :width="560"><div class="report-attachment-message"><strong>{{ attachmentDialog.name }}</strong><p>当前为前端演示，尚未接入附件服务，暂无可供{{ attachmentDialog.action }}的原始文件。</p></div><template slot="footer"><a-button @click="attachmentDialog.visible = false">关闭</a-button></template></a-modal>
     <a-modal v-model="budgetDialog.visible" :title="budgetDialog.name" :mask-closable="false" :width="1080" class="report-budget-modal">
@@ -343,6 +343,7 @@ export default {
 <style scoped>
 .review-dialog-actions { display: flex; justify-content: space-between; align-items: center; }
 .review-dialog-actions > .ant-btn-primary { margin-left: auto; }
+.review-dialog-actions-right { margin-left: auto; display: flex; gap: 8px; }
 .report-page-heading { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
 .report-page-heading > div { min-width: 0; }
 .report-page-heading h1 { margin: 0; color: #18253c; font-size: 16px; font-weight: 700; line-height: 1.6; overflow-wrap: anywhere; }

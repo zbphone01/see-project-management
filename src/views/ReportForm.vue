@@ -65,6 +65,15 @@
       <template v-else><div class="attachment-list form-attachment-list"><div v-for="file in draft.attachments" :key="file.id"><div><strong>{{ file.name }}</strong><span>{{ file.category }} · {{ formatSize(file.size) }} · {{ file.time }}</span></div><a-button type="link" class="danger-link" @click="removeAttachment(file)">删除</a-button></div></div><a-button class="add-more-attachment" type="dashed" icon="plus" @click="openAttachmentModal">添加更多附件</a-button></template>
     </section>
 
+    <section v-if="draft.auditHistory.length" class="panel form-section">
+      <div class="detail-section-header"><span class="detail-section-icon gray"><a-icon type="history" /></span><div><h2>审核信息</h2></div></div>
+      <a-timeline class="audit-timeline">
+        <a-timeline-item v-for="entry in draft.auditHistory" :key="entry.id" color="blue">
+          <div class="audit-entry"><strong>审核结果：{{ entry.result }}</strong><div class="audit-result-row"><span class="audit-info-chip audit-time">{{ entry.time }} · {{ entry.reviewer || entry.account }}</span></div><div v-if="entry.remark" class="audit-result-details"><p><b>审核备注：</b>{{ entry.remark }}</p></div></div>
+        </a-timeline-item>
+      </a-timeline>
+    </section>
+
     <footer class="form-footer"><span><a-icon type="info-circle" /> {{ draft.savedAt ? '草稿内容已保留' : `请填写${draft.type}，可随时存为草稿` }}</span><div><a-button @click="goBack">取消</a-button><a-button icon="save" @click="save">存为草稿</a-button><a-button type="primary" @click="submit">提交{{ draft.type.replace('报告', '') }}</a-button></div></footer>
 
     <a-modal v-model="attachmentVisible" title="添加附件" :width="550" :mask-closable="false" @ok="confirmAttachment" ok-text="上传" cancel-text="取消">

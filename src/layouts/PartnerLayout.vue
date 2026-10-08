@@ -127,13 +127,14 @@ export default {
   } },
   computed: {
     pagedNotices () { return this.historyNotices.slice((this.noticePage - 1) * 5, this.noticePage * 5) },
-    activeNav () { return this.$route.name === 'fundraising-application-detail' ? 'framework-agreements' : this.$route.name },
+    activeNav () { return ['fundraising-application-detail', 'fundraising-application-form'].includes(this.$route.name) ? 'framework-agreements' : this.$route.name },
     breadcrumbRoot () {
       if (['organization-list', 'organization-detail'].includes(this.activeNav)) return '机构管理'
       return ['recruitment-summary', 'available-projects', 'recruitment-detail', 'recruitment-form', 'applied-projects', 'framework-agreements', 'project-detail', 'project-form', 'project-reports', 'report-detail'].includes(this.activeNav) ? '项目管理' : '工作台'
     },
     breadcrumbLeaf () {
       if (this.$route.name === 'fundraising-application-detail') return this.$route.query.mode === 'audit' ? '审核募捐申请书' : '查看募捐申请书'
+      if (this.$route.name === 'fundraising-application-form') return '编辑募捐申请书'
       if (this.activeNav === 'organization-list') return '机构列表'
       if (this.activeNav === 'framework-agreements') return '框架协议'
       return this.activeNav === 'recruitment-summary' ? '招募汇总' : this.activeNav === 'project-reports' ? '进展/结项' : this.activeNav === 'dashboard-see' ? 'SEE首页' : this.activeNav === 'available-projects' ? '可申请项目' : this.activeNav === 'applied-projects' ? '已申请项目' : '伙伴首页'

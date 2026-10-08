@@ -15,9 +15,9 @@
 
         <section v-for="section in application.content" :key="section.key" class="rich-text-section">
           <h3><button v-if="isAudit && section.type === 'text'" type="button" class="review-label-trigger" @click="openReview(section.key)">{{ section.title }}</button><template v-else>{{ section.title }}</template></h3>
-          <div v-if="section.type === 'text'" class="rich-text-field" :class="fieldClass(section.key)"><p v-for="(paragraph, index) in section.paragraphs" :key="index">{{ paragraph }}</p><p v-for="link in section.links || []" :key="link.url"><a :href="link.url" target="_blank" rel="noopener noreferrer">{{ link.label }}：{{ link.url }}</a></p></div>
+          <div v-if="section.type === 'text'" class="rich-text-field" :class="fieldClass(section.key)"><div v-if="hasRichHtml(section)" class="saved-rich-content" v-html="richHtml(section)"></div><template v-else><p v-for="(paragraph, index) in section.paragraphs" :key="index">{{ paragraph }}</p></template><p v-for="link in section.links || []" :key="link.url"><a v-if="safeLink(link.url)" :href="link.url" target="_blank" rel="noopener noreferrer">{{ link.label }}：{{ link.url }}</a></p></div>
           <template v-else-if="section.type === 'annualFunds'">
-            <div v-for="year in application.annualFunds" :key="year.year"><h4>{{ year.year }}</h4><div class="detail-table-wrap"><table class="detail-table annual-funds-table"><colgroup><col /><col style="width: 180px" /><col style="width: 240px" /></colgroup><thead><tr><th>资金来源描述</th><th>资金量（万元）</th><th>机构年度总收入占比（%）</th></tr></thead><tbody><tr v-for="row in year.rows" :key="row.id" :class="rowClass('annualFunds', row)" v-bind="reviewAttributes(row)" @click="openRowReview('annualFunds', row)" @keydown.enter.prevent="openRowReview('annualFunds', row)" @keydown.space.prevent="openRowReview('annualFunds', row)"><td>{{ row.source }}</td><td>{{ row.amount }}</td><td>{{ row.ratio }}</td></tr></tbody></table></div></div>
+            <div v-for="year in application.annualFunds" :key="year.year"><h4>{{ year.year }}</h4><div class="detail-table-wrap"><table class="detail-table annual-funds-table"><colgroup><col /><col style="width: 180px" /><col style="width: 180px" /></colgroup><thead><tr><th>资金来源描述</th><th>资金量（万元）</th><th>机构年度总收入占比（%）</th></tr></thead><tbody><tr v-for="row in year.rows" :key="row.id" :class="rowClass('annualFunds', row)" v-bind="reviewAttributes(row)" @click="openRowReview('annualFunds', row)" @keydown.enter.prevent="openRowReview('annualFunds', row)" @keydown.space.prevent="openRowReview('annualFunds', row)"><td>{{ row.source }}</td><td>{{ row.amount }}</td><td>{{ row.ratio }}</td></tr></tbody></table></div></div>
           </template>
           <div v-else-if="section.type === 'amounts'" class="description-grid application-amounts"><div v-for="field in application.amountFields" :key="field.key" class="description-item" :class="fieldClass(field.key)" v-bind="reviewAttributes()" @click="openReview(field.key)" @keydown.enter.prevent="openReview(field.key)" @keydown.space.prevent="openReview(field.key)"><span>{{ field.label }}</span><strong>{{ field.value }}</strong></div></div>
           <div v-else-if="section.type === 'fundDirections'" class="detail-table-wrap"><table class="detail-table fund-directions-table"><colgroup><col style="width: 220px" /><col style="width: 150px" /><col /></colgroup><thead><tr><th>资金使用方向</th><th>资金分配比例</th><th>详细说明（具体支出）</th></tr></thead><tbody><tr v-for="row in application.fundDirections" :key="row.id" :class="rowClass('fundDirections', row)" v-bind="reviewAttributes(row)" @click="openRowReview('fundDirections', row)" @keydown.enter.prevent="openRowReview('fundDirections', row)" @keydown.space.prevent="openRowReview('fundDirections', row)"><td>{{ row.direction }}</td><td>{{ row.ratio }}</td><td class="multiline">{{ row.description }}</td></tr></tbody></table></div>
@@ -27,7 +27,7 @@
 
     <section id="detail-images" class="panel detail-section">
       <div class="detail-section-header"><span class="detail-section-icon blue"><a-icon type="picture" /></span><div><h2><button v-if="isAudit" type="button" class="review-label-trigger" @click="openReview('images')">筹款图片</button><template v-else>筹款图片</template></h2><p v-if="isAudit">点击标题可添加审核意见，点击图片可查看大图</p></div></div>
-      <div class="fundraising-images fundraising-image-module" :class="fieldClass('images')"><button v-for="item in application.images" :key="item.id" type="button" class="fundraising-image-button" :aria-label="'查看筹款图片大图：' + item.alt" @click="previewImage = item"><img class="organization-avatar" :src="item.src" :alt="item.alt" /></button><strong v-if="!application.images.length">暂无</strong></div>
+      <div class="fundraising-images fundraising-image-module" :class="fieldClass('images')"><button v-for="item in application.images" :key="item.id" type="button" class="fundraising-image-button" :aria-label="'查看筹款图片大图：' + item.alt" @click="openImage(item)"><img v-if="imageSource(item)" class="organization-avatar" :src="imageSource(item)" :alt="item.alt" /><span v-else class="image-unavailable">图片不可用</span></button><strong v-if="!application.images.length">暂无</strong></div>
     </section>
     <section id="detail-attachments" class="panel detail-section">
       <div class="detail-section-header"><span class="detail-section-icon blue"><a-icon type="paper-clip" /></span><div><h2>附件</h2><p>{{ isAudit ? '点击附件行可添加审核意见' : '项目相关附件，如有需要请下载留存' }}</p></div></div>
@@ -61,36 +61,45 @@
       <template slot="footer"><div class="review-dialog-actions"><a-button v-if="comment(reviewKey)" type="danger" @click="deleteReview">删除</a-button><div class="review-dialog-actions-right"><a-button v-if="!comment(reviewKey)" @click="reviewVisible = false">取消</a-button><a-button type="primary" @click="saveReview">{{ comment(reviewKey) ? '修改' : '确认' }}</a-button></div></div></template>
     </a-modal>
     <a-modal :visible="!!previewImage" title="筹款图片" :width="900" :mask-closable="false" :footer="null" @cancel="previewImage = null"><img v-if="previewImage" class="fundraising-image-preview" :src="previewImage.src" :alt="previewImage.alt" /></a-modal>
-    <a-modal :visible="!!previewFile" title="附件预览" :width="550" :mask-closable="false" :footer="null" @cancel="previewFile = null"><template v-if="previewFile"><p>{{ previewFile.name }}</p><p>附件类型：{{ previewFile.type }}</p><p>上传时间：{{ previewFile.uploadedAt }}</p><p>当前 JSON 未提供附件正文或文件地址，仅展示文件信息。</p></template></a-modal>
+    <a-modal :visible="!!previewFile" :title="previewFile ? previewFile.name : '附件预览'" :width="900" :mask-closable="false" :footer="null" @cancel="clearPreview"><template v-if="previewFile"><img v-if="previewType === 'image'" class="fundraising-image-preview" :src="previewUrl" :alt="previewFile.name" /><iframe v-else-if="previewType === 'pdf'" class="attachment-preview-pdf" :src="previewUrl" :title="previewFile.name"></iframe><template v-else-if="previewType === 'office'"><p>此格式请下载后使用对应办公软件查看。</p><a-button icon="download" @click="downloadAttachment(previewFile)">下载附件</a-button></template><template v-else><p>附件类型：{{ previewFile.type }}</p><p>上传时间：{{ previewFile.uploadedAt }}</p><p>该示例附件未提供文件正文，请重新上传文件后预览或下载。</p></template></template></a-modal>
   </section>
 </template>
 
 <script>
 import example from '../mock/fundraising-application-detail.json'
-const storageKey = 'see-fundraising-application-example-v1'
+import { cleanFundraisingRichText } from '../utils/fundraising-rich-text'
+import { fundraisingStorageKey as storageKey } from '../mock/fundraising-drafts'
+import { draftFile } from '../mock/project-drafts'
 const clone = value => JSON.parse(JSON.stringify(value))
 const rowFields = { annualFunds: ['source', 'amount', 'ratio'], fundDirections: ['direction', 'ratio', 'description'], attachments: ['name', 'type', 'uploadedAt'] }
 export default {
   name: 'FundraisingApplicationDetail',
   props: { mode: { type: String, default: 'view' } },
   data () {
-    return { application: clone(example), auditForm: { result: 'approved', agreementCode: example.agreementCode, reviewAttachment: '', agreementScan: '', remark: '' }, reviewVisible: false, reviewKey: '', reviewLabel: '', reviewText: '', relatedComments: '', previewFile: null, previewImage: null }
+    return { application: clone(example), auditForm: { result: 'approved', agreementCode: example.agreementCode, reviewAttachment: '', agreementScan: '', remark: '' }, reviewVisible: false, reviewKey: '', reviewLabel: '', reviewText: '', relatedComments: '', previewFile: null, previewImage: null, previewUrl: '', previewType: '', imageUrls: {} }
   },
   computed: { isAudit () { return this.mode === 'audit' } },
-  created () {
-    try {
-      const saved = JSON.parse(window.localStorage.getItem(storageKey) || 'null')
-      if (saved && saved.application && saved.application.id === example.id) {
-        const comments = saved.application.reviewComments
-        this.application.reviewComments = Object.assign({}, example.reviewComments, comments && typeof comments === 'object' && !Array.isArray(comments) ? comments : {})
-        if (Array.isArray(saved.application.auditHistory)) this.application.auditHistory = saved.application.auditHistory
-        if (typeof saved.application.status === 'string') this.application.status = saved.application.status
-        if (typeof saved.application.agreementCode === 'string') this.application.agreementCode = saved.application.agreementCode
-        if (saved.auditForm) this.auditForm = Object.assign({}, this.auditForm, saved.auditForm)
-      }
-    } catch (error) { this.$message.warning('本地示例记录无法读取，已使用默认 JSON') }
-  },
+  created () { this.loadApplication() },
+  activated () { this.loadApplication() },
+  deactivated () { this.clearPreview(); this.clearImages() },
+  beforeDestroy () { this.clearPreview(); this.clearImages() },
   methods: {
+    loadApplication () {
+      try {
+        const saved = JSON.parse(window.localStorage.getItem(storageKey) || 'null')
+        if (saved && saved.application && saved.application.id === example.id) {
+          this.application = Object.assign({}, clone(example), clone(saved.application))
+          this.application.rejectionOpinion = typeof saved.application.rejectionOpinion === 'string' ? saved.application.rejectionOpinion : ''
+          const comments = saved.application.reviewComments
+          this.application.reviewComments = Object.assign({}, example.reviewComments, comments && typeof comments === 'object' && !Array.isArray(comments) ? comments : {})
+          if (saved.auditForm) this.auditForm = Object.assign({}, this.auditForm, saved.auditForm)
+        } else this.application = clone(example)
+      } catch (error) { this.$message.warning('本地示例记录无法读取，已保留当前资料') }
+      this.loadImages()
+    },
+    hasRichHtml (section) { return Object.prototype.hasOwnProperty.call(section, 'html') },
+    richHtml (section) { return cleanFundraisingRichText(section.html) },
+    safeLink (url) { return /^https?:\/\//i.test(String(url || '').trim()) },
     goBack () { this.$router.push({ name: 'framework-agreements', query: { tab: this.$route.query.from === 'fundraising' ? 'fundraising' : 'agreements' } }) },
     formatAuditTime (value) { return typeof value === 'string' && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(value) ? value + ':00' : value },
     comment (key) { const value = this.application.reviewComments[key]; return typeof value === 'string' ? value.trim() : '' },
@@ -131,8 +140,31 @@ export default {
     deleteReview () { this.reviewText = ''; this.saveReview() },
     selectReviewAttachment (file) { this.auditForm.reviewAttachment = file.name; return false },
     selectAgreementScan (file) { this.auditForm.agreementScan = file.name; return false },
-    previewAttachment (file) { this.previewFile = file },
-    downloadAttachment () { this.$message.info('示例附件未提供真实文件，暂无法下载') },
+    imageSource (item) { return item.blobKey ? this.imageUrls[item.id] || '' : item.src },
+    openImage (item) { const src = this.imageSource(item); if (src) this.previewImage = { src, alt: item.alt }; else this.$message.warning('图片文件不可用，请重新上传') },
+    clearImages () { this._imageLoadToken = {}; Object.keys(this.imageUrls).forEach(key => URL.revokeObjectURL(this.imageUrls[key])); this.imageUrls = {}; this.previewImage = null },
+    loadImages () {
+      this.clearImages()
+      const token = this._imageLoadToken
+      this.application.images.filter(item => item.blobKey).forEach(async item => {
+        try { const blob = await draftFile('get', item.blobKey); if (blob && token === this._imageLoadToken) this.$set(this.imageUrls, item.id, URL.createObjectURL(blob)) } catch (error) { /* Keep other document content available if a local file is missing. */ }
+      })
+    },
+    async getAttachment (file) {
+      if (!file.blobKey) { this.$message.info('该示例附件未提供文件正文，请重新上传'); return null }
+      try { const blob = await draftFile('get', file.blobKey); if (!blob) throw new Error('missing'); return blob } catch (error) { this.$message.error('本地附件已不可用，请重新上传'); return null }
+    },
+    async previewAttachment (file) {
+      this.clearPreview()
+      if (!file.blobKey) { this.previewFile = file; return }
+      const blob = await this.getAttachment(file); if (!blob) return
+      this.previewUrl = URL.createObjectURL(blob); this.previewType = /\.(png|jpe?g)$/i.test(file.name) ? 'image' : /\.pdf$/i.test(file.name) ? 'pdf' : 'office'; this.previewFile = file
+    },
+    async downloadAttachment (file) {
+      const blob = await this.getAttachment(file); if (!blob) return
+      const url = URL.createObjectURL(blob), link = document.createElement('a'); link.href = url; link.download = file.name; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000)
+    },
+    clearPreview () { if (this.previewUrl) URL.revokeObjectURL(this.previewUrl); this.previewUrl = ''; this.previewFile = null; this.previewType = '' },
     confirmAudit () {
       if (!this.isAudit) return
       if (!['approved', 'rejected'].includes(this.auditForm.result)) return this.$message.warning('请选择审核结果')
@@ -144,6 +176,7 @@ export default {
       const date = new Date(); const pad = value => String(value).padStart(2, '0')
       const time = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
       this.application.status = this.auditForm.result === 'approved' ? '待生效' : '募捐申请驳回'
+      this.$set(this.application, 'rejectionOpinion', this.auditForm.result === 'rejected' ? this.auditForm.remark.trim() : '')
       if (this.auditForm.result === 'approved') this.application.agreementCode = this.auditForm.agreementCode.trim()
       this.application.auditHistory.unshift({ id: 'local-audit-' + Date.now(), time, result: this.auditForm.result === 'approved' ? '通过' : '驳回', account: '本地演示账号', remark: this.auditForm.remark.trim() })
       if (!this.persist()) { this.application = previous; return }
@@ -161,11 +194,13 @@ export default {
 .application-version { color: #c41d7f; background: #fff0f6; }
 .application-agreement { color: #873800; background: #fff4e8; }
 .organization-avatar { display: block; width: 80px; height: 80px; object-fit: cover; border-radius: 13px; }
+.image-unavailable { display: grid; place-items: center; width: 80px; height: 80px; border: 1px dashed #d9e1eb; border-radius: 13px; color: #718095; }
 .fundraising-images { display: flex; flex-wrap: wrap; gap: 12px; }
 .fundraising-image-module { padding: 22px; }
 .fundraising-image-button { padding: 0; border: 0; border-radius: 13px; background: transparent; cursor: zoom-in; }
 .fundraising-image-button:focus-visible { outline: 2px solid #1677ff; outline-offset: 3px; }
 .fundraising-image-preview { display: block; max-width: 100%; max-height: 70vh; width: auto; height: auto; margin: 0 auto; object-fit: contain; }
+.attachment-preview-pdf { width: 100%; height: 65vh; border: 0; }
 .fund-directions-table th:nth-child(2), .fund-directions-table td:nth-child(2) { text-align: center; }
 .annual-funds-table th:nth-child(2), .annual-funds-table td:nth-child(2) { text-align: right; }
 .annual-funds-table th:last-child, .annual-funds-table td:last-child { text-align: center; }
@@ -174,6 +209,9 @@ export default {
 .application-content .detail-table-wrap { margin: 16px 0 0; }
 .application-content h3 { font-size: 16px; }
 .application-content p, .detail-table td { overflow-wrap: anywhere; }
+.saved-rich-content >>> img { max-width: 100%; height: auto; }
+.saved-rich-content >>> table { max-width: 100%; border-collapse: collapse; }
+.saved-rich-content >>> td, .saved-rich-content >>> th { border: 1px solid #e6ebf2; padding: 6px 8px; }
 .application-amounts { padding: 0; }
 .review-label-trigger { padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .description-item[role=button], .review-row-trigger { cursor: pointer; }

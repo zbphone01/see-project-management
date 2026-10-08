@@ -99,7 +99,7 @@ export default {
     recruitment () {
       const project = availableProjects.find(item => String(item.id) === this.recruitmentId)
       const detail = recruitmentDetails[this.recruitmentId]
-      return project && detail ? { ...project, ...detail } : null
+      return detail && (project || this.recruitmentId === '2') ? { ...(project || {}), ...detail } : null
     },
     period () {
       const recruitment = this.recruitment || {}
@@ -116,7 +116,7 @@ export default {
   deactivated () { this.stopClock() },
   beforeDestroy () { this.stopClock() },
   methods: {
-    backToList () { this.$router.push({ name: 'available-projects' }) },
+    backToList () { this.$router.push({ name: this.$route.query.from === 'dashboard' ? 'dashboard' : 'available-projects' }) },
     startClock () {
       this.stopClock()
       this.now = new Date()

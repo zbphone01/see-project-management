@@ -103,7 +103,7 @@
                   <span><a-icon type="cluster" /> {{ item.group }}</span>
                 </div>
               </div>
-              <a-button type="primary" :class="['recruit-action', 'action-button', `action-${item.actionTone}`]" @click.stop="notify(item.action)"><a-icon :type="item.actionIcon" /> {{ item.action }}</a-button>
+              <a-button type="primary" :class="['recruit-action', 'action-button', `action-${item.actionTone}`]" @click.stop="handleRecruitmentAction(item)"><a-icon :type="item.actionIcon" /> {{ item.action }}</a-button>
             </article>
 
             <div class="pagination"><a-pagination :current="1" :total="50" :page-size="10" /></div>
@@ -189,9 +189,18 @@ export default {
     }
   },
   methods: {
+    handleRecruitmentAction (item) {
+      if (item.id === 506306 && item.action === '申请项目') {
+        this.$router.push({ name: 'project-form', params: { id: '506306' }, query: { from: 'dashboard' } }); return
+      }
+      if (item.id === 2 && item.action === '募捐申请') {
+        this.$router.push({ name: 'fundraising-application-form', params: { id: 'new-2' }, query: { recruitment: item.title, from: 'dashboard' } }); return
+      }
+      this.notify(item.action)
+    },
     openRecruitment (item) {
       if (!item.detailAvailable) return
-      this.$router.push({ name: 'recruitment-detail', params: { id: String(item.id) } })
+      this.$router.push({ name: 'recruitment-detail', params: { id: String(item.id) }, query: { from: 'dashboard' } })
     },
     handleProjectAction (project, action) {
       if (project.id === 1 && action.label === '提交进展') {

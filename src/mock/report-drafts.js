@@ -65,6 +65,7 @@ const createReportDraft = (projectId, type) => {
     budget: { updatedAt: '', personnelUpdatedAt: '', rows: [], personnel: [] },
     benefits: [],
     attachments: [],
+    auditHistory: Number(projectId) === (isCompletion ? 12 : 9) ? [{ id: isCompletion ? 'completion-12-audit-rejected' : 'progress-9-audit-rejected', time: '2026-03-06 10:30', result: '驳回', reviewer: '李四', remark: isCompletion ? '请补充结项成果证明及财务票据，核对最终预算执行金额后重新提交。' : '请补充监测点位、活动执行记录和巡护物资签收记录，核对预算执行金额后重新提交。' }] : [],
     reviewComments: {},
     savedAt: ''
   }
@@ -76,7 +77,7 @@ export function loadReportDraft (projectId, type) {
   if (!raw) return defaults
   try {
     const saved = JSON.parse(raw)
-    const merged = { ...defaults, ...saved, outputs: Array.isArray(saved.outputs) ? saved.outputs : defaults.outputs, attachments: Array.isArray(saved.attachments) ? saved.attachments : [], benefits: Array.isArray(saved.benefits) ? saved.benefits : defaults.benefits, budget: saved.budget || defaults.budget, reviewComments: { ...defaults.reviewComments, ...(saved.reviewComments || {}) } }
+    const merged = { ...defaults, ...saved, auditHistory: Array.isArray(saved.auditHistory) ? saved.auditHistory : defaults.auditHistory, outputs: Array.isArray(saved.outputs) ? saved.outputs : defaults.outputs, attachments: Array.isArray(saved.attachments) ? saved.attachments : [], benefits: Array.isArray(saved.benefits) ? saved.benefits : defaults.benefits, budget: saved.budget || defaults.budget, reviewComments: { ...defaults.reviewComments, ...(saved.reviewComments || {}) } }
     merged.beneficiaryAid = defaults.beneficiaryAid
     if (!merged.filledAt) merged.filledAt = defaults.filledAt
     if (typeof merged.contact === 'string' && merged.contact.includes('*')) merged.contact = defaults.contact

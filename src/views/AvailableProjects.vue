@@ -44,7 +44,7 @@
         </template>
         <template slot="operation" slot-scope="text, project">
           <div class="available-row-actions">
-            <button type="button" @click="handleAction('detail', project)">查看</button>
+            <button class="view-action" type="button" @click="handleAction('detail', project)">查看</button>
             <button type="button" @click="handleAction('edit', project)">编辑</button>
             <button class="delete-action" type="button" @click="handleAction('delete', project)">删除</button>
           </div>
@@ -121,15 +121,18 @@ export default {
 </script>
 
 <style scoped>
-.strategy-tabs { padding: 0 20px; }
-.strategy-tabs ::v-deep .ant-tabs-bar { min-height: 76px; margin: 0; border-bottom-color: #edf1f5; }
+.strategy-tabs ::v-deep .ant-tabs-bar { min-height: 76px; margin: 0; padding: 0 20px; border-bottom-color: #edf1f5; }
 .strategy-tabs ::v-deep .ant-tabs-nav .ant-tabs-tab { height: 76px; margin-right: 28px; padding: 0; display: inline-flex; align-items: center; box-sizing: border-box; }
 .strategy-tabs ::v-deep .ant-tabs-tab-active { color: #1677ff; font-weight: 600; }
 .recruitment-search { min-height: 72px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border-bottom: 1px solid #edf1f5; }
 .search-controls { display: grid; grid-template-columns: 300px 88px; align-items: center; gap: 10px; }
+.search-controls ::v-deep .search-input { width: 100%; margin-left: 0; }
 .search-controls ::v-deep .search-input,
-.search-controls ::v-deep .search-button { height: 32px; }
-.recruitment-search ::v-deep .search-button { line-height: 30px; }
+.search-controls ::v-deep .search-button { height: 38px; border-radius: 8px; }
+.search-controls ::v-deep .search-input .ant-input { height: 38px; border-radius: 8px; }
+.recruitment-search ::v-deep .search-button { width: 88px; padding: 0 12px; display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
+.recruitment-search ::v-deep .search-button .anticon { top: 0; }
+.recruitment-search ::v-deep .search-button .anticon + span { margin-left: 8px; }
 .recruitment-search ::v-deep .launch-recruitment-button { height: 32px; display: inline-flex; align-items: center; justify-content: center; border-color: #1677ff; border-radius: 5px; color: #fff; background: #1677ff; box-shadow: 0 2px 0 rgba(0,0,0,.043); line-height: 1; }
 .recruitment-search ::v-deep .launch-recruitment-button .anticon { line-height: 1; }
 .recruitment-search ::v-deep .launch-recruitment-button:hover,
@@ -146,6 +149,8 @@ export default {
 .available-row-actions { display: grid; justify-items: center; gap: 0; }
 .available-row-actions button { min-height: 24px; padding: 0 2px; border: 0; border-radius: 5px; color: #1677ff; background: transparent; cursor: pointer; }
 .available-row-actions button:hover, .available-row-actions button:focus { color: #0958d9; background: #f0f7ff; }
+.available-row-actions .view-action { color: #70b603; }
+.available-row-actions .view-action:hover, .available-row-actions .view-action:focus { color: #70b603; background: #f8ffed; }
 .available-row-actions .delete-action { color: #ff4d4f; }
 .available-row-actions .delete-action:hover, .available-row-actions .delete-action:focus { color: #ff4d4f; background: #fff1f0; }
 .available-table ::v-deep td { overflow-wrap: anywhere; line-height: 1.55; }

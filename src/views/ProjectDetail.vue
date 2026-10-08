@@ -267,7 +267,7 @@
       <template slot="footer">
         <div class="review-dialog-actions">
         <a-button v-if="hasReviewComment(getActiveReviewComments()[activeReviewKey()])" type="danger" @click="deleteTargetReview">删除</a-button>
-        <a-button type="primary" @click="saveTargetReview">确定</a-button>
+        <div class="review-dialog-actions-right"><a-button v-if="!hasReviewComment(getActiveReviewComments()[activeReviewKey()])" @click="targetReviewVisible = false">取消</a-button><a-button type="primary" @click="saveTargetReview">{{ hasReviewComment(getActiveReviewComments()[activeReviewKey()]) ? '修改' : '确认' }}</a-button></div>
         </div>
       </template>
     </a-modal>
@@ -520,8 +520,10 @@ export default {
 </script>
 
 <style scoped>
+.audit-upload-item { border-radius: 6px; }
 .review-dialog-actions { display: flex; justify-content: space-between; align-items: center; }
 .review-dialog-actions > .ant-btn-primary { margin-left: auto; }
+.review-dialog-actions-right { margin-left: auto; display: flex; gap: 8px; }
 .organization-work-type-col { width: 150px; }
 .organization-fundraising-table th:nth-child(1),
 .organization-fundraising-table td:nth-child(1),

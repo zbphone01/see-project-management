@@ -25,6 +25,6 @@
   ],
   "recruitments": [
     { "id": 506306, "title": "大熊猫国家公园四川片区药用植物保护与可持续利用项目招募", "description": "面向具备植物调查、生态保护及社区工作经验的伙伴机构，开展药用植物种类、分布与利用现状调查，识别资源保护与利用中的关键问题，并提出兼顾生态保护和社区发展的可持续利用建议。", "date": "2025-12-01 至 2026-12-31", "phone": "12345678901", "email": "test@see.org.cn", "group": "项目组 - 生态保护与自然教育", "image": "/assets/recommend-ecology.jpg", "action": "申请项目", "actionIcon": "file-add", "actionTone": "approved", "detailAvailable": true },
-    { "id": 2, "title": "招募名称超长时的样式招募名称超长时的样式招募名称超长时的样式", "description": "简述简短时的样式", "date": "2023-02-03 至 2023-02-20", "phone": "13518074869", "email": "test@see.org.cn", "group": "联合公益", "action": "募捐申请", "actionIcon": "file-add", "actionTone": "fundraising" }
+    { "id": 2, "title": "招募名称超长时的样式招募名称超长时的样式招募名称超长时的样式", "description": "简述简短时的样式", "date": "2023-02-03 至 2023-02-20", "phone": "13518074869", "email": "test@see.org.cn", "group": "联合公益", "action": "募捐申请", "actionIcon": "file-add", "actionTone": "fundraising", "detailAvailable": true }
   ]
 }

@@ -53,6 +53,9 @@ export default {
     resetFilters () { this.filters = { organization: '', recruitment: '' }; this.queryApplications() },
     changePage (pagination) { this.page = pagination.pageSize === this.pageSize ? pagination.current : 1; this.pageSize = pagination.pageSize },
     handleAction (action, record) {
+      if (action === '编辑' && record.status === '草稿') {
+        this.$router.push({ name: 'fundraising-application-form', params: { id: record.id }, query: { from: 'fundraising' } }); return
+      }
       if (action === '查看' || action === '审核') {
         this.$router.push({ name: 'fundraising-application-detail', params: { id: 'example' }, query: { from: 'fundraising', mode: action === '审核' ? 'audit' : 'view' } }); return
       }

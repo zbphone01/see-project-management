@@ -1,4 +1,19 @@
 {
+  "2": {
+    "id": 2,
+    "name": "招募名称超长时的样式招募名称超长时的样式招募名称超长时的样式",
+    "type": "联合公益",
+    "strategy": "联合公益",
+    "topic": "公募项目",
+    "department": "联合公益",
+    "fundingSource": "联合公益筹资",
+    "startDate": "2023-02-03",
+    "endDate": "2023-02-20",
+    "applicationCount": 0,
+    "description": ["简述简短时的样式"],
+    "contact": { "name": "", "phone": "13518074869", "landline": "", "email": "test@see.org.cn" },
+    "attachments": []
+  },
   "506306": {
     "department": "项目组-生态保护与自然教育",
     "fundingSource": "资助",

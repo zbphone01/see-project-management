@@ -45,6 +45,15 @@
 
     <section class="panel form-section attachment-section"><div class="detail-section-header"><span class="detail-section-icon blue"><a-icon type="paper-clip" /></span><div><h2>附件</h2></div></div><a-empty v-if="!draft.attachments.length" class="output-empty-add attachment-empty-add" description="点击添加附件" role="button" tabindex="0" @click="openAttachmentPicker" @keydown.enter.native.prevent="openAttachmentPicker" @keydown.space.native.prevent="openAttachmentPicker" /><template v-else><div class="attachment-list form-attachment-list"><div v-for="file in draft.attachments" :key="file.id"><div><strong>{{ file.name }}</strong><span>{{ file.category }} · {{ formatSize(file.size) }} · {{ file.time }}</span></div><a-button type="link" @click="previewAttachment(file)">预览</a-button><a-button type="link" @click="downloadAttachment(file)">下载</a-button><a-button type="link" class="danger-link" @click="removeAttachment(file)">删除</a-button></div></div><a-button class="add-more-attachment" type="dashed" icon="plus" @click="openAttachmentPicker">添加更多附件</a-button></template></section>
 
+    <section v-if="draft.auditHistory.length" class="panel form-section">
+      <div class="detail-section-header"><span class="detail-section-icon gray"><a-icon type="history" /></span><div><h2>审核信息</h2></div></div>
+      <a-timeline class="audit-timeline">
+        <a-timeline-item v-for="entry in draft.auditHistory" :key="entry.id" color="blue">
+          <div class="audit-entry"><strong>审核结果：{{ entry.result }}</strong><div class="audit-result-row"><span class="audit-info-chip audit-time">{{ entry.time }} · {{ entry.reviewer || entry.account }}</span></div><div v-if="entry.remark" class="audit-result-details"><p><b>审核备注：</b>{{ entry.remark }}</p></div></div>
+        </a-timeline-item>
+      </a-timeline>
+    </section>
+
     <footer class="form-footer"><span><a-icon type="info-circle" /> {{ dirty ? '填写内容尚未保存' : draft.savedAt ? '草稿内容已保留' : '请填写项目信息，可随时存为草稿' }}</span><div><a-button @click="goBack">取消</a-button><a-button icon="save" :disabled="uploading > 0" @click="save">存为草稿</a-button><a-button type="primary" :disabled="uploading > 0" @click="submit">提交申请</a-button></div></footer>
 
     <a-modal v-model="modal.visible" :title="modal.title" :width="modal.kind === 'team' || modal.kind === 'output' || modal.kind === 'activity' || modal.kind === 'stakeholders' || modal.kind === 'monitoring' || modal.kind === 'risks' ? 550 : 620" :mask-closable="false" :body-style="modal.kind === 'output' ? { overflowY: 'visible' } : { maxHeight: '65vh', overflowY: 'auto' }">
@@ -403,6 +412,14 @@ export default {
   color: #27384e;
   font-weight: 500;
   line-height: 38px;
+}
+.form-fields >>> input#application-name.ant-input {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  line-height: 22px;
+}
+.form-fields >>> input#application-name.ant-input:placeholder-shown {
+  font-size: 14px;
 }
 .form-fields >>> textarea.ant-input {
   padding-left: 12px;

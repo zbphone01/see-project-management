@@ -54,7 +54,7 @@
           <template slot="active" slot-scope="count"><span :class="{ 'active-count': count > 0 }">{{ count }}</span></template>
           <template slot="operation" slot-scope="text, recruitment">
             <div class="summary-operation-trigger" @click.stop>
-              <a-dropdown :trigger="['click']" placement="bottomRight">
+              <a-dropdown :trigger="['hover']" placement="bottomRight">
                 <a-button class="operation-button" :aria-label="`${recruitment.name}的操作`">操作 <a-icon type="down" /></a-button>
                 <a-menu slot="overlay">
                   <a-menu-item key="export-summary" @click="notifyComingSoon('导出申请汇总')">导出申请汇总</a-menu-item>
@@ -181,13 +181,15 @@ export default {
 </script>
 
 <style scoped>
-.strategy-tabs { padding: 0 20px; }
-.strategy-tabs ::v-deep .ant-tabs-bar { min-height: 76px; margin: 0; border-bottom-color: #edf1f5; }
+.strategy-tabs ::v-deep .ant-tabs-bar { min-height: 76px; margin: 0; padding: 0 20px; border-bottom-color: #edf1f5; }
 .strategy-tabs ::v-deep .ant-tabs-nav .ant-tabs-tab { height: 76px; margin-right: 28px; padding: 0; display: inline-flex; align-items: center; box-sizing: border-box; }
 .strategy-tabs ::v-deep .ant-tabs-tab-active { color: #1677ff; font-weight: 600; }
 .recruitment-search { min-height: 72px; padding: 12px 20px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #e6ebf2; }
-.search-input { width: 300px; flex: none; }
-.recruitment-search .ant-btn { height: 32px; }
+.search-input { width: 300px; flex: none; height: 38px; border-radius: 8px; }
+.search-input ::v-deep .ant-input { height: 38px; border-radius: 8px; }
+.recruitment-search .ant-btn { width: 88px; flex: none; height: 38px; border-radius: 8px; padding: 0 12px; display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
+.recruitment-search .ant-btn ::v-deep .anticon + span { margin-left: 8px; }
+.recruitment-search .ant-btn .anticon { top: 0; }
 .summary-statistics { min-width: 0; flex: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 20px; color: #506177; line-height: 1.7; }
 .summary-statistics strong { padding: 0 4px; color: #1677ff; font-size: 16px; }
 .summary-statistics .pending-count, .pending-count { color: #fa8c16; }

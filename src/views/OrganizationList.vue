@@ -13,8 +13,7 @@
       </form>
     </section>
     <section class="panel applied-table-panel">
-      <div class="organization-table-scroll">
-        <a-table class="applied-table organization-table" :columns="columns" :data-source="filteredOrganizations" :pagination="pagination" row-key="id" :locale="{ emptyText: '暂无符合条件的机构' }" @change="changePage">
+        <a-table class="applied-table organization-table" :columns="columns" :data-source="filteredOrganizations" :pagination="pagination" :scroll="{ x: true }" row-key="id" :locale="{ emptyText: '暂无符合条件的机构' }" @change="changePage">
           <template slot="logo" slot-scope="text, item"><div class="organization-logo"><img v-if="item.image" :src="item.image" :alt="item.name" /><a-icon v-else type="bank" /></div></template>
           <template slot="name" slot-scope="text, item"><div class="organization-name">{{ item.name }}<span v-if="item.isPrimaryAccount" class="primary-account-tag">主账号</span><div v-if="item.organizationName" class="organization-subline"><span>{{ item.organizationName }}</span><span v-if="item.isSubAccount" class="sub-account-tag">子账号</span></div></div></template>
           <template slot="contact" slot-scope="text, item"><div class="organization-contact"><span>{{ item.contactName }}</span><span>{{ item.contactPhone }}</span></div></template>
@@ -26,7 +25,6 @@
             </a-dropdown>
           </template>
         </a-table>
-      </div>
     </section>
     <a-modal v-model="reportVisible" title="上传年报" :width="550" :mask-closable="false" ok-text="确定" cancel-text="取消" @ok="saveReport" @cancel="clearReport">
       <div class="area-picker team-picker report-picker">
@@ -68,7 +66,7 @@ export default {
         { title: '项目申请数', dataIndex: 'projectCount', width: 110, align: 'center' },
         { title: '负责人及联系方式', key: 'contact', width: 150, scopedSlots: { customRender: 'contact' } },
         { title: '状态', dataIndex: 'status', width: 150, align: 'center', scopedSlots: { customRender: 'status' } },
-        { title: '操作', key: 'operation', width: 90, align: 'center', className: 'organization-operation', scopedSlots: { customRender: 'operation' } }
+        { title: '操作', key: 'operation', fixed: 'right', width: 90, align: 'center', scopedSlots: { customRender: 'operation' } }
       ]
     }
   },
@@ -123,14 +121,12 @@ export default {
 
 <style scoped>
 .organization-filters { grid-template-columns: 260px 200px 196px; justify-content: start; }
-.organization-table-scroll { overflow-x: auto; }
-.organization-table { min-width: 1140px; }
-.organization-table >>> table { width: 100%; min-width: 1140px; table-layout: fixed; }
+.organization-table >>> .ant-table-scroll table { width: 100% !important; min-width: 1140px !important; }
+.organization-table >>> .ant-table-thead > tr > th,
+.organization-table >>> .ant-table-tbody > tr > td { padding-right: 8px; padding-left: 8px; }
 .organization-table >>> .ant-table-thead > tr > th:first-child,
 .organization-table >>> .ant-table-tbody > tr > td:first-child { padding-left: 20px; white-space: nowrap; }
 .organization-table >>> .ant-table-thead > tr > th:nth-child(4) { white-space: nowrap; }
-.organization-table >>> .organization-operation { position: sticky; right: 0; z-index: 1; background: white; }
-.organization-table >>> th.organization-operation { z-index: 2; background: #f7f9fc; }
 .organization-logo { width: 80px; height: 80px; border-radius: 13px; overflow: hidden; display: grid; place-items: center; flex: none; background: #f1fbf5; color: #61bd98; font-size: 28px; }
 .organization-logo img { width: 100%; height: 100%; object-fit: cover; }
 .organization-name { min-width: 0; white-space: normal; overflow-wrap: anywhere; line-height: 1.6; font-size: 16px; color: #18253c; font-weight: 600; }
@@ -149,5 +145,4 @@ export default {
 .report-picker > .form-error { margin: -4px 0 0 108px; }
 .operation-button { border: 0; background: transparent; padding: 0; height: 32px; box-shadow: none; }
 .operation-button >>> .anticon { margin-left: 2px !important; }
-@media (max-width: 1439px) { .organization-table { min-width: 1200px; } }
 </style>

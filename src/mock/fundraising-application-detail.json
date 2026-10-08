@@ -4,6 +4,7 @@
   "version": "952961_019586_02（版本作废）",
   "noticeText": "募捐申请书审核通过后，请及时提醒伙伴进行项目申请。\n（仅在作废版本中显示）请注意，虽然当前版本已作废，但如需公开、转发、下载或用于其他场景，仍需要确认资料使用范围，并完成必要的内部授权。\n（仅在生效中显示）如需公开、转发、下载或用于其他场景，请先确认资料使用范围，并完成必要的内部授权。",
   "status": "版本作废",
+  "rejectionOpinion": "这里是审核驳回的意见",
   "agreementCode": "SEE-B-7266",
   "organization": "贵阳黔仁生态公益发展中心",
   "basicFields": [
@@ -84,5 +85,5 @@
   "attachments": [{ "id": "attachment-1", "name": "文件.pdf", "type": "诚信承诺函", "uploadedAt": "2023-12-28 23:59" }, { "id": "attachment-2", "name": "文件.docx", "type": "项目上线文案", "uploadedAt": "2023-12-28 23:59" }, { "id": "attachment-3", "name": "xxx.pdf", "type": "其他附件", "uploadedAt": "2023-12-28 23:59" }],
   "auditHistory": [{ "id": "audit-3", "time": "2026-01-07 23:59:00", "result": "版本作废", "account": "张三", "remark": "更新版本审核通过后，原始版本同时添加审核信息" }, { "id": "audit-2", "time": "2026-01-06 23:59:00", "result": "通过", "account": "张三", "remark": "审核备注信息" }, { "id": "audit-1", "time": "2026-01-05 23:59:00", "result": "驳回", "account": "张三", "remark": "审核备注信息" }],
   "auditHints": { "recruitmentTarget": "10,000 元", "targetDifference": "± 5,000 元" },
-  "reviewComments": {}
+  "reviewComments": { "organizationIntroduction": "请补充机构组织规模及主要业务内容。" }
 }
