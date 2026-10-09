@@ -376,15 +376,19 @@ export default {
     const sourceTableData = this.tableData || (this.detailType === 'one-time-donation'
       ? { ...defaultTableData, ...typeTableData, basic: { ...defaultTableData.basic, ...typeTableData.basic } }
       : typeTableData)
-    const usesJsonReviewComments = Object.prototype.hasOwnProperty.call(sourceTableData, 'reviewComments')
+    const comments = Object.prototype.hasOwnProperty.call(sourceTableData, 'reviewComments') ? { ...sourceTableData.reviewComments } : { targets: '请补充各项目目标板块对应的成果指标及衡量方式。', overview: '请补充项目受益范围和社区参与方式。', 'areas.areas-1': '请核实实施区域与活动地点的一致性。', 'outputs.output-1': '请明确产出的数量、完成时间和验收依据。', 'activities.activity-2-1': '请补充活动实施安排及执行人员分工。' }
+    try {
+      const saved = JSON.parse(localStorage.getItem('see-project-review-example-' + this.projectId))
+      if (saved && saved.reviewComments && typeof saved.reviewComments === 'object' && !Array.isArray(saved.reviewComments)) { Object.keys(comments).forEach(key => delete comments[key]); Object.assign(comments, saved.reviewComments) }
+    } catch (error) { /* Invalid local data does not prevent opening the page. */ }
     return {
-    detailTableData: JSON.parse(JSON.stringify(sourceTableData)),
+    detailTableData: { ...JSON.parse(JSON.stringify(sourceTableData)), reviewComments: comments },
     targetReviewVisible: false,
     targetReviewDraft: '',
-    basicReviewComments: usesJsonReviewComments ? { ...sourceTableData.reviewComments } : { targets: '请补充各项目目标板块对应的成果指标及衡量方式。' },
-    contentReviewComments: usesJsonReviewComments ? { ...sourceTableData.reviewComments } : { overview: '请补充项目受益范围和社区参与方式。' },
-    rowReviewComments: usesJsonReviewComments ? {} : { [`${this.projectId}:areas:areas-1`]: '请核实实施区域与活动地点的一致性。' },
-    outputReviewComments: usesJsonReviewComments ? {} : { [`${this.projectId}:output:output-1`]: '请明确产出的数量、完成时间和验收依据。', [`${this.projectId}:activity:activity-2-1`]: '请补充活动实施安排及执行人员分工。' },
+    basicReviewComments: comments,
+    contentReviewComments: comments,
+    rowReviewComments: comments,
+    outputReviewComments: comments,
     reviewField: 'basic:targets',
     auditForm: {
         result: 'approved',
@@ -492,12 +496,18 @@ export default {
     },
     saveTargetReview () {
       const comments = this.getActiveReviewComments()
-      this.$set(comments, this.activeReviewKey(), this.targetReviewDraft.trim())
+      const key = this.activeReviewKey(), text = this.targetReviewDraft.trim()
+      const previous = { ...comments }
+      if (text) this.$set(comments, key, text)
+      else this.$delete(comments, key)
+      if (!this.persistReviewComments()) { Object.keys(comments).forEach(item => this.$delete(comments, item)); Object.keys(previous).forEach(item => this.$set(comments, item, previous[item])); return }
       this.targetReviewVisible = false
     },
     deleteTargetReview () {
       const comments = this.getActiveReviewComments()
+      const previous = { ...comments }
       this.$delete(comments, this.activeReviewKey())
+      if (!this.persistReviewComments()) { Object.keys(previous).forEach(item => this.$set(comments, item, previous[item])); return }
       this.targetReviewDraft = ''
       this.targetReviewVisible = false
     },
@@ -507,13 +517,18 @@ export default {
       if (this.reviewField.indexOf('basic:') === 0) return this.basicReviewComments
       if (this.reviewField.indexOf('content:') === 0) return this.contentReviewComments
     },
+    persistReviewComments () {
+      try { localStorage.setItem('see-project-review-example-' + this.projectId, JSON.stringify({ reviewComments: this.detailTableData.reviewComments })); return true }
+      catch (error) { this.$message.error('本地审核意见保存失败，请重试'); return false }
+    },
     activeReviewKey () {
-      if (this.reviewField.indexOf('row:') === 0) return `${this.selectedProjectId}:${this.reviewField.slice(4)}`
+      if (this.reviewField.indexOf('row:') === 0) return this.reviewField.slice(4).replace(':', '.')
       if (this.reviewField.indexOf('basic:') === 0) return this.reviewField.slice(6)
       if (this.reviewField.indexOf('content:') === 0) return this.reviewField.slice(8)
-      return this.reviewField.indexOf(':') > -1 ? `${this.selectedProjectId}:${this.reviewField}` : this.selectedProjectId
+      const parts = this.reviewField.split(':')
+      return (parts[0] === 'output' ? 'outputs' : parts[0] === 'activity' ? 'activities' : parts[0]) + '.' + parts.slice(1).join('.')
     },
-    rowReviewKey (section, id) { return `${this.selectedProjectId}:${section}:${id}` },
+    rowReviewKey (section, id) { return section + '.' + id },
     reviewRowClass (section, id) { return { 'review-row-trigger': this.detailMode === 'audit', 'review-row-has-comment': this.hasReviewComment(this.rowReviewComments[this.rowReviewKey(section, id)]) } },
     openRowReview (section, id) {
       if (this.detailMode !== 'audit') return
@@ -522,7 +537,7 @@ export default {
       this.targetReviewVisible = true
     },
     outputReviewKey (kind, id) {
-      return `${this.selectedProjectId}:${kind}:${id}`
+      return (kind === 'output' ? 'outputs' : 'activities') + '.' + id
     },
     openOutputReview (kind, id) {
       if (this.detailMode !== 'audit') return
@@ -594,4 +609,5 @@ export default {
 .detail-table tr.review-row-has-comment > td { background: #fff1f0; }
 .detail-table tr.review-row-has-comment:hover > td { background: #ffe7e5; }
 .detail-table tr.review-row-trigger:focus-visible { outline: 2px solid #ff7875; outline-offset: -2px; }
+.review-dialog-actions-right > .ant-btn + .ant-btn { margin-left: 0; }
 </style>

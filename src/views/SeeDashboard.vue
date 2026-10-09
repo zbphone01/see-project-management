@@ -51,6 +51,7 @@
       </section>
     </aside>
 
+    <FundraisingPlanModal ref="planModal" />
     <a-modal v-model="dialog.visible" :title="dialog.title" :mask-closable="false" :footer="null" :width="560">
       <div class="see-dialog">
         <time v-if="dialog.date">{{ dialog.date }}</time>
@@ -64,9 +65,11 @@
 
 <script>
 import seeDashboardContent from '../mock/see-dashboard-content.json'
+import FundraisingPlanModal from '../components/FundraisingPlanModal.vue'
 
 export default {
   name: 'SeeDashboard',
+  components: { FundraisingPlanModal },
   data () { return {
     statistics: seeDashboardContent.statistics,
     shortcuts: [{ label: '发起招募', icon: 'notification', tone: 'see-blue' }, { label: '发起筹款规划', icon: 'file-add', tone: 'see-green' }, { label: '申请筹款规划', icon: 'form', tone: 'see-orange' }, { label: '募捐申请待审', icon: 'audit', tone: 'see-pending' }],
@@ -86,6 +89,10 @@ export default {
   methods: {
     openInformation (title, content, date = '') { this.dialog = { visible: true, title, content, date, project: '' } },
     previewAction (action, project) {
+      if (action === '发起筹款规划') {
+        this.$refs.planModal.open()
+        return
+      }
       if (action === '发起招募') {
         this.$router.push({ name: 'recruitment-form', query: { from: 'dashboard-see' } })
         return

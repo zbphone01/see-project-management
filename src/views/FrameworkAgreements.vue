@@ -4,8 +4,8 @@
       <a-tabs v-model="activeTab" class="agreement-tabs">
         <a-tab-pane key="agreements" tab="框架协议">
           <form class="filter-grid agreement-filters" @submit.prevent="queryAgreements">
-            <label for="agreement-organization"><span>机构名称</span><a-input id="agreement-organization" v-model="filters.organization" placeholder="请输入机构名称" allow-clear /></label>
-            <label for="agreement-code"><span>协议编号</span><a-input id="agreement-code" v-model="filters.code" placeholder="请输入协议编号" allow-clear /></label>
+            <label for="agreement-organization"><a-input id="agreement-organization" v-model="filters.organization" aria-label="机构名称" placeholder="请输入机构名称" allow-clear /></label>
+            <label for="agreement-code"><a-input id="agreement-code" v-model="filters.code" aria-label="协议编号" placeholder="请输入协议编号" allow-clear /></label>
             <div class="filter-actions agreement-query"><a-button type="primary" html-type="submit" icon="search">查询</a-button></div>
           </form>
           <a-table class="applied-table agreement-table" :columns="columns" :data-source="filteredAgreements" :pagination="pagination" :scroll="{ x: true }" row-key="id" :locale="{ emptyText: '暂无符合条件的框架协议' }" @change="changePage">

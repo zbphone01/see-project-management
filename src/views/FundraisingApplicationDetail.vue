@@ -230,4 +230,5 @@ export default {
 .detail-table .ant-btn-link { padding: 0 4px; height: 32px; }
 .audit-upload-item { border-radius: 6px; }
 .audit-upload-field + .audit-upload-field { margin-top: 28px; }
+.review-dialog-actions-right > .ant-btn + .ant-btn { margin-left: 0; }
 </style>

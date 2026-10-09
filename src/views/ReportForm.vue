@@ -56,7 +56,7 @@
 
     <section class="panel form-section benefits-section">
       <div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="environment" /></span><div><h2>收益指标成果</h2></div></div>
-      <div class="benefit-groups"><a-button class="add-benefit-type" type="dashed" icon="plus" @click="addBenefitType">新增收益</a-button><section v-for="section in benefitSections" :key="section.key" class="benefit-group"><table class="detail-table benefits-table"><colgroup><col class="benefit-indicator" /><col v-for="column in section.columns" :key="column.key" /><col class="benefit-actions" /></colgroup><thead><tr><th>收益指标</th><th v-for="column in section.columns" :key="column.key">{{ column.label }}</th><th>操作</th></tr></thead><tbody><tr v-for="row in section.rows" :key="row.id"><td>{{ section.title }}</td><td v-for="column in section.columns" :key="column.key">{{ row[column.key] || '—' }}</td><td><a-button type="link" @click="editBenefitExample(section, row)">编辑</a-button><a-button type="link" class="danger-link" @click="removeBenefitExample(section, row)">删除</a-button></td></tr><tr class="benefit-add-row"><td :colspan="section.columns.length + 2"><a-button type="link" @click="addBenefitExample(section)">添加更多成果</a-button></td></tr></tbody></table></section></div>
+      <div class="benefit-groups"><a-button class="add-benefit-type" type="dashed" icon="plus" @click="addBenefitType">新增收益</a-button><section v-for="section in benefitSections" :key="section.key" class="benefit-group"><table class="detail-table benefits-table"><colgroup><col class="benefit-indicator" /><col v-for="column in section.columns" :key="column.key" /><col class="benefit-actions" /></colgroup><thead><tr><th>收益指标</th><th v-for="column in section.columns" :key="column.key">{{ column.label }}</th><th>操作</th></tr></thead><tbody><tr v-for="row in section.rows" :key="row.id"><td>{{ section.title }}</td><td v-for="column in section.columns" :key="column.key">{{ section.key === 'document' && column.key === 'file' ? [row.file, row.edition].filter(Boolean).join(' / ') || '—' : row[column.key] === 0 ? 0 : row[column.key] || '—' }}{{ section.key === 'area' && column.key === 'area' ? ' ' + (row.areaUnit || '平方公里') : section.key === 'weight' && column.key === 'weight' ? ' ' + (row.weightUnit || '吨') : '' }}</td><td><a-button type="link" @click="editBenefitExample(section, row)">编辑</a-button><a-button type="link" class="danger-link" @click="removeBenefitExample(section, row)">删除</a-button></td></tr><tr class="benefit-add-row"><td :colspan="section.columns.length + 2"><a-button type="link" @click="addBenefitExample(section)">添加更多成果</a-button></td></tr></tbody></table></section></div>
     </section>
 
     <section class="panel form-section attachment-section">
@@ -76,10 +76,24 @@
 
     <footer class="form-footer"><span><a-icon type="info-circle" /> {{ draft.savedAt ? '草稿内容已保留' : `请填写${draft.type}，可随时存为草稿` }}</span><div><a-button @click="goBack">取消</a-button><a-button icon="save" @click="save">存为草稿</a-button><a-button type="primary" @click="submit">提交{{ draft.type.replace('报告', '') }}</a-button></div></footer>
 
-    <a-modal v-model="attachmentVisible" title="添加附件" :width="550" :mask-closable="false" @ok="confirmAttachment" ok-text="上传" cancel-text="取消">
+    <a-modal v-model="attachmentVisible" wrap-class-name="standard-form-modal" title="添加附件" :width="550" :mask-closable="false" @ok="confirmAttachment" ok-text="上传" cancel-text="取消">
       <div class="area-picker attachment-picker"><div class="area-picker-row"><label for="report-attachment-category">附件类型：</label><a-select id="report-attachment-category" v-model="attachmentDraft.category" placeholder="请选择附件类型"><a-select-option value="传播信息附件">传播信息附件</a-select-option><a-select-option value="财务票据">财务票据</a-select-option><a-select-option value="预算表">预算表</a-select-option><a-select-option value="其他附件">其他附件</a-select-option></a-select></div><div class="area-picker-row"><label>选择文件：</label><div class="attachment-file-picker"><a-upload :before-upload="selectAttachment" :show-upload-list="false" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"><a-button icon="upload">选择文件</a-button></a-upload><span v-if="attachmentDraft.file">{{ attachmentDraft.file.name }}</span></div></div><p v-if="attachmentDraft.error" class="form-error" role="alert">{{ attachmentDraft.error }}</p></div>
     </a-modal>
-    <a-modal v-model="benefitVisible" :title="benefitIndex < 0 ? '增加收益指标成果' : '编辑收益指标成果'" :width="550" :mask-closable="false" @ok="confirmBenefit" ok-text="确定" cancel-text="取消"><div class="modal-form"><div v-for="field in benefitFields" :key="field.key" class="modal-field"><label :for="'benefit-' + field.key"><em v-if="field.required">*</em> {{ field.label }}</label><a-input :id="'benefit-' + field.key" v-model="benefitDraft[field.key]" :placeholder="'请输入' + field.label" /></div></div></a-modal>
+    <a-modal v-model="benefitVisible" wrap-class-name="standard-form-modal" :title="benefitMode === 'edit' ? '编辑收益' : '新增收益'" :width="550" :mask-closable="false" :body-style="{ maxHeight: '65vh', overflowY: 'auto' }" @ok="confirmBenefit" :ok-text="benefitMode === 'edit' ? '确认' : '添加'" :cancel-text="benefitMode === 'edit' ? '取消' : '关闭'">
+      <div class="modal-form">
+        <div class="modal-field"><label>收益指标</label><a-select v-model="benefitSectionKey" :disabled="benefitMode !== 'new'" placeholder="请选择" @change="changeBenefitIndicator"><a-select-option v-for="section in benefitSections" :key="section.key" :value="section.key">{{ section.title }}</a-select-option></a-select></div>
+        <div v-for="field in activeBenefitFields" :key="field.key" class="modal-field"><label :for="'benefit-' + field.key">{{ field.label }}</label><div class="benefit-control">
+          <a-select v-if="field.kind === 'select'" :id="'benefit-' + field.key" v-model="benefitDraft[field.key]" :disabled="benefitFieldLocked(field)" placeholder="请选择" :show-search="field.key === 'name'" option-filter-prop="children" @change="benefitOptionChanged(field)"><a-select-option v-for="option in benefitOptions(field)" :key="option" :value="option">{{ option }}</a-select-option></a-select>
+          <a-input v-if="field.kind === 'select' && benefitDraft[field.key] === '其他'" v-model="benefitDraft[field.key + 'Other']" :disabled="benefitFieldLocked(field)" placeholder="选择其他时填写" />
+          <a-cascader v-else-if="field.kind === 'region'" :id="'benefit-' + field.key" v-model="benefitDraft.regionPath" :options="benefitRegions" :disabled="benefitFieldLocked(field)" placeholder="请选择" @change="setBenefitRegion" />
+          <div v-else-if="field.kind === 'number'" class="benefit-number"><a-input-number :id="'benefit-' + field.key" v-model="benefitDraft[field.key]" :min="0" :precision="field.integer ? 0 : 2" :placeholder="(benefitSectionKey === 'area' && field.key === 'planting') || (benefitSectionKey === 'species' && field.key === 'quantity') || (benefitSectionKey === 'people' && field.key === 'volunteers') ? '选填' : '请输入'" /><template v-if="benefitSectionKey === 'area' && field.key === 'area'"><span v-if="benefitDraft.ecosystem === '海洋'">平方公里</span><a-select v-else v-model="benefitDraft.areaUnit" class="benefit-area-unit" :disabled="benefitMode === 'edit'" aria-label="面积数量单位"><a-select-option value="亩">亩</a-select-option><a-select-option value="公顷">公顷</a-select-option><a-select-option v-if="benefitMode === 'edit' && benefitDraft.areaUnit === '平方公里'" value="平方公里">平方公里</a-select-option></a-select></template><span v-else-if="benefitSectionKey === 'weight' && field.key === 'weight'">{{ benefitDraft.weightUnit }}</span><span v-else-if="field.unit">{{ field.unit }}</span></div>
+          <div v-else-if="field.kind === 'file'" class="benefit-file"><a-upload :before-upload="selectBenefitFile" :show-upload-list="false" :disabled="benefitFieldLocked(field)" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"><a-button icon="upload" :disabled="benefitFieldLocked(field)">点击上传</a-button></a-upload><span v-if="benefitDraft.file">{{ benefitDraft.file }}</span></div>
+          <a-textarea v-else-if="field.key === 'remark'" :id="'benefit-' + field.key" v-model="benefitDraft[field.key]" :rows="2" :placeholder="benefitSectionKey === 'area' ? '填写种植数量后必填' : benefitSectionKey === 'species' ? '填写受益数量后必填' : '选填'" />
+          <a-input v-else-if="field.kind !== 'select'" :id="'benefit-' + field.key" v-model="benefitDraft[field.key]" :disabled="benefitFieldLocked(field) || (field.key === 'latinName' && benefitDraft.name !== '其他')" :placeholder="field.key === 'latinName' ? '如有自动显示，中文名其他时选填' : field.key === 'edition' ? '选填' : '请填写' + field.label" />
+          <p v-if="benefitErrors[field.key]" class="benefit-error" role="alert">{{ benefitErrors[field.key] }}</p>
+        </div></div>
+      </div>
+    </a-modal>
   </section>
 </template>
 
@@ -138,21 +152,45 @@ const RichEditor = {
 const emptyBenefit = () => ({ indicator: '', category: '', name: '', latinName: '', quantity: '', remark: '' })
 const benefitSections = [
   { key: 'species', title: '物种', columns: [{ key: 'category', label: '分类' }, { key: 'name', label: '中文名' }, { key: 'latinName', label: '拉丁文名' }, { key: 'quantity', label: '受益数量' }, { key: 'remark', label: '备注' }], rows: [{ id: 'species-1', category: '动物', name: '东黑冠长臂猿', latinName: 'Nomascus nasutus', quantity: '12', remark: '完成重点栖息地监测' }] },
-  { key: 'area', title: '面积', columns: [{ key: 'region', label: '地区' }, { key: 'name', label: '名称' }, { key: 'type', label: '类型' }, { key: 'ecosystem', label: '生态系统' }, { key: 'area', label: '面积（平方公里）' }, { key: 'planting', label: '种植数量' }, { key: 'remark', label: '备注' }], rows: [{ id: 'area-1', region: '四川省-雅安市-荥经县', name: '大熊猫栖息地', type: '生态修复', ecosystem: '森林', area: '100', planting: '—', remark: '重点修复区域' }] },
+  { key: 'area', title: '面积', columns: [{ key: 'region', label: '地区' }, { key: 'name', label: '名称' }, { key: 'type', label: '类型' }, { key: 'ecosystem', label: '生态系统' }, { key: 'area', label: '面积' }, { key: 'planting', label: '种植数量' }, { key: 'remark', label: '备注' }], rows: [{ id: 'area-1', region: '四川省-雅安市-荥经县', name: '大熊猫栖息地', type: '生态修复', ecosystem: '森林', area: '100', planting: '—', remark: '重点修复区域' }] },
   { key: 'people', title: '人数', columns: [{ key: 'region', label: '地区' }, { key: 'type', label: '类型' }, { key: 'sessions', label: '场次' }, { key: 'participants', label: '参与人数' }, { key: 'reach', label: '触达人数' }, { key: 'volunteers', label: '志愿者数' }, { key: 'remark', label: '备注' }], rows: [{ id: 'people-1', region: '四川省-雅安市-荥经县', type: '自然教育', sessions: '10', participants: '1000', reach: '10000', volunteers: '10', remark: '社区公众参与' }] },
-  { key: 'weight', title: '重量', columns: [{ key: 'type', label: '类型' }, { key: 'weight', label: '重量（吨）' }, { key: 'remark', label: '备注' }], rows: [{ id: 'weight-1', type: '减排碳当量', weight: '100', remark: '按项目核算口径统计' }] },
+  { key: 'weight', title: '重量', columns: [{ key: 'type', label: '类型' }, { key: 'weight', label: '重量' }, { key: 'remark', label: '备注' }], rows: [{ id: 'weight-1', type: '减排碳当量', weight: '100', remark: '按项目核算口径统计' }] },
   { key: 'amount', title: '金额', columns: [{ key: 'type', label: '类型' }, { key: 'amount', label: '金额（万元）' }, { key: 'remark', label: '备注' }], rows: [{ id: 'amount-1', type: '生态系统服务价值', amount: '100', remark: '阶段评估值' }] },
   { key: 'distance', title: '距离', columns: [{ key: 'region', label: '地区' }, { key: 'type', label: '活动类型' }, { key: 'sessions', label: '活动次数' }, { key: 'participants', label: '参与人数' }, { key: 'distance', label: '距离（公里）' }, { key: 'remark', label: '备注' }], rows: [{ id: 'distance-1', region: '四川省-雅安市-荥经县', type: '巡护/监测', sessions: '10', participants: '20', distance: '1000', remark: '累计巡护里程' }] },
   { key: 'roster', title: '名单', columns: [{ key: 'name', label: '名称' }, { key: 'type', label: '类型' }, { key: 'description', label: '名单说明' }, { key: 'file', label: '名单文件' }, { key: 'remark', label: '备注' }], rows: [{ id: 'roster-1', name: '社区巡护员名单', type: '社区', description: '参与项目巡护的社区成员', file: '社区巡护员名单.xlsx', remark: '已核验' }] },
   { key: 'document', title: '文件材料', columns: [{ key: 'name', label: '名称' }, { key: 'type', label: '类型' }, { key: 'year', label: '年份' }, { key: 'file', label: '名单文件 / 版号' }, { key: 'remark', label: '备注' }], rows: [{ id: 'document-1', name: '栖息地监测报告', type: 'SEE支持出版—公开发行出版物', year: '2026', file: 'ISBNxxxxxxxxxxxxx', remark: '阶段成果材料' }] }
 ]
 
+
+const benefitSelect = (key, label, options, required = true) => ({ key, label, kind: 'select', options, required })
+const benefitNumber = (key, label, unit = '', required = true, integer = true) => ({ key, label, kind: 'number', unit, required, integer })
+const benefitText = (key, label, required = true) => ({ key, label, kind: 'text', required })
+const benefitRegion = { key: 'region', label: '地区', kind: 'region', required: true }
+const benefitRemark = benefitText('remark', '备注', false)
+const benefitSchemas = {
+  species: [benefitSelect('category', '分类', ['保护动物', '保护植物']), benefitSelect('name', '中文名', []), benefitText('latinName', '拉丁文名', false), benefitNumber('quantity', '受益数量', '', false), benefitRemark],
+  area: [benefitRegion, benefitText('name', '名称'), benefitSelect('type', '类型', ['生态修复', '保护地', '其他']), benefitSelect('ecosystem', '生态系统', ['森林', '草原', '海洋', '湿地', '农田', '城市', '荒漠']), benefitNumber('area', '面积数量', '平方公里', true, false), benefitNumber('planting', '种植数量', '', false), benefitRemark],
+  people: [benefitRegion, benefitSelect('type', '活动类型', ['自然教育', '公众倡导', '会议/论坛', '培训', '其他']), benefitNumber('sessions', '场次'), benefitNumber('participants', '参与人数'), benefitNumber('reach', '触达人数'), benefitNumber('volunteers', '志愿者数', '', false), benefitRemark],
+  weight: [benefitSelect('type', '类型', ['碳汇当量', '减排碳当量', '水效应量', '垃圾重量', '粮食重量', '其他']), benefitNumber('weight', '重量', '吨', true, false), benefitRemark],
+  amount: [benefitSelect('type', '类型', ['绿色采购额', '生态系统服务价值', '其他']), benefitNumber('amount', '金额', '万元', true, false), benefitRemark],
+  distance: [benefitRegion, benefitSelect('type', '活动类型', ['巡护/监测', '调查', '其他']), benefitNumber('sessions', '活动次数'), benefitNumber('participants', '参与人数'), benefitNumber('distance', '距离', '千米', true, false), benefitRemark],
+  roster: [benefitText('name', '名称'), benefitSelect('type', '类型', ['社区', '企业', '行业', '商家', '伙伴', '其他']), benefitText('description', '名单说明'), { key: 'file', label: '上传名单', kind: 'file', required: true }, benefitRemark],
+  document: [benefitText('name', '名称'), benefitSelect('type', '类型', ['行业标准', '科研论文', '提案', '倡导文件', 'SEE支持出版——公开发行出版物', 'SEE合作出版——公开发行出版物', 'SEE自行出版——公开发行出版物', '其他']), benefitText('year', '年份'), benefitSelect('materialType', '材料类型', ['电子版', '出版物（版号）']), benefitText('edition', '版号', false), { key: 'file', label: '上传材料', kind: 'file', required: false }, benefitRemark]
+}
+const benefitSpecies = [{ name: '蜂猴', latinName: 'Nycticebus bengalensis', category: '保护动物' }, { name: '东黑冠长臂猿', latinName: 'Nomascus nasutus', category: '保护动物' }, { name: '银杏', latinName: 'Ginkgo biloba', category: '保护植物' }]
+const benefitRegions = [
+  { value: '四川省', label: '四川省', children: [{ value: '雅安市', label: '雅安市', children: [{ value: '荥经县', label: '荥经县' }] }, { value: '成都市', label: '成都市', children: [{ value: '锦江区', label: '锦江区' }, { value: '青羊区', label: '青羊区' }] }] },
+  { value: '青海省', label: '青海省', children: [{ value: '玉树藏族自治州', label: '玉树藏族自治州', children: [{ value: '囊谦县', label: '囊谦县' }, { value: '治多县扎河乡', label: '治多县扎河乡' }] }] },
+  { value: '云南省', label: '云南省', children: [{ value: '昆明市', label: '昆明市', children: [{ value: '五华区', label: '五华区' }, { value: '盘龙区', label: '盘龙区' }] }] }
+]
+
 export default {
   name: 'ReportForm',
   components: { ProjectBudgetEditor, RichEditor },
   props: { projectId: { type: [String, Number], required: true }, type: { type: String, default: 'progress' } },
-  data () { return { draft: loadReportDraft(this.projectId, this.type), benefitSections: JSON.parse(JSON.stringify(benefitSections)), attachmentVisible: false, attachmentDraft: { category: undefined, file: null, error: '' }, benefitVisible: false, benefitIndex: -1, benefitDraft: emptyBenefit(), benefitFields: [{ key: 'indicator', label: '收益指标', required: true }, { key: 'category', label: '分类', required: true }, { key: 'name', label: '中文名', required: true }, { key: 'latinName', label: '拉丁文名' }, { key: 'quantity', label: '受益数量', required: true }, { key: 'remark', label: '备注' }] } },
+  data () { return { draft: loadReportDraft(this.projectId, this.type), benefitSections: JSON.parse(JSON.stringify(benefitSections)), attachmentVisible: false, attachmentDraft: { category: undefined, file: null, error: '' }, benefitVisible: false, benefitMode: 'new', benefitErrors: {}, benefitOriginal: null, benefitRegions, benefitIndex: -1, benefitSectionKey: null, benefitDraft: emptyBenefit(), benefitFields: [{ key: 'indicator', label: '收益指标', required: true }, { key: 'category', label: '分类', required: true }, { key: 'name', label: '中文名', required: true }, { key: 'latinName', label: '拉丁文名' }, { key: 'quantity', label: '受益数量', required: true }, { key: 'remark', label: '备注' }] } },
   computed: {
+    activeBenefitFields () { return benefitSchemas[this.benefitSectionKey] || [] },
     isCompletion () { return this.draft.type === '结项报告' },
     executionRate () { return this.ratio(this.draft.executed, this.draft.funding) },
     requestRate () { return this.ratio(Number(this.draft.paid || 0) + (this.draft.requestNeeded ? Number(this.draft.requested || 0) : 0), this.draft.funding) }
@@ -169,13 +207,80 @@ export default {
     confirmAttachment () { const { category, file } = this.attachmentDraft; if (!category || !file) { this.attachmentDraft.error = !category ? '请选择附件类型' : '请选择需要上传的文件'; return }; this.draft.attachments.push({ id: `attachment-${Date.now()}`, name: file.name, size: file.size, type: file.type, category, time: new Date().toLocaleString('zh-CN', { hour12: false }) }); this.attachmentVisible = false; this.$message.success('附件已加入，请存为草稿以保存附件列表') },
     formatSize (size) { return size >= 1024 * 1024 ? (size / 1024 / 1024).toFixed(1) + ' MB' : Math.max(1, Math.round((size || 0) / 1024)) + ' KB' },
     removeAttachment (file) { this.draft.attachments = this.draft.attachments.filter(item => item.id !== file.id) },
-    openBenefitModal (index = -1) { this.benefitIndex = index; this.benefitDraft = index < 0 ? emptyBenefit() : { ...this.draft.benefits[index] }; this.benefitVisible = true },
-    confirmBenefit () { if (!this.benefitDraft.indicator.trim() || !this.benefitDraft.category.trim() || !this.benefitDraft.name.trim() || !this.benefitDraft.quantity.trim()) { this.$message.warning('请填写收益指标、分类、中文名和受益数量'); return }; const value = { ...this.benefitDraft, id: this.benefitDraft.id || `benefit-${Date.now()}` }; if (this.benefitIndex < 0) this.draft.benefits.push(value); else this.$set(this.draft.benefits, this.benefitIndex, value); this.benefitVisible = false },
-    removeBenefit (index) { this.draft.benefits.splice(index, 1) }
-    ,addBenefitExample (section) { this.$message.info(`“${section.title}”收益新增入口示例`) }
-    ,editBenefitExample (section) { this.$message.info(`“${section.title}”收益编辑入口示例`) }
+    openBenefitModal (section, row) {
+      this.benefitMode = row ? 'edit' : section ? 'append' : 'new'
+      this.benefitSectionKey = section ? section.key : 'species'
+      this.benefitOriginal = row ? { ...row } : null
+      this.benefitIndex = row ? section.rows.findIndex(item => item.id === row.id) : -1
+      this.resetBenefitDraft(row)
+      this.benefitVisible = true
+    },
+    resetBenefitDraft (row) {
+      const value = { regionPath: [], region: '', file: '', weightUnit: row ? row.weightUnit || '吨' : '吨', areaUnit: row ? row.areaUnit || '平方公里' : '亩' }
+      this.activeBenefitFields.forEach(field => { value[field.key] = field.kind === 'number' ? null : undefined; if (field.kind === 'select') value[field.key + 'Other'] = '' })
+      this.benefitDraft = Object.assign(value, row || {})
+      this.activeBenefitFields.filter(field => field.kind === 'number').forEach(field => {
+        const raw = this.benefitDraft[field.key]
+        this.benefitDraft[field.key] = raw === '' || raw === null || raw === undefined || !isFinite(Number(raw)) ? null : Number(raw)
+      })
+      if (this.benefitSectionKey === 'species' && row) {
+        if (row.category === '动物') this.benefitDraft.category = '保护动物'
+        if (row.category === '植物') this.benefitDraft.category = '保护植物'
+      }
+      if (row && row.region) this.benefitDraft.regionPath = row.region.split('-')
+      this.activeBenefitFields.filter(field => field.kind === 'select').forEach(field => {
+        if (this.benefitDraft[field.key] && this.benefitOptions(field).indexOf(this.benefitDraft[field.key]) < 0) {
+          this.benefitDraft[field.key + 'Other'] = this.benefitDraft[field.key]
+          this.benefitDraft[field.key] = '其他'
+        }
+      })
+      this.benefitErrors = {}
+    },
+    changeBenefitIndicator () { this.resetBenefitDraft() },
+    benefitFieldLocked (field) { return this.benefitMode === 'edit' && field.kind !== 'number' && field.key !== 'remark' },
+    benefitOptions (field) { return field.key === 'name' ? ['其他'].concat(benefitSpecies.filter(item => !this.benefitDraft.category || item.category === this.benefitDraft.category).map(item => item.name)) : field.options },
+    benefitOptionChanged (field) {
+      if (this.benefitSectionKey === 'weight' && field.key === 'type') this.benefitDraft.weightUnit = ['垃圾重量', '粮食重量'].indexOf(this.benefitDraft.type) >= 0 ? '公斤' : '吨'
+      if (this.benefitSectionKey === 'area' && field.key === 'ecosystem') this.benefitDraft.areaUnit = this.benefitDraft.ecosystem === '海洋' ? '平方公里' : '亩'
+      if (field.key === 'category') { this.benefitDraft.name = undefined; this.benefitDraft.nameOther = ''; this.benefitDraft.latinName = '' }
+      if (field.key === 'name') { const species = benefitSpecies.find(item => item.name === this.benefitDraft.name); this.benefitDraft.latinName = species ? species.latinName : '' }
+    },
+    setBenefitRegion (values) { this.benefitDraft.region = values.join('-') },
+    selectBenefitFile (file) {
+      if (!/\.(pdf|docx?|xlsx?|png|jpe?g)$/i.test(file.name) || file.size > 20 * 1024 * 1024) { this.$set(this.benefitErrors, 'file', '请选择20MB以内的PDF、Word、Excel或图片文件'); return false }
+      this.benefitDraft.file = file.name; this.$delete(this.benefitErrors, 'file'); return false
+    },
+    confirmBenefit () {
+      const section = this.benefitSections.find(item => item.key === this.benefitSectionKey)
+      if (!section) return
+      const errors = {}, value = this.benefitMode === 'edit' ? { ...this.benefitOriginal } : {}
+      this.activeBenefitFields.forEach(field => {
+        if (this.benefitFieldLocked(field)) return
+        const raw = this.benefitDraft[field.key]
+        const resolved = raw === '其他' ? this.benefitDraft[field.key + 'Other'] : raw
+        if (field.required && (resolved === undefined || resolved === null || String(resolved).trim() === '')) errors[field.key] = '请填写' + field.label
+        if (field.kind === 'number' && raw !== undefined && raw !== null && raw !== '' && (!isFinite(Number(raw)) || Number(raw) < 0 || (field.integer && Number(raw) % 1 !== 0))) errors[field.key] = '请输入有效的非负' + (field.integer ? '整数' : '数值')
+        value[field.key] = resolved === undefined || resolved === null ? '' : resolved
+      })
+      if (this.benefitSectionKey === 'species' && this.benefitDraft.quantity !== null && this.benefitDraft.quantity !== undefined && this.benefitDraft.quantity !== '' && !String(this.benefitDraft.remark || '').trim()) errors.remark = '填写受益数量后必填'
+      if (this.benefitSectionKey === 'area' && this.benefitDraft.planting !== null && this.benefitDraft.planting !== undefined && this.benefitDraft.planting !== '' && !String(this.benefitDraft.remark || '').trim()) errors.remark = '填写种植数量后请填写备注'
+      if (this.benefitSectionKey === 'document' && this.benefitMode !== 'edit' && !/^\d{4}$/.test(String(this.benefitDraft.year || ''))) errors.year = '请输入四位年份'
+      if (this.benefitSectionKey === 'area' && this.benefitMode !== 'edit') {
+        value.areaUnit = this.benefitDraft.ecosystem === '海洋' ? '平方公里' : this.benefitDraft.areaUnit
+        if (this.benefitDraft.ecosystem !== '海洋' && ['亩', '公顷'].indexOf(value.areaUnit) < 0) errors.area = '请选择亩或公顷'
+      }
+      if (this.benefitSectionKey === 'weight' && this.benefitMode !== 'edit') value.weightUnit = ['垃圾重量', '粮食重量'].indexOf(this.benefitDraft.type) >= 0 ? '公斤' : '吨'
+      this.benefitErrors = errors
+      if (Object.keys(errors).length) return
+      if (this.benefitMode === 'edit') { const index = section.rows.findIndex(item => item.id === this.benefitOriginal.id); if (index < 0) return; this.$set(section.rows, index, value) }
+      else { value.id = section.key + '-' + Date.now() + '-' + section.rows.length; section.rows.push(value) }
+      this.benefitVisible = false
+      this.$message.success('成果演示已更新，刷新后恢复')
+    },
+    addBenefitExample (section) { this.openBenefitModal(section) },
+    editBenefitExample (section, row) { this.openBenefitModal(section, row) }
     ,removeBenefitExample (section, row) { section.rows = section.rows.filter(item => item.id !== row.id) }
-    ,addBenefitType () { this.$message.info('新增收益入口示例') }
+    ,addBenefitType () { this.openBenefitModal() }
   }
 }
 </script>
@@ -200,9 +305,30 @@ export default {
 .output-progress-records { display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: start; gap: 8px; margin: 0; padding: 16px 18px; border: 0; border-radius: 0; background: #fff; }.output-progress-records > h3 { width: max-content; margin: 0; padding: 4px 9px; border-radius: 6px; color: #1677ff; background: #edf5ff; font-size: 14px; line-height: 1.55; }.output-progress-list { min-width: 0; padding-top: 0; }.output-progress-list .report-progress-entry { align-items: start; grid-template-columns: 94px minmax(0, 1fr); padding: 3px 0 11px; border-top: 0; }.output-progress-list .report-progress-entry + .report-progress-entry { padding-top: 8px; border-top: 1px solid #edf1f5; }.output-progress-list .report-progress-entry time, .output-progress-list .report-progress-entry p { margin: 0; padding-left: 0; color: #18253c; font-size: 14px; line-height: 1.65; }.output-progress-list .report-progress-entry.is-latest time { color: #1677ff; }
 .activity-progress-records { margin: 18px 0 0; padding: 0; border: 0; border-radius: 0; background: transparent; }.activity-progress-records h3 { margin: 0 0 8px; color: #18a66a; }.activity-progress-table { width: 100%; border-collapse: collapse; table-layout: fixed; }.activity-progress-table td { padding: 10px 0; color: #18253c; vertical-align: top; line-height: 1.65; overflow-wrap: anywhere; }.activity-progress-table tr + tr td { border-top: 1px solid #edf1f5; }.activity-progress-table tr.is-latest td { color: #18a66a; }.activity-progress-table td:first-child { width: 110px; padding-right: 16px; font-variant-numeric: tabular-nums; white-space: nowrap; }.report-activity-label { margin-bottom: 6px; }
 .report-progress-entry >>> textarea.ant-input, .activity-progress-table >>> textarea.ant-input { min-height: 54px; padding: 7px 10px; border-color: #d9e1eb; border-radius: 6px; color: #18253c; font-size: 14px; line-height: 1.55; resize: vertical; }.report-progress-entry >>> textarea.ant-input:focus, .activity-progress-table >>> textarea.ant-input:focus { border-color: #1677ff; box-shadow: 0 0 0 2px rgba(22,119,255,.12); }
-.attachment-section .detail-section-header { align-items: center; }.attachment-section .detail-section-header > div { display: flex; align-items: center; min-height: 40px; }.attachment-section .detail-section-header h2 { margin: 0; }.attachment-empty-add { margin: 22px; padding: 24px; border: 1px dashed #d9e1eb; border-radius: 10px; cursor: pointer; }.attachment-empty-add >>> .ant-empty-description { color: #5b8ff9; }.attachment-empty-add:hover, .attachment-empty-add:focus { border-color: #1677ff; background: #f8fbff; outline: none; }.form-attachment-list > div { grid-template-columns: minmax(0, 1fr) auto; }.form-attachment-list strong { overflow-wrap: anywhere; }.form-attachment-list .ant-btn { padding: 0 6px; }.add-more-attachment { width: calc(100% - 44px); margin: 0 22px 22px; border-color: #91d5ff; border-style: dashed; color: #096dd9 !important; background: #e6f7ff; }.add-more-attachment:hover, .add-more-attachment:focus { border-color: #40a9ff; color: #096dd9 !important; background: #fff; }.attachment-file-picker { min-width: 0; display: flex; align-items: center; gap: 12px; }.attachment-file-picker > span { min-width: 0; color: #536277; overflow-wrap: anywhere; }.attachment-picker .form-error { margin: 0 0 0 108px; color: #ff4d4f; }.attachment-picker { display: grid; width: 470px; max-width: 100%; gap: 16px; margin: 0 auto; padding: 16px 0 12px; }.attachment-picker .area-picker-row { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 18px; align-items: center; }.attachment-picker .area-picker-row label { display: flex; min-height: 32px; align-items: center; justify-content: flex-end; color: #27384e; text-align: right; white-space: nowrap; }.attachment-picker .area-picker-row .ant-select { width: 100%; }.danger-link { color: #ff4d4f; }
+.attachment-section .detail-section-header { align-items: center; }.attachment-section .detail-section-header > div { display: flex; align-items: center; min-height: 40px; }.attachment-section .detail-section-header h2 { margin: 0; }.attachment-empty-add { margin: 22px; padding: 24px; border: 1px dashed #d9e1eb; border-radius: 10px; cursor: pointer; }.attachment-empty-add >>> .ant-empty-description { color: #5b8ff9; }.attachment-empty-add:hover, .attachment-empty-add:focus { border-color: #1677ff; background: #f8fbff; outline: none; }.form-attachment-list > div { grid-template-columns: minmax(0, 1fr) auto; }.form-attachment-list strong { overflow-wrap: anywhere; }.form-attachment-list .ant-btn { padding: 0 6px; }.add-more-attachment { width: calc(100% - 44px); margin: 0 22px 22px; border-color: #91d5ff; border-style: dashed; color: #096dd9 !important; background: #e6f7ff; }.add-more-attachment:hover, .add-more-attachment:focus { border-color: #40a9ff; color: #096dd9 !important; background: #fff; }.attachment-file-picker { min-width: 0; display: flex; align-items: center; gap: 12px; }.attachment-file-picker > span { min-width: 0; color: #536277; overflow-wrap: anywhere; }.attachment-picker .form-error { margin: 0 0 0 108px; color: #ff4d4f; }.attachment-picker { display: grid; width: 470px; max-width: 100%; gap: 16px; margin: 0 auto; padding: 0; }.attachment-picker .area-picker-row { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 18px; align-items: start; }.attachment-picker .area-picker-row label { padding-top: 5px; line-height: 22px; color: #27384e; text-align: right; white-space: nowrap; }.attachment-picker .area-picker-row .ant-select { width: 100%; }.danger-link { color: #ff4d4f; }
 .budget-section .detail-section-header, .benefits-section .detail-section-header { align-items: center; }.budget-section .detail-section-header > div, .benefits-section .detail-section-header > div { display: flex; align-items: center; min-height: 40px; }.budget-section .detail-section-header h2, .benefits-section .detail-section-header h2 { margin: 0; }.benefit-groups { display: grid; gap: 22px; padding: 22px; }.benefit-group { min-width: 0; overflow-x: auto; overflow-y: hidden; border: 1px solid #e6ebf2; border-radius: 10px; background: #fff; }.benefits-table { min-width: 980px; table-layout: fixed; border: 0; }.benefits-table .benefit-indicator { width: 120px; }.benefits-table .benefit-actions { width: 130px; }.benefits-table th:first-child, .benefits-table td:first-child, .benefits-table th:last-child, .benefits-table td:last-child { text-align: center; }.benefits-table td { white-space: normal; line-height: 1.55; overflow-wrap: anywhere; }.benefits-table td:last-child { white-space: nowrap; }.benefits-table td:last-child .ant-btn { height: auto; padding: 0 7px; }.benefit-add-row td { padding: 8px 12px; text-align: center !important; background: #fff; }.benefit-add-row .ant-btn { height: 32px; }.add-benefit-type { width: 100%; border-color: #91d5ff; border-style: dashed; color: #096dd9 !important; background: #e6f7ff; }.add-benefit-type:hover, .add-benefit-type:focus { border-color: #40a9ff; color: #096dd9 !important; background: #fff; }
 .form-footer { position: sticky; bottom: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 18px 24px; border: 1px solid #e6ebf2; border-radius: 12px; background: rgba(255,255,255,.98); box-shadow: 0 -4px 22px rgba(23,56,92,.07); }.form-footer > span { color: #718095; }.form-footer > div { display: flex; gap: 12px; }.form-footer .ant-btn { min-width: 100px; }
-.modal-form { display: grid; gap: 20px; padding: 4px 4px 12px; }.modal-field { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 16px; align-items: start; }.modal-field label { padding-top: 6px; text-align: right; line-height: 1.6; }.modal-field > .ant-select { width: 100%; }.report-form-page >>> input::placeholder, .report-form-page >>> textarea::placeholder, .modal-form >>> input::placeholder, .modal-form >>> textarea::placeholder { color: #5b8ff9; font-size: 14px; opacity: 1; }
+.modal-form { display: grid; width: 470px; max-width: 100%; margin: 0 auto; gap: 16px; padding: 0; }.modal-field { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 18px; align-items: start; }.modal-field label { padding-top: 5px; text-align: right; line-height: 22px; }.modal-field > .ant-select { width: 100%; }.report-form-page >>> input::placeholder, .report-form-page >>> textarea::placeholder, .modal-form >>> input::placeholder, .modal-form >>> textarea::placeholder { color: #5b8ff9; font-size: 14px; opacity: 1; }
 @media (max-width: 1440px) { .form-fields.description-grid { padding-right: 18px; padding-left: 18px; }.form-activity dl { gap: 14px; } }
+.benefit-standard-form .modal-field { grid-template-columns: 140px minmax(0, 1fr); }
+.modal-form >>> input.ant-input { height: 32px; font-size: 14px; }
+.attachment-picker >>> .ant-select { font-size: 14px; }
+.attachment-picker >>> .ant-select-selection--single { height: 32px; }
+.attachment-picker >>> .ant-select-selection__rendered { line-height: 30px; }
+.attachment-picker >>> .ant-select-selection__placeholder { color: #5b8ff9; font-size: 14px; opacity: 1; }
+.benefit-control { min-width: 0; display: grid; gap: 8px; }
+.benefit-control >>> .ant-select, .benefit-control >>> .ant-cascader-picker { width: 100%; font-size: 14px; }
+.modal-form >>> .ant-select-selection--single, .modal-form >>> .ant-input-number { height: 32px; }
+.modal-form >>> .ant-select-selection__rendered { line-height: 30px; }
+.modal-form >>> .ant-select-selection__placeholder, .modal-form >>> .ant-cascader-picker-label { font-size: 14px; }
+.modal-form >>> .ant-select-selection__placeholder { color: #5b8ff9; opacity: 1; }
+.benefit-number { display: flex; gap: 8px; align-items: center; }
+.benefit-number >>> .ant-input-number { flex: 1; min-width: 0; font-size: 14px; }
+.benefit-number >>> .ant-input-number-input { height: 30px; font-size: 14px; }
+.benefit-number > span { white-space: nowrap; }
+.benefit-file { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.benefit-file > span { overflow-wrap: anywhere; }
+.benefit-error { margin: 0; color: #ff4d4f; font-size: 14px; line-height: 22px; }
+.modal-form >>> textarea.ant-input { padding: 4px 11px; font-size: 14px; line-height: 1.5; }
+.benefit-number >>> .benefit-area-unit { flex: 0 0 88px; width: 88px; }
 </style>

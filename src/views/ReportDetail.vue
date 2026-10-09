@@ -273,7 +273,10 @@ export default {
       this.formErrors = emptyErrors()
       this.closeDialogs()
       if (!this.report) { this.paymentOptions = []; return }
-      this.reviewComments = { ...(this.report.reviewComments || {}) }
+      let comments = { ...(this.report.reviewComments || {}) }
+      try { const saved = JSON.parse(localStorage.getItem('see-report-review-example-' + this.reportId)); if (saved && saved.reviewComments && typeof saved.reviewComments === 'object' && !Array.isArray(saved.reviewComments)) comments = saved.reviewComments } catch (error) { /* Use report data if local data is invalid. */ }
+      this.$set(this.report, 'reviewComments', comments)
+      this.reviewComments = this.report.reviewComments
       const requested = this.report.requestedCents
       const alternative = (Math.floor(Math.random() * 9) + 1) * 1000000
       const amounts = requested ? [0, requested, requested + alternative] : [0, alternative, alternative + 10000000]
@@ -308,15 +311,22 @@ export default {
       this.reviewVisible = true
     },
     saveReview () {
+      if (!this.isAudit) return
+      const previous = { ...this.reviewComments }
       const text = typeof this.reviewDraft === 'string' ? this.reviewDraft.trim() : ''
       if (text) this.$set(this.reviewComments, this.reviewField, text)
       else this.$delete(this.reviewComments, this.reviewField)
+      if (!this.persistReviewComments(previous)) return
       this.reviewVisible = false
     },
-    deleteReview () {
-      this.$delete(this.reviewComments, this.reviewField)
-      this.reviewDraft = ''
-      this.reviewVisible = false
+    deleteReview () { this.reviewDraft = ''; this.saveReview() },
+    persistReviewComments (previous) {
+      try { localStorage.setItem('see-report-review-example-' + this.reportId, JSON.stringify({ reviewComments: this.reviewComments })); return true }
+      catch (error) {
+        Object.keys(this.reviewComments).forEach(key => this.$delete(this.reviewComments, key))
+        Object.keys(previous).forEach(key => this.$set(this.reviewComments, key, previous[key]))
+        this.$message.error('本地审核意见保存失败，请重试'); return false
+      }
     },
     submitAudit () {
       if (!this.report || !this.isAudit) return
@@ -332,7 +342,7 @@ export default {
     finishAudit () {
       if (!this.report || !this.isAudit) return
       this.aidConfirmationVisible = false
-      this.$set(this.report, 'reviewComments', { ...this.reviewComments })
+      this.$set(this.report, 'reviewComments', this.reviewComments)
       this.auditPreviewVisible = true
     }
   },
@@ -435,4 +445,5 @@ export default {
 .report-budget-demo-note { margin: 0; color: #718095; }
 .report-empty { padding: 24px; text-align: center; color: #718095; }
 .report-not-found { padding: 72px 24px; }
+.review-dialog-actions-right > .ant-btn + .ant-btn { margin-left: 0; }
 </style>
