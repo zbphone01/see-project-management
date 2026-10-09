@@ -87,6 +87,10 @@
                 <a-menu slot="overlay" @click="handleProjectAction($event, record)">
                   <template v-if="record.status === '申请待审'">
                     <a-menu-item key="audit">审核</a-menu-item>
+                    <template v-if="record.id === appliedProjects[0].id">
+                      <a-menu-item key="audit-project-center">项目组或中心审核</a-menu-item>
+                      <a-menu-item key="audit-functional-department">职能部门审核</a-menu-item>
+                    </template>
                     <a-menu-item key="download-pdf">下载待审申请书pdf</a-menu-item>
                     <a-menu-item key="download-word">下载待审申请书word</a-menu-item>
                     <a-menu-item key="download-budget">下载待审预算表</a-menu-item>
@@ -228,8 +232,13 @@ export default {
         this.$router.push({ name: 'report-detail', params: { id: record.reportId }, query: { mode: 'audit' } })
         return
       }
-      if (key === 'detail' || key === 'project-detail' || key === 'audit') {
-        const query = key === 'audit' ? { mode: 'audit' } : {}
+      const auditTypes = {
+        'audit-project-center': 'project-center',
+        'audit-functional-department': 'functional-department'
+      }
+      if (key === 'detail' || key === 'project-detail' || key === 'audit' || auditTypes[key]) {
+        const query = key === 'audit' || auditTypes[key] ? { mode: 'audit' } : {}
+        if (auditTypes[key]) query.auditType = auditTypes[key]
         if (record.detailType) query.detailType = record.detailType
         this.$router.push({ name: 'project-detail', params: { id: String(record.id) }, query })
         return

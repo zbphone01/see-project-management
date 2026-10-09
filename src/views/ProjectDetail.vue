@@ -196,26 +196,30 @@
           <div class="attachment-list"><div><div><strong>项目预算表.xlsx</strong><span>预算表 · 2025-12-28 23:59</span></div><a-button type="link" @click="notify('预览项目预算表')">预览</a-button><a-button type="link" @click="notify('下载项目预算表')">下载</a-button></div><div><div><strong>项目实施方案.pdf</strong><span>其他附件 · 2025-12-28 23:59</span></div><a-button type="link" @click="notify('预览项目实施方案')">预览</a-button><a-button type="link" @click="notify('下载项目实施方案')">下载</a-button></div></div>
         </section>
 
-        <section v-if="detailMode === 'audit'" id="detail-audit" class="panel detail-section">
-          <div class="detail-section-header"><span class="detail-section-icon red"><a-icon type="audit" /></span><div><h2>审核</h2></div></div>
+        <section v-if="detailMode === 'audit'" id="detail-audit" :key="auditModule.type" :data-audit-type="auditModule.type" class="panel detail-section">
+          <div class="detail-section-header"><span class="detail-section-icon red"><a-icon type="audit" /></span><div><h2>{{ auditModule.title }}</h2></div></div>
           <div class="project-audit-form">
             <div class="audit-form-grid">
             <div class="audit-form-column">
             <div class="audit-form-row">
               <label for="audit-result"><em>*</em> 审核结果：</label>
               <a-select id="audit-result" v-model="auditForm.result">
-                <a-select-option value="approved">通过 - 项目状态将变更为“审核流程中”</a-select-option>
-                <a-select-option value="rejected">驳回 - 项目状态将变更为“申请待修改”</a-select-option>
+                <a-select-option v-for="option in auditResultOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option>
               </a-select>
             </div>
-            <div v-if="basicInfo.type === '联合公益'" class="audit-form-row">
+            <div v-if="!isPlanningAudit && basicInfo.type === '联合公益'" class="audit-form-row">
               <label for="audit-agreement-number"><em>*</em> 框架协议编号：</label>
               <a-input id="audit-agreement-number" v-model="auditForm.frameworkAgreementNumber" placeholder="请输入框架协议编号" />
             </div>
             <div v-else class="audit-form-row audit-amount-row">
-              <label for="audit-amount"><em>*</em> 审核通过金额：</label>
-              <a-input id="audit-amount" v-model="auditForm.approvedAmount" suffix="元" placeholder="请输入审核通过金额" />
+              <label for="audit-amount"><em>*</em> {{ isPlanningAudit ? '资助总金额' : '审核通过金额' }}：</label>
+              <a-input id="audit-amount" v-model="auditForm.approvedAmount" :disabled="auditModule.type === 'functional-department'" suffix="元" :placeholder="isPlanningAudit ? '请输入资助总金额' : '请输入审核通过金额'" />
               <div class="audit-amount-uppercase">大写：{{ auditAmountUppercase }}</div>
+            </div>
+            <div v-if="isPlanningAudit" class="audit-form-row audit-amount-row">
+              <label for="audit-expected-amount"><em>*</em> 预计筹款金额：</label>
+              <a-input id="audit-expected-amount" v-model="auditForm.expectedAmount" :disabled="auditModule.type === 'project-center'" suffix="元" :placeholder="auditModule.type === 'project-center' ? '金额由职能部门填写' : '请输入预计筹款金额'" />
+              <div class="audit-amount-uppercase">大写：{{ auditExpectedAmountUppercase }}</div>
             </div>
             <div class="audit-upload-field">
               <div class="audit-upload-heading"><label><em>*</em> 上传评审附件：</label><a-upload :before-upload="addAuditFile" :file-list="auditFiles" :show-upload-list="false"><a-button><a-icon type="upload" />点击上传</a-button></a-upload></div>
@@ -224,13 +228,17 @@
             </div>
             <div class="audit-form-column">
             <div class="audit-form-row">
-              <label for="audit-remark">审核备注信息：</label>
-              <a-textarea id="audit-remark" v-model="auditForm.remark" :rows="5" placeholder="驳回时必填" />
+              <label for="audit-remark"><em v-if="isPlanningAudit">*</em> 审核备注信息：</label>
+              <a-textarea id="audit-remark" v-model="auditForm.remark" :rows="5" :placeholder="isPlanningAudit ? '请输入审核备注信息' : '驳回时必填'" />
             </div>
             <div class="audit-funding-hint">
               <div class="audit-hint-title">提示信息</div>
               <div><span>{{ basicInfo.type === '联合公益' ? '招募筹款目标' : '招募资助总额' }}</span><strong>{{ auditFundingTotal.toLocaleString('en-US') }} 元</strong></div>
-              <div><span>本项目通过后招募资助余额</span><strong :class="{ 'audit-balance-negative': auditFundingBalance < 0 }">{{ auditFundingBalance === null ? '—' : auditFundingBalance.toLocaleString('en-US') + ' 元' }}</strong></div>
+              <template v-if="isPlanningAudit">
+                <div><span>资助总额中包括筹款规划</span><strong>{{ auditPlannedFundingTotal.toLocaleString('en-US') }} 元</strong></div>
+                <div><span>该招募执行中项目的资助总计</span><strong>{{ auditExecutingFundingTotal.toLocaleString('en-US') }} 元</strong></div>
+              </template>
+              <div v-else><span>本项目通过后招募资助余额</span><strong :class="{ 'audit-balance-negative': auditFundingBalance < 0 }">{{ auditFundingBalance === null ? '—' : auditFundingBalance.toLocaleString('en-US') + ' 元' }}</strong></div>
             </div>
             </div>
             </div>
@@ -358,6 +366,7 @@ export default {
   props: {
     projectId: { type: Number, required: true },
     mode: { type: String, default: 'view' },
+    auditType: { type: String, default: 'default' },
     detailType: { type: String, default: 'default' },
     // 接口返回同结构 JSON 后可通过路由容器传入，或在此接入请求。
     tableData: { type: Object, default: null }
@@ -381,12 +390,37 @@ export default {
         result: 'approved',
         frameworkAgreementNumber: sourceTableData.basic.frameworkAgreementNumber || '',
         approvedAmount: '5000',
+        expectedAmount: '',
         remark: ''
       },
     auditFiles: [],
-    auditFundingTotal: 10000
+    // 招募汇总及筹款金额暂为本地演示数据，后续由接口带入。
+    auditFundingTotal: 10000,
+    auditPlannedFundingTotal: 5000,
+    auditExecutingFundingTotal: 5000
   } },
   computed: {
+    auditModule () {
+      if (this.auditType === 'project-center') return { type: 'project-center', title: '项目组或中心审核' }
+      if (this.auditType === 'functional-department') return { type: 'functional-department', title: '职能部门审核' }
+      return { type: 'default', title: '审核' }
+    },
+    isPlanningAudit () { return this.auditModule.type !== 'default' },
+    auditResultOptions () {
+      if (this.auditModule.type === 'project-center') return [
+        { value: 'approved', label: '通过 - 由筹款部门确认筹款数额' },
+        { value: 'revision', label: '修改 - 项目状态将变更为“申请待修改”' },
+        { value: 'pending', label: '待定 - 项目状态将变更为“申请待定”' },
+        { value: 'eliminated', label: '淘汰 - 项目状态将变更为“申请淘汰”' }
+      ]
+      return [
+        { value: 'approved', label: '通过 - 项目状态将变更为“审核流程中”' },
+        this.isPlanningAudit
+          ? { value: 'revision', label: '修改 - 项目状态将变更为“申请待修改”' }
+          : { value: 'rejected', label: '驳回 - 项目状态将变更为“申请待修改”' }
+      ]
+    },
+    auditExpectedAmountUppercase () { return this.formatAuditAmount(this.auditForm.expectedAmount) },
     basicReviewFields () { return detailFieldVariants[this.detailType] || detailFieldVariants.default },
     isGreenHomeExample () { return this.detailType === 'green-home' || this.detailType === 'grass' },
     selectedProjectId () { return this.projectId },
@@ -396,8 +430,15 @@ export default {
       const value = this.auditForm.approvedAmount.trim()
       return /^\d{1,12}(\.\d{1,2})?$/.test(value) ? this.auditFundingTotal - Number(value) : null
     },
-    auditAmountUppercase () {
-      const value = this.auditForm.approvedAmount.trim()
+    auditAmountUppercase () { return this.formatAuditAmount(this.auditForm.approvedAmount) },
+    detailProject () {
+      return appliedProjects.find(project => project.id === this.selectedProjectId) || appliedProjects[0]
+    }
+  },
+  methods: {
+    isValidAuditAmount (value) { return typeof value === 'string' && /^\d{1,12}(\.\d{1,2})?$/.test(value.trim()) },
+    formatAuditAmount (amount) {
+      const value = amount.trim()
       if (!value) return '—'
       if (!/^\d{1,12}(\.\d{1,2})?$/.test(value)) return '请输入有效金额（最多两位小数）'
       const digits = '零壹贰叁肆伍陆柒捌玖'
@@ -428,11 +469,7 @@ export default {
       if (fen) result += (jiao ? '' : '零') + digits[fen] + '分'
       return result
     },
-    detailProject () {
-      return appliedProjects.find(project => project.id === this.selectedProjectId) || appliedProjects[0]
-    }
-  },
-  methods: {
+
     hasReviewComment (comment) { return this.detailMode === 'audit' && typeof comment === 'string' && comment.trim().length > 0 },
     goBack () {
       if (window.history.length > 1) this.$router.go(-1)
@@ -501,6 +538,15 @@ export default {
       this.auditFiles = this.auditFiles.filter(file => file.uid !== uid)
     },
     submitProjectAudit () {
+      if (this.isPlanningAudit) {
+        const selected = this.auditResultOptions.find(option => option.value === this.auditForm.result)
+        if (!selected) return this.$message.warning('请选择有效的审核结果')
+        if (!this.isValidAuditAmount(this.auditForm.approvedAmount) || Number(this.auditForm.approvedAmount) <= 0) return this.$message.warning('请输入大于零的有效资助总金额，最多两位小数')
+        if (this.auditModule.type === 'functional-department' && !this.isValidAuditAmount(this.auditForm.expectedAmount)) return this.$message.warning('请输入有效预计筹款金额，最多两位小数，可为零')
+        if (!this.auditFiles.length) return this.$message.warning('请上传评审附件')
+        if (!this.auditForm.remark.trim()) return this.$message.warning('请填写审核备注信息')
+        return this.$message.info(`本地审核校验通过：${this.auditModule.title} · ${selected.label}；尚未提交至服务器`)
+      }
       if (!this.auditForm.result) return this.$message.warning('请选择审核结果')
       if (this.auditForm.result === 'rejected' && !this.auditForm.remark.trim()) return this.$message.warning('驳回时请填写审核备注')
       if (this.auditForm.result === 'approved') {
@@ -515,11 +561,23 @@ export default {
     notify (label) { this.$message.info(label) }
   },
   components: { BudgetPrototype },
+  watch: {
+    auditType () {
+      // 同一详情页切换审核角色时，恢复演示带入值，避免上一个角色的输入污染只读金额。
+      this.auditForm.result = 'approved'
+      this.auditForm.approvedAmount = '5000'
+      this.auditForm.expectedAmount = ''
+      this.auditForm.remark = ''
+      this.auditFiles = []
+    }
+  },
   deactivated () { this.targetReviewVisible = false },
 }
 </script>
 
 <style scoped>
+#detail-audit ::v-deep #audit-amount.ant-input-disabled,
+#detail-audit ::v-deep #audit-expected-amount.ant-input-disabled { background-color: #f5f5f5; color: #718095; }
 .audit-upload-item { border-radius: 6px; }
 .review-dialog-actions { display: flex; justify-content: space-between; align-items: center; }
 .review-dialog-actions > .ant-btn-primary { margin-left: auto; }

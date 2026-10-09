@@ -38,7 +38,7 @@ const router = new VueRouter({
     },
     { path: '/projects/:id/edit', name: 'project-form', component: () => import('../views/ProjectForm.vue') },
     { path: '/projects/:id', name: 'project-detail', component: () => import('../views/ProjectDetail.vue'),
-      props: route => ({ projectId: Number(route.params.id), mode: route.query.mode === 'audit' ? 'audit' : 'view', detailType: route.query.detailType || 'default' })
+      props: route => ({ projectId: Number(route.params.id), mode: route.query.mode === 'audit' ? 'audit' : 'view', detailType: route.query.detailType || 'default', auditType: route.query.auditType || 'default' })
     },
     { path: '*', redirect: '/dashboard' }
   ],
