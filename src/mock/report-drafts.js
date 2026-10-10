@@ -1,4 +1,7 @@
+import reportDetails from './report-progress-detail.json'
+
 const storageKey = (projectId, type) => `see-report-draft-example-v4-${projectId}-${type}`
+const reviewedExampleKey = reportId => `see-reviewed-report-draft-example-${reportId}`
 const clone = value => JSON.parse(JSON.stringify(value))
 const today = () => {
   const date = new Date()
@@ -92,8 +95,49 @@ export function loadReportDraft (projectId, type) {
   }
 }
 
+export function loadReviewedReportExample (projectId) {
+  const reportId = 'P-001006', source = reportDetails[reportId], basic = source.basic
+  const draft = {
+    ...createReportDraft(projectId, 'progress'),
+    exampleReportId: reportId, reportCode: reportId,
+    projectName: basic.projectName, projectCode: basic.projectCode,
+    projectType: basic.projectType, strategy: basic.strategy, issue: basic.issue,
+    organization: basic.organization, projectPeriod: basic.projectPeriod,
+    periodStart: '2026-01-01', periodEnd: '2026-05-31', filledAt: '2026-06-03',
+    funding: basic.fundingCents / 100, requestNeeded: !!basic.requestedCents,
+    requested: basic.requestedCents / 100, paid: basic.paidCents / 100,
+    reporter: basic.reporter, contact: basic.contact,
+    outputs: source.outputs.map(output => ({
+      ...clone(output), id: 'output-' + output.id, standard: output.standard.join('\n'),
+      progressHistory: clone(output.progress.slice(0, -1)),
+      progress: output.progress.length ? output.progress[output.progress.length - 1].content : '',
+      activities: output.activities.map(activity => ({
+        ...clone(activity), id: 'activity-' + activity.id.replace(/\./g, '-'),
+        progressHistory: clone(activity.progress.slice(0, -1)),
+        progress: activity.progress.length ? activity.progress[activity.progress.length - 1].content : ''
+      }))
+    })),
+    auditHistory: clone(source.auditHistory),
+    reviewComments: {
+      'outputs.output-1': '请补充最新产出进展对应的监测资料、核查结果及成果归档情况。',
+      'activities.activity-1-1': '请补充最新活动进展的执行记录及设备维护问题处理结果。'
+    }
+  }
+  let result = draft
+  try {
+    const saved = JSON.parse(localStorage.getItem(reviewedExampleKey(reportId)))
+    if (saved && saved.exampleReportId === reportId) result = { ...draft, ...saved, projectId }
+  } catch (error) { /* Invalid local draft falls back to the example. */ }
+  try {
+    const audit = JSON.parse(localStorage.getItem('see-report-review-example-' + reportId))
+    if (audit && audit.reviewComments && typeof audit.reviewComments === 'object' && !Array.isArray(audit.reviewComments)) result.reviewComments = { ...audit.reviewComments }
+  } catch (error) { /* Retain example comments if local audit data is invalid. */ }
+  return result
+}
+
 export function saveReportDraft (draft) {
   const savedAt = new Date().toLocaleString('zh-CN', { hour12: false })
-  localStorage.setItem(storageKey(draft.projectId, draft.type === '结项报告' ? 'completion' : 'progress'), JSON.stringify({ ...draft, savedAt }))
+  const key = draft.exampleReportId ? reviewedExampleKey(draft.exampleReportId) : storageKey(draft.projectId, draft.type === '结项报告' ? 'completion' : 'progress')
+  localStorage.setItem(key, JSON.stringify({ ...draft, savedAt }))
   return savedAt
 }

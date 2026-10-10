@@ -173,7 +173,7 @@ export default {
 .form-section { overflow: hidden; }.form-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 4px 22px 22px; }
 .field { display: grid; align-content: center; gap: 7px; min-width: 0; min-height: 76px; padding: 17px 18px; border-bottom: 1px solid #edf1f5; }.full { grid-column: 1 / -1; }
 .field label, .field-label { color: #7b899b; font-weight: 400; line-height: 1.6; }em { color: #ff4d4f; font-style: normal; margin-right: 3px; }
-.readonly-value { display: block; padding: 7px 12px; color: #27384e; font-size: 16px; font-weight: 500; overflow-wrap: anywhere; }
+.readonly-value { color: #27384e; font-weight: 500; line-height: 1.6; overflow-wrap: anywhere; }
 .field > .ant-select, .field > .ant-calendar-picker { width: 100%; }.field small { color: #718095; font-size: 14px; line-height: 1.6; }
 .field >>> .ant-input, .field >>> .ant-input-number, .field >>> .ant-select-selection { border-color: transparent; background: transparent; box-shadow: none; }
 .field >>> .ant-input:hover, .field >>> .ant-input-number:hover, .field >>> .ant-select-selection:hover { border-color: #d9e1eb; }

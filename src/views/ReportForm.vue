@@ -26,17 +26,17 @@
     </section>
 
     <section class="panel form-section detail-section report-progress-section">
-      <div class="detail-section-header"><span class="detail-section-icon orange"><a-icon type="project" /></span><div><h2>项目执行进展</h2></div></div>
+      <div class="detail-section-header"><span class="detail-section-icon orange"><a-icon type="project" /></span><div><h2>项目执行进展</h2><p v-if="hasProgressReviewComments">请检查并修改标红的最新进展内容，点击最新进展日期可查看具体审核意见</p></div></div>
       <div class="outputs-body">
         <article v-for="(output, outputIndex) in draft.outputs" :key="output.id" class="output-block">
           <div class="output-title"><span>产出 {{ outputIndex + 1 }}</span><strong>{{ output.name }}</strong></div>
           <div class="output-standard"><span>产出衡量标准</span><div><p>{{ output.standard }}</p></div></div>
-          <div class="report-progress-records output-progress-records"><h3>产出执行进展</h3><div class="output-progress-list"><div v-for="entry in output.progressHistory" :key="entry.date" class="report-progress-entry"><time>{{ entry.date }}</time><p>{{ entry.content }}</p></div><div class="report-progress-entry is-latest"><time :class="{ 'report-date-hint': !draft.filledAt }">{{ draft.filledAt || '同报告填写日期' }}</time><a-textarea v-model="output.progress" :rows="2" placeholder="请填写本报告周期内的产出执行进展" /></div></div></div>
+          <div class="report-progress-records output-progress-records"><h3>产出执行进展</h3><div class="output-progress-list"><div v-for="entry in output.progressHistory" :key="entry.date" class="report-progress-entry"><time>{{ entry.date }}</time><p>{{ entry.content }}</p></div><div class="report-progress-entry is-latest"><time :class="{ 'report-date-hint': !draft.filledAt }"><review-comment-label :comment="progressReviewComment('outputs', output)">{{ draft.filledAt || '同报告填写日期' }}</review-comment-label></time><a-textarea v-model="output.progress" :class="progressReviewClass('outputs', output)" :rows="2" placeholder="请填写本报告周期内的产出执行进展" /></div></div></div>
           <section v-for="(activity, activityIndex) in output.activities" :key="activity.id" class="activity-card">
             <div><span>活动 {{ outputIndex + 1 }}.{{ activityIndex + 1 }}</span><strong>{{ activity.name }}</strong></div>
             <dl><div><dt>活动时间</dt><dd>{{ activity.period }}</dd></div><div><dt>活动地点</dt><dd>{{ activity.location }}</dd></div><div><dt>执行人员</dt><dd>{{ activity.people }}</dd></div></dl>
             <h3 class="report-activity-label">活动内容</h3><p>{{ activity.content }}</p>
-            <div class="report-progress-records activity-progress-records"><h3>活动执行进展</h3><table class="activity-progress-table"><tbody><tr v-for="entry in activity.progressHistory" :key="entry.date"><td>{{ entry.date }}</td><td>{{ entry.content }}</td></tr><tr class="is-latest"><td :class="{ 'report-date-hint': !draft.filledAt }">{{ draft.filledAt || '同报告填写日期' }}</td><td><a-textarea v-model="activity.progress" :rows="2" placeholder="请填写本报告周期内的活动执行进展" /></td></tr></tbody></table></div>
+            <div class="report-progress-records activity-progress-records"><h3>活动执行进展</h3><table class="activity-progress-table"><tbody><tr v-for="entry in activity.progressHistory" :key="entry.date"><td>{{ entry.date }}</td><td>{{ entry.content }}</td></tr><tr class="is-latest"><td :class="{ 'report-date-hint': !draft.filledAt }"><review-comment-label :comment="progressReviewComment('activities', activity)">{{ draft.filledAt || '同报告填写日期' }}</review-comment-label></td><td><a-textarea v-model="activity.progress" :class="progressReviewClass('activities', activity)" :rows="2" placeholder="请填写本报告周期内的活动执行进展" /></td></tr></tbody></table></div>
           </section>
         </article>
       </div>
@@ -98,7 +98,8 @@
 </template>
 
 <script>
-import { loadReportDraft, saveReportDraft } from '../mock/report-drafts'
+import { loadReportDraft, loadReviewedReportExample, saveReportDraft } from '../mock/report-drafts'
+import ReviewCommentLabel from '../components/ReviewCommentLabel.vue'
 import ProjectBudgetEditor from '../components/ProjectBudgetEditor.vue'
 
 function cleanRichText (html) {
@@ -186,16 +187,19 @@ const benefitRegions = [
 
 export default {
   name: 'ReportForm',
-  components: { ProjectBudgetEditor, RichEditor },
+  components: { ProjectBudgetEditor, RichEditor, ReviewCommentLabel },
   props: { projectId: { type: [String, Number], required: true }, type: { type: String, default: 'progress' } },
-  data () { return { draft: loadReportDraft(this.projectId, this.type), benefitSections: JSON.parse(JSON.stringify(benefitSections)), attachmentVisible: false, attachmentDraft: { category: undefined, file: null, error: '' }, benefitVisible: false, benefitMode: 'new', benefitErrors: {}, benefitOriginal: null, benefitRegions, benefitIndex: -1, benefitSectionKey: null, benefitDraft: emptyBenefit(), benefitFields: [{ key: 'indicator', label: '收益指标', required: true }, { key: 'category', label: '分类', required: true }, { key: 'name', label: '中文名', required: true }, { key: 'latinName', label: '拉丁文名' }, { key: 'quantity', label: '受益数量', required: true }, { key: 'remark', label: '备注' }] } },
+  data () { return { draft: this.$route.query.example === 'P-001006' ? loadReviewedReportExample(this.projectId) : loadReportDraft(this.projectId, this.type), benefitSections: JSON.parse(JSON.stringify(benefitSections)), attachmentVisible: false, attachmentDraft: { category: undefined, file: null, error: '' }, benefitVisible: false, benefitMode: 'new', benefitErrors: {}, benefitOriginal: null, benefitRegions, benefitIndex: -1, benefitSectionKey: null, benefitDraft: emptyBenefit(), benefitFields: [{ key: 'indicator', label: '收益指标', required: true }, { key: 'category', label: '分类', required: true }, { key: 'name', label: '中文名', required: true }, { key: 'latinName', label: '拉丁文名' }, { key: 'quantity', label: '受益数量', required: true }, { key: 'remark', label: '备注' }] } },
   computed: {
+    hasProgressReviewComments () { return this.draft.outputs.some(output => !!this.progressReviewComment('outputs', output) || output.activities.some(activity => !!this.progressReviewComment('activities', activity))) },
     activeBenefitFields () { return benefitSchemas[this.benefitSectionKey] || [] },
     isCompletion () { return this.draft.type === '结项报告' },
     executionRate () { return this.ratio(this.draft.executed, this.draft.funding) },
     requestRate () { return this.ratio(Number(this.draft.paid || 0) + (this.draft.requestNeeded ? Number(this.draft.requested || 0) : 0), this.draft.funding) }
   },
   methods: {
+    progressReviewComment (section, row) { const value = (this.draft.reviewComments || {})[section + '.' + row.id]; return typeof value === 'string' ? value.trim() : '' },
+    progressReviewClass (section, row) { return { 'review-has-comment': !!this.progressReviewComment(section, row) } },
     goBack () { this.$router.go(-1) },
     money (value) { return (Number(value) || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) },
     ratio (value, total) { return Number(total) ? (Number(value || 0) / Number(total) * 100).toFixed(1) + ' %' : '—' },
@@ -289,9 +293,10 @@ export default {
 .project-form-page { display: grid; gap: 20px; min-width: 0; padding-bottom: 18px; color: #18253c; }
 .form-section { overflow: hidden; }.form-section .detail-section-header > .ant-btn { height: 32px; border-radius: 6px; }
 .basic-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 7px; }.basic-meta > span { padding: 2px 7px; border-radius: 3px; line-height: 20px; font-weight: 400; }.basic-meta .anticon { margin-right: 5px; }.project-code { color: #62bfe6; background: #effaff; }.report-code { color: #5b8ff9; background: #f0f5ff; }
-.form-fields.description-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; padding: 4px 22px 22px; }.field { min-width: 0; display: flex; flex-direction: column; gap: 9px; }.full { grid-column: 1 / -1; }.form-fields > .field { min-height: 76px; padding: 17px 18px; display: grid; align-content: center; gap: 7px; border-bottom: 1px solid #edf1f5; }.field label, .basic-field-label { color: #7b899b; font-weight: 400; line-height: 1.6; }.basic-field-value { min-height: 40px; padding: 8px 12px; color: #27384e; font-size: 16px; line-height: 24px; overflow-wrap: anywhere; } em { margin-right: 3px; color: #ff4d4f; font-style: normal; }
-.project-name-field .basic-field-value { font-weight: 600; line-height: 1.55; }
+.form-fields.description-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; padding: 4px 22px 22px; }.field { min-width: 0; display: flex; flex-direction: column; gap: 9px; }.full { grid-column: 1 / -1; }.form-fields > .field { min-height: 76px; padding: 17px 18px; display: grid; align-content: center; gap: 7px; border-bottom: 1px solid #edf1f5; }.field label, .basic-field-label { color: #7b899b; font-weight: 400; line-height: 1.6; }.basic-field-value { color: #27384e; font-weight: 500; line-height: 1.6; overflow-wrap: anywhere; } em { margin-right: 3px; color: #ff4d4f; font-style: normal; }
+
 .report-filled-date-control { width: calc(50% - 18px); display: grid; gap: 7px; }
+.project-name-field .basic-field-value { font-size: 16px; font-weight: 600; line-height: 1.55; }
 .date-pair { display: flex; gap: 12px; align-items: center; }.date-pair .ant-input { width: 50%; min-width: 0; }.date-pair > span { color: #718095; }.form-fields >>> input.ant-input, .form-fields .date-pair .ant-input { height: 40px; padding: 7px 12px; border-color: transparent; background: transparent; color: #27384e; font-size: 16px; line-height: 24px; box-shadow: none; }.form-fields >>> input.ant-input:hover, .form-fields .date-pair .ant-input:hover { border-color: #d9e1eb; }.form-fields >>> input.ant-input:focus, .form-fields .date-pair .ant-input:focus { border-color: #1677ff; box-shadow: 0 0 0 2px rgba(22,119,255,.12); }
 .amount-input { display: flex; align-items: center; gap: 8px; }.amount-input >>> .ant-input-number { width: 190px; height: 40px; border-color: transparent; background: transparent; box-shadow: none; }.amount-input >>> .ant-input-number:hover { border-color: #d9e1eb; }.amount-input >>> .ant-input-number-focused { border-color: #1677ff; box-shadow: 0 0 0 2px rgba(22,119,255,.12); }.amount-input >>> .ant-input-number-input { height: 38px; padding: 0 12px; color: #27384e; font-size: 16px; }.amount-input > span { color: #718095; }.form-fields >>> .binary-choice { min-height: 40px; line-height: 40px; }
 .request-control { display: flex; align-items: center; gap: 16px; min-height: 40px; }.request-control > .ant-checkbox-wrapper { flex: none; }.request-control .amount-input { flex: 1; }.request-control .amount-input >>> .ant-input-number { width: 100%; max-width: 240px; }.request-control .amount-input >>> .ant-input-number-disabled { border-color: transparent; background: #f5f7fa; }
@@ -331,4 +336,5 @@ export default {
 .benefit-error { margin: 0; color: #ff4d4f; font-size: 14px; line-height: 22px; }
 .modal-form >>> textarea.ant-input { padding: 4px 11px; font-size: 14px; line-height: 1.5; }
 .benefit-number >>> .benefit-area-unit { flex: 0 0 88px; width: 88px; }
+
 </style>

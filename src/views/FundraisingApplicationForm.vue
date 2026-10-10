@@ -2,15 +2,16 @@
   <section class="project-detail-page fundraising-form-page">
     <div class="detail-back-row"><a-button class="detail-back" @click="goBack"><a-icon type="arrow-left" /> 返回</a-button></div>
     <section class="panel detail-section">
-      <div class="detail-section-header"><span class="detail-section-icon"><a-icon type="file-text" /></span><div><h2>{{ draft.recruitment || '招募名称' }} - 募捐申请书</h2><p>{{ draft.organization || '机构名称' }}</p></div></div>
+      <div class="detail-section-header"><span class="detail-section-icon"><a-icon type="file-text" /></span><div><h2>{{ draft.recruitment || '招募名称' }} - 募捐申请书</h2></div></div>
       <div class="edit-grid">
         <div v-for="field in basicFieldsOrdered" :key="field.key" class="edit-field" :class="[{ wide: field.key === 'name' }, reviewClass(field.key)]">
-          <label :for="'fundraising-' + field.key"><em>*</em><review-comment-label :comment="comment(field.key)">{{ basicFieldLabel(field) }}</review-comment-label></label>
+          <label :for="'fundraising-' + field.key"><em v-if="field.key !== 'organization'">*</em><review-comment-label :comment="comment(field.key)">{{ basicFieldLabel(field) }}</review-comment-label></label>
           <a-input v-if="field.key === 'name'" :id="'fundraising-' + field.key" v-model="field.value" :max-length="200" placeholder="建议9个字，项目名称需具有项目代表性，体现项目急需要解决的社会问题" />
           <div v-else-if="field.key === 'fundraisingPeriod'" class="date-pair">
             <input id="fundraising-fundraisingPeriod" v-model="draft.periodStart" :type="draft.periodStart ? 'date' : 'text'" class="ant-input" placeholder="开始日期" aria-label="预计筹款开始日期" @focus="$event.target.type = 'date'" @blur="!draft.periodStart && ($event.target.type = 'text')" />
             <span>至</span><input v-model="draft.periodEnd" :type="draft.periodEnd ? 'date' : 'text'" class="ant-input" :min="draft.periodStart || undefined" placeholder="结束日期" aria-label="预计筹款结束日期" @focus="$event.target.type = 'date'" @blur="!draft.periodEnd && ($event.target.type = 'text')" />
           </div>
+          <span v-else-if="field.key === 'organization'" :id="'fundraising-' + field.key" class="basic-field-value">{{ draft.organization || '暂无' }}</span>
           <a-input v-else :id="'fundraising-' + field.key" v-model="field.value" :max-length="field.key === 'phone' ? 25 : 100" :placeholder="field.key === 'leader' ? '请负责人姓名' : field.key === 'phone' ? '请填写联系电话' : '请填写' + basicFieldLabel(field)" />
         </div>
       </div>
@@ -186,7 +187,12 @@ export default {
     pendingFundDirectionEntry () { const row = this.fundDirectionEntry; return !!row.direction || !!row.description || (row.ratio !== null && row.ratio !== '') },
     pendingEdits () { return (this.rowEditor.visible && JSON.stringify(this.rowEditor.value) !== this.rowEditor.snapshot) || (this.attachmentPicker.visible && !!this.attachmentPicker.file) },
     busy () { return this.uploading > 0 || Object.keys(this.busyEditors).some(key => this.busyEditors[key]) },
-    basicFieldsOrdered () { return this.draft.basicFields },
+    basicFieldsOrdered () {
+      const fields = this.draft.basicFields.filter(field => field.key !== 'organization')
+      const periodIndex = fields.findIndex(field => field.key === 'fundraisingPeriod')
+      fields.splice(periodIndex < 0 ? 1 : periodIndex + 1, 0, { key: 'organization', label: '申请机构', value: this.draft.organization })
+      return fields
+    },
     basicRichContent () { return ['organizationIntroduction', 'businessAchievements', 'experience'].map(key => this.draft.content.find(section => section.key === key)).filter(Boolean) },
     annualFundsSection () { return this.draft.content.find(section => section.key === 'annualFunds') },
     remainingContent () { return this.draft.content.filter(section => !['organizationIntroduction', 'businessAchievements', 'experience', 'annualFunds'].includes(section.key)) },
@@ -392,6 +398,7 @@ export default {
 
 <style scoped>
 .fundraising-form-page { min-width: 0; color: #18253c; padding-bottom: 18px; }
+.basic-field-value { color: #27384e; font-weight: 500; line-height: 1.6; overflow-wrap: anywhere; }
 .edit-grid { padding: 4px 22px 22px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; }
 .edit-grid .wide { grid-column: 1 / -1; }
 .edit-field { min-width: 0; min-height: 76px; padding: 17px 18px; display: grid; align-content: center; gap: 7px; border-bottom: 1px solid #edf1f5; }

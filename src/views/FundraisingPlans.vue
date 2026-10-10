@@ -39,7 +39,7 @@
             <template slot="status" slot-scope="status"><span :class="['status-chip', statusTone(status)]">{{ status }}</span></template>
             <template slot="updatedAt" slot-scope="updatedAt"><span class="updated-time"><span>{{ updatedAt.split(' ')[0] }}</span><span>{{ updatedAt.split(' ')[1] }}</span></span></template>
             <template slot="operation" slot-scope="text, record">
-              <div class="application-row-actions"><button v-for="action in actions(record)" :key="action" type="button" :class="{ 'view-action': action === '查看', 'delete-action': action === '删除' }" @click="notifyUnavailable(action)">{{ action }}</button></div>
+              <div class="application-row-actions"><button v-for="action in actions(record)" :key="action" type="button" :class="{ 'view-action': action === '查看', 'delete-action': action === '删除' }" @click="handleApplicationAction(action, record)">{{ action }}</button></div>
             </template>
           </a-table>
         </a-tab-pane>
@@ -59,7 +59,7 @@ export default {
   components: { FundraisingPlanModal },
   data () {
     return {
-      activeTab: 'plans', departments: planDepartments,
+      activeTab: this.$route.query.tab === 'applications' ? 'applications' : 'plans', departments: planDepartments,
       plans: createFundraisingPlans(), applications: createPlanApplications(),
       planName: '', appliedPlanName: '', planPage: 1, planPageSize: 10,
       applicationFilters: { name: '', department: undefined }, appliedApplicationFilters: { name: '', department: undefined }, applicationPage: 1, applicationPageSize: 50,
@@ -81,6 +81,13 @@ export default {
       ]
     }
   },
+  activated () {
+    this.applications = createPlanApplications()
+    if (this.$route.query.tab === 'applications') this.activeTab = 'applications'
+  },
+  watch: {
+    '$route.query.tab' (tab) { if (this.$route.name === 'fundraising-plans' && tab === 'applications') this.activeTab = 'applications' }
+  },
   computed: {
     filteredPlans () { return filterPlans(this.plans, { name: this.appliedPlanName }) },
     filteredApplications () { return filterPlans(this.applications, this.appliedApplicationFilters) },
@@ -97,7 +104,14 @@ export default {
     resetApplications () { this.applicationFilters = { name: '', department: undefined }; this.queryApplications() },
     changePlanPage (pagination) { this.planPage = pagination.pageSize === this.planPageSize ? pagination.current : 1; this.planPageSize = pagination.pageSize },
     changeApplicationPage (pagination) { this.applicationPage = pagination.pageSize === this.applicationPageSize ? pagination.current : 1; this.applicationPageSize = pagination.pageSize },
-    handlePlanAction (action, record) { if (action === 'edit') this.openPlan(record); else this.notifyUnavailable('申请') },
+    handlePlanAction (action, record) { if (action === 'edit') this.openPlan(record); else this.$router.push({ name: 'fundraising-plan-form', params: { id: 'new' }, query: { planId: record.id } }) },
+    handleApplicationAction (action, record) {
+      if (action === '编辑') { this.$router.push({ name: 'fundraising-plan-form', params: { id: record.id } }); return }
+      if (action === '查看' || action === '审核') {
+        this.$router.push({ name: 'fundraising-plan-detail', params: { id: record.id }, query: { mode: action === '审核' ? 'audit' : 'view' } }); return
+      }
+      this.notifyUnavailable(action)
+    },
     notifyUnavailable (action) { this.$message.info(`${action}对应的独立页面尚未实现，当前仅提供列表入口`) },
     openPlan (record) { this.$refs.planModal.open(record) },
     onPlanSaved () { this.planName = ''; this.appliedPlanName = ''; this.planPage = 1 }

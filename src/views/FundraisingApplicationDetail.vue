@@ -7,9 +7,9 @@
     </section>
 
     <section class="panel detail-section application-document">
-      <div class="detail-section-header"><span class="detail-section-icon"><a-icon type="file-text" /></span><div><h2>{{ application.organization }}</h2><div class="detail-basic-meta"><span class="application-version">{{ application.version }}</span><span class="application-agreement"><a-icon type="file-protect" /> {{ application.agreementCode || '暂无框架协议编号' }}</span><span class="project-recruitment"><a-icon type="notification" /> {{ application.recruitment }}</span></div><p v-if="isAudit">点击字段内容、信息小标题或表格行可添加审核意见</p></div></div>
+      <div class="detail-section-header"><span class="detail-section-icon"><a-icon type="file-text" /></span><div><h2>募捐申请书</h2><div class="detail-basic-meta"><span class="application-version">{{ application.version }}</span><span class="application-agreement"><a-icon type="file-protect" /> {{ application.agreementCode || '暂无框架协议编号' }}</span><span class="project-recruitment"><a-icon type="notification" /> {{ application.recruitment }}</span></div><p v-if="isAudit">点击字段内容、信息小标题或表格行可添加审核意见</p></div></div>
       <div class="description-grid">
-        <div v-for="field in application.basicFields" :key="field.key" class="description-item" :class="[fieldClass(field.key), { 'wide project-name-item': field.key === 'name' }]" v-bind="reviewAttributes()" @click="openReview(field.key)" @keydown.enter.prevent="openReview(field.key)" @keydown.space.prevent="openReview(field.key)"><span>{{ field.label }}</span><strong>{{ field.value || '暂无' }}</strong></div>
+        <div v-for="field in basicFields" :key="field.key" class="description-item" :class="[fieldClass(field.key), { 'wide project-name-item': field.key === 'name' }]" v-bind="reviewAttributes()" @click="openReview(field.key)" @keydown.enter.prevent="openReview(field.key)" @keydown.space.prevent="openReview(field.key)"><span>{{ field.label }}</span><strong>{{ field.value || '暂无' }}</strong></div>
       </div>
       <article class="rich-content application-content">
 
@@ -78,7 +78,15 @@ export default {
   data () {
     return { application: clone(example), auditForm: { result: 'approved', agreementCode: example.agreementCode, reviewAttachment: '', agreementScan: '', remark: '' }, reviewVisible: false, reviewKey: '', reviewLabel: '', reviewText: '', relatedComments: '', previewFile: null, previewImage: null, previewUrl: '', previewType: '', imageUrls: {} }
   },
-  computed: { isAudit () { return this.mode === 'audit' } },
+  computed: {
+    isAudit () { return this.mode === 'audit' },
+    basicFields () {
+      const fields = this.application.basicFields.filter(field => field.key !== 'organization')
+      const periodIndex = fields.findIndex(field => field.key === 'fundraisingPeriod')
+      fields.splice(periodIndex < 0 ? 1 : periodIndex + 1, 0, { key: 'organization', label: '申请机构', value: this.application.organization })
+      return fields
+    }
+  },
   created () { this.loadApplication() },
   activated () { this.loadApplication() },
   deactivated () { this.clearPreview(); this.clearImages() },
@@ -122,7 +130,7 @@ export default {
     },
     openReview (key, label) {
       if (!this.isAudit) return
-      const field = this.application.basicFields.concat(this.application.amountFields, this.application.content).find(item => item.key === key)
+      const field = this.basicFields.concat(this.application.amountFields, this.application.content).find(item => item.key === key)
       this.reviewKey = key; this.reviewLabel = label || (field && (field.label || field.title)) || '筹款图片'; this.reviewText = this.comment(key); this.relatedComments = ''; this.reviewVisible = true
     },
     persist () {

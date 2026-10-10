@@ -127,12 +127,14 @@ export default {
   } },
   computed: {
     pagedNotices () { return this.historyNotices.slice((this.noticePage - 1) * 5, this.noticePage * 5) },
-    activeNav () { return ['fundraising-application-detail', 'fundraising-application-form'].includes(this.$route.name) ? 'framework-agreements' : this.$route.name },
+    activeNav () { return ['fundraising-plan-detail', 'fundraising-plan-form'].includes(this.$route.name) ? 'fundraising-plans' : ['fundraising-application-detail', 'fundraising-application-form'].includes(this.$route.name) ? 'framework-agreements' : this.$route.name },
     breadcrumbRoot () {
       if (['organization-list', 'organization-detail'].includes(this.activeNav)) return '机构管理'
       return ['recruitment-summary', 'available-projects', 'recruitment-detail', 'recruitment-form', 'applied-projects', 'fundraising-plans', 'framework-agreements', 'project-detail', 'project-form', 'project-reports', 'report-detail'].includes(this.activeNav) ? '项目管理' : '工作台'
     },
     breadcrumbLeaf () {
+      if (this.$route.name === 'fundraising-plan-form') return this.$route.params.id === 'new' ? '申请筹款规划' : '编辑筹款规划申请'
+      if (this.$route.name === 'fundraising-plan-detail') return this.$route.query.mode === 'audit' ? '审核筹款规划' : '查看筹款规划'
       if (this.$route.name === 'fundraising-application-detail') return this.$route.query.mode === 'audit' ? '审核募捐申请书' : '查看募捐申请书'
       if (this.$route.name === 'fundraising-application-form') return '编辑募捐申请书'
       if (this.activeNav === 'organization-list') return '机构列表'

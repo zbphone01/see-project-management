@@ -158,11 +158,11 @@
         </section>
 
         <section id="detail-output" class="panel detail-section">
-          <div class="detail-section-header"><span class="detail-section-icon orange"><a-icon type="project" /></span><div><h2>{{ isGreenHomeExample ? '机构发展衡量指标及活动' : '项目产出 / 活动' }}</h2><p v-if="detailMode === 'audit'">点击产出或活动序号可添加审核意见</p></div></div>
-          <div v-for="(output, outputIndex) in detailTableData.outputs" :key="output.id" class="output-block" :class="{ 'review-has-comment': hasReviewComment(outputReviewComments[outputReviewKey('output', output.id)]) }">
-            <div class="output-title"><span :class="{ 'review-label-trigger': detailMode === 'audit' }" :role="detailMode === 'audit' ? 'button' : undefined" :tabindex="detailMode === 'audit' ? 0 : undefined" @click="openOutputReview('output', output.id)" @keydown.enter.prevent="openOutputReview('output', output.id)" @keydown.space.prevent="openOutputReview('output', output.id)">产出 {{ outputIndex + 1 }}</span><strong>{{ output.name }}</strong></div>
+          <div class="detail-section-header"><span class="detail-section-icon orange"><a-icon type="project" /></span><div><h2>{{ isGreenHomeExample ? '机构发展衡量指标及活动' : '项目产出 / 活动' }}</h2><p v-if="detailMode === 'audit'">点击产出行或活动表任意位置可添加审核意见</p></div></div>
+          <div v-for="(output, outputIndex) in detailTableData.outputs" :key="output.id" class="output-block">
+            <div class="output-title" :class="{ 'output-review-trigger': detailMode === 'audit', 'review-has-comment': hasReviewComment(outputReviewComments[outputReviewKey('output', output.id)]) }" :role="detailMode === 'audit' ? 'button' : undefined" :tabindex="detailMode === 'audit' ? 0 : undefined" @click="openOutputReview('output', output.id)" @keydown.enter.prevent="openOutputReview('output', output.id)" @keydown.space.prevent="openOutputReview('output', output.id)"><span>产出 {{ outputIndex + 1 }}</span><strong>{{ output.name }}</strong></div>
             <div class="output-standard"><span>产出衡量标准</span><div><p v-for="(paragraph, paragraphIndex) in output.standard.split('\n')" :key="paragraphIndex">{{ paragraph }}</p></div></div>
-            <div v-for="(activity, activityIndex) in output.activities" :key="activity.id" class="activity-card" :class="{ 'review-has-comment': hasReviewComment(outputReviewComments[outputReviewKey('activity', activity.id)]) }"><div><span :class="{ 'review-label-trigger': detailMode === 'audit' }" :role="detailMode === 'audit' ? 'button' : undefined" :tabindex="detailMode === 'audit' ? 0 : undefined" @click="openOutputReview('activity', activity.id)" @keydown.enter.prevent="openOutputReview('activity', activity.id)" @keydown.space.prevent="openOutputReview('activity', activity.id)">活动 {{ outputIndex + 1 }}.{{ activityIndex + 1 }}</span><strong>{{ activity.name }}</strong></div><dl><div><dt>活动时间</dt><dd>{{ activity.start }} 至 {{ activity.end }}</dd></div><div><dt>活动地点</dt><dd>{{ activity.location }}</dd></div><div><dt>执行人员</dt><dd>{{ activity.people }}</dd></div></dl><p>{{ activity.content }}</p></div>
+            <div v-for="(activity, activityIndex) in output.activities" :key="activity.id" class="activity-card" :class="{ 'output-review-trigger': detailMode === 'audit', 'review-has-comment': hasReviewComment(outputReviewComments[outputReviewKey('activity', activity.id)]) }" :role="detailMode === 'audit' ? 'button' : undefined" :tabindex="detailMode === 'audit' ? 0 : undefined" @click="openOutputReview('activity', activity.id)" @keydown.enter.prevent="openOutputReview('activity', activity.id)" @keydown.space.prevent="openOutputReview('activity', activity.id)"><div><span>活动 {{ outputIndex + 1 }}.{{ activityIndex + 1 }}</span><strong>{{ activity.name }}</strong></div><dl><div><dt>活动时间</dt><dd>{{ activity.start }} 至 {{ activity.end }}</dd></div><div><dt>活动地点</dt><dd>{{ activity.location }}</dd></div><div><dt>执行人员</dt><dd>{{ activity.people }}</dd></div></dl><p>{{ activity.content }}</p></div>
           </div>
         </section>
 
@@ -610,4 +610,8 @@ export default {
 .detail-table tr.review-row-has-comment:hover > td { background: #ffe7e5; }
 .detail-table tr.review-row-trigger:focus-visible { outline: 2px solid #ff7875; outline-offset: -2px; }
 .review-dialog-actions-right > .ant-btn + .ant-btn { margin-left: 0; }
+.output-review-trigger { cursor: pointer; }
+.output-review-trigger:hover { background-color: #f8fbff; }
+.output-review-trigger.review-has-comment:hover { background-color: #ffe7e5 !important; }
+.output-review-trigger:focus-visible { outline: 2px solid #ff7875; outline-offset: -2px; }
 </style>

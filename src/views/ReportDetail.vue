@@ -36,23 +36,23 @@
     </section>
 
     <section id="report-progress" class="panel detail-section">
-      <div class="detail-section-header"><span class="detail-section-icon orange"><a-icon type="project" /></span><div><h2>项目执行进展</h2><p v-if="isAudit">点击产出或活动序号可添加或编辑审核意见</p></div></div>
-      <article v-for="output in report.outputs" :key="output.id" class="output-block" :class="reportReviewClass(outputReviewKey(output.id))">
-        <div class="output-title"><span :class="{ 'review-label-trigger': isAudit }" :role="isAudit ? 'button' : undefined" :tabindex="isAudit ? 0 : undefined" @click="openReview(outputReviewKey(output.id))" @keydown.enter.prevent="openReview(outputReviewKey(output.id))" @keydown.space.prevent="openReview(outputReviewKey(output.id))">产出 {{ output.id }}</span><strong>{{ output.name }}</strong></div>
+      <div class="detail-section-header"><span class="detail-section-icon orange"><a-icon type="project" /></span><div><h2>项目执行进展</h2><p v-if="isAudit">点击蓝色产出或绿色活动的最新进展行可添加或编辑审核意见</p></div></div>
+      <article v-for="output in report.outputs" :key="output.id" class="output-block">
+        <div class="output-title"><span>产出 {{ output.id }}</span><strong>{{ output.name }}</strong></div>
         <div class="output-standard"><span>产出衡量标准</span><div><p v-for="(paragraph, index) in output.standard" :key="index">{{ paragraph }}</p></div></div>
         <div class="report-progress-records output-progress-records">
           <h3>产出执行进展</h3>
           <div class="output-progress-list">
-            <div v-for="(entry, index) in output.progress" :key="entry.date" :class="['report-progress-entry', { 'is-latest': index === output.progress.length - 1 }]"><time>{{ entry.date }}</time><p>{{ entry.content }}</p></div>
+            <div v-for="(entry, index) in output.progress" :key="entry.date" class="report-progress-entry" :class="progressReviewClass(outputReviewKey(output.id), index === output.progress.length - 1)" :role="isAudit && index === output.progress.length - 1 ? 'button' : undefined" :tabindex="isAudit && index === output.progress.length - 1 ? 0 : undefined" @click="index === output.progress.length - 1 && openReview(outputReviewKey(output.id))" @keydown.enter.prevent="index === output.progress.length - 1 && openReview(outputReviewKey(output.id))" @keydown.space.prevent="index === output.progress.length - 1 && openReview(outputReviewKey(output.id))"><time>{{ entry.date }}</time><p>{{ entry.content }}</p></div>
           </div>
         </div>
-        <section v-for="activity in output.activities" :key="activity.id" class="activity-card" :class="reportReviewClass(activityReviewKey(activity.id))">
-          <div><span :class="{ 'review-label-trigger': isAudit }" :role="isAudit ? 'button' : undefined" :tabindex="isAudit ? 0 : undefined" @click="openReview(activityReviewKey(activity.id))" @keydown.enter.prevent="openReview(activityReviewKey(activity.id))" @keydown.space.prevent="openReview(activityReviewKey(activity.id))">活动 {{ activity.id }}</span><strong>{{ activity.name }}</strong></div>
+        <section v-for="activity in output.activities" :key="activity.id" class="activity-card">
+          <div><span>活动 {{ activity.id }}</span><strong>{{ activity.name }}</strong></div>
           <dl><div><dt>活动时间</dt><dd>{{ activity.period }}</dd></div><div><dt>活动地点</dt><dd>{{ activity.location }}</dd></div><div><dt>执行人员</dt><dd>{{ activity.people }}</dd></div></dl>
           <h3 class="report-activity-label">活动内容</h3><p>{{ activity.content }}</p>
           <div class="report-progress-records activity-progress-records">
             <h3>活动执行进展</h3>
-            <table class="activity-progress-table"><tbody><tr v-for="entry in activity.progress" :key="entry.date" :class="{ 'is-latest': entry.isLatest }"><td>{{ entry.date }}</td><td>{{ entry.content }}</td></tr></tbody></table>
+            <table class="activity-progress-table"><tbody><tr v-for="(entry, index) in activity.progress" :key="entry.date" :class="progressReviewClass(activityReviewKey(activity.id), index === activity.progress.length - 1)" :role="isAudit && index === activity.progress.length - 1 ? 'button' : undefined" :tabindex="isAudit && index === activity.progress.length - 1 ? 0 : undefined" @click="index === activity.progress.length - 1 && openReview(activityReviewKey(activity.id))" @keydown.enter.prevent="index === activity.progress.length - 1 && openReview(activityReviewKey(activity.id))" @keydown.space.prevent="index === activity.progress.length - 1 && openReview(activityReviewKey(activity.id))"><td>{{ entry.date }}</td><td>{{ entry.content }}</td></tr></tbody></table>
           </div>
         </section>
       </article>
@@ -113,7 +113,7 @@
             </div>
           </div>
           <div class="audit-form-column">
-            <div class="audit-form-row" :class="{ 'report-field-error': formErrors.remark }"><label for="report-remark"><em v-if="auditForm.result === 'rejected'">*</em> 审核备注信息：</label><a-textarea id="report-remark" v-model="auditForm.remark" :rows="6" placeholder="驳回时必填" @change="formErrors.remark = ''" /><p v-if="formErrors.remark" class="report-error" role="alert">{{ formErrors.remark }}</p></div>
+            <div class="audit-form-row" :class="{ 'report-field-error': formErrors.remark }"><label for="report-remark"><em v-if="auditForm.result === 'rejected'">*</em> 审核备注信息：</label><a-textarea id="report-remark" v-model="auditForm.remark" :rows="5" placeholder="驳回时必填" @change="formErrors.remark = ''" /><p v-if="formErrors.remark" class="report-error" role="alert">{{ formErrors.remark }}</p></div>
           </div>
         </div>
         <div class="audit-form-actions"><a-button @click="backToDashboard">取消</a-button><a-button type="primary" html-type="submit">确认</a-button></div>
@@ -301,6 +301,7 @@ export default {
       const value = (this.reviewComments || {})[key]
       return typeof value === 'string' ? value.trim() : ''
     },
+    progressReviewClass (key, latest) { return { 'is-latest': latest, 'review-row-trigger': this.isAudit && latest, 'review-has-comment': this.isAudit && latest && !!this.reviewComment(key) } },
     reportReviewClass (key) {
       return { 'review-has-comment': this.isAudit && !!this.reviewComment(key) }
     },
@@ -446,4 +447,9 @@ export default {
 .report-empty { padding: 24px; text-align: center; color: #718095; }
 .report-not-found { padding: 72px 24px; }
 .review-dialog-actions-right > .ant-btn + .ant-btn { margin-left: 0; }
+.report-progress-entry.review-row-trigger, .activity-progress-table .review-row-trigger { cursor: pointer; }
+.report-progress-entry.review-row-trigger:hover, .activity-progress-table .review-row-trigger:hover > td { background: #f8fbff; }
+.report-progress-entry.review-has-comment:hover, .activity-progress-table .review-has-comment:hover > td { background: #ffe7e5 !important; }
+.activity-progress-table .review-has-comment > td { background: #fff1f0; }
+.report-progress-entry.review-row-trigger:focus-visible, .activity-progress-table .review-row-trigger:focus-visible { outline: 2px solid #ff7875; outline-offset: -2px; }
 </style>

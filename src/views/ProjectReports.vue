@@ -33,6 +33,7 @@
             <a-menu slot="overlay" @click="showDemo($event.key, report)">
               <a-menu-item v-if="report.status === '进展待审'" key="审核">审核</a-menu-item>
               <a-menu-item :key="report.reportType === '进展报告' ? '查看进展报告' : '查看报告'">{{ report.reportType === '进展报告' ? '查看进展报告' : '查看报告' }}</a-menu-item>
+              <a-menu-item v-if="report.reportCode === 'P-001006'" key="编辑示例">编辑示例</a-menu-item>
               <a-menu-item v-if="report.status === '草稿'" key="编辑报告">编辑报告</a-menu-item>
             </a-menu>
           </a-dropdown>
@@ -93,6 +94,7 @@ export default {
     changePage (pagination) { this.page = pagination.pageSize !== this.pageSize ? 1 : pagination.current; this.pageSize = pagination.pageSize },
     openProject (report) { this.$router.push({ name: 'project-detail', params: { id: String(report.projectId) } }) },
     showDemo (action, report) {
+      if (action === '编辑示例') { this.$router.push({ name: 'report-form', params: { id: String(report.projectId) }, query: { type: 'progress', example: report.reportCode } }); return }
       if (action === '审核' || action === '查看进展报告' || action === '查看报告') {
         this.$router.push({ name: 'report-detail', params: { id: report.reportCode }, query: action === '审核' ? { mode: 'audit' } : {} })
         return

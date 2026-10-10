@@ -25,6 +25,10 @@ const router = new VueRouter({
     },
     { path: '/projects/applied', name: 'applied-projects', component: () => import('../views/AppliedProjects.vue') },
     { path: '/projects/fundraising-plans', name: 'fundraising-plans', component: () => import('../views/FundraisingPlans.vue') },
+    { path: '/projects/fundraising-plans/applications/:id/edit', name: 'fundraising-plan-form', component: () => import('../views/FundraisingPlanForm.vue') },
+    { path: '/projects/fundraising-plans/applications/:id', name: 'fundraising-plan-detail', component: () => import('../views/FundraisingPlanDetail.vue'),
+      props: route => ({ applicationId: route.params.id, mode: route.query.mode === 'audit' ? 'audit' : 'view' })
+    },
     { path: '/projects/framework-agreements', name: 'framework-agreements', component: () => import('../views/FrameworkAgreements.vue') },
     { path: '/projects/fundraising-applications/:id', name: 'fundraising-application-detail', component: () => import('../views/FundraisingApplicationDetail.vue'),
       props: route => ({ mode: route.query.mode === 'audit' ? 'audit' : 'view' })
