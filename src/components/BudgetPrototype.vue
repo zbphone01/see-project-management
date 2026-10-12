@@ -1,5 +1,5 @@
 <template>
-  <div class="budget-prototype">
+  <div class="budget-prototype" :class="{ 'budget-prototype-embedded': embedded }">
     <a-tabs v-model="activeTab" :animated="false">
       <a-tab-pane v-for="(title, index) in budget.tabs" :key="String(index)" :tab="title">
         <div v-if="index === 0" class="budget-sheet-scroll" tabindex="0" aria-label="预算及执行明细表，可左右滚动">
@@ -39,6 +39,7 @@
 export default {
   name: 'BudgetPrototype',
   props: {
+    embedded: { type: Boolean, default: false },
     projectName: { type: String, default: '项目名称' },
     budget: { type: Object, required: true }
   },
@@ -47,10 +48,12 @@ export default {
 </script>
 
 <style scoped>
-.budget-prototype { min-width: 0; padding-bottom: 24px; }
+.budget-prototype { min-width: 0; }
+.budget-prototype:not(.budget-prototype-embedded) { padding-bottom: 24px; }
 .budget-prototype >>> .ant-tabs-bar { margin-bottom: 24px; }
 .budget-prototype >>> .ant-tabs-tab { margin-right: 0; padding: 18px 28px; }
-.budget-sheet-scroll { max-width: 100%; margin: 0 24px; overflow-x: auto; overscroll-behavior-x: contain; padding-bottom: 12px; }
+.budget-prototype:not(.budget-prototype-embedded) .budget-sheet-scroll { margin: 0 24px; }
+.budget-sheet-scroll { max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; padding-bottom: 12px; }
 .budget-sheet-scroll:focus-visible { outline: 2px solid #1677ff; outline-offset: 2px; }
 .budget-sheet { width: 1650px; min-width: 1650px; max-width: none; table-layout: fixed; border-collapse: collapse; color: #111; background: #fff; font-size: 12px; line-height: 1.35; }
 .budget-sheet th, .budget-sheet td { border: 1px solid #222; padding: 7px 6px; text-align: center; vertical-align: middle; overflow-wrap: anywhere; }

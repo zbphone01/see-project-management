@@ -1,6 +1,6 @@
 <template>
   <div class="application-budget budget-sheet-list">
-    <div v-for="sheet in sheets" :key="sheet.title" class="budget-sheet-row">
+    <div v-for="sheet in visibleSheets" :key="sheet.title" class="budget-sheet-row">
       <div class="budget-sheet-info">
         <strong>{{ sheet.title }}</strong>
         <span>{{ sheet.status }}</span>
@@ -14,6 +14,7 @@
 export default {
   name: 'ProjectBudgetEditor',
   props: {
+    hideCostTypeAnalysis: { type: Boolean, default: false },
     value: { type: Object, required: true },
     projectName: { type: String, default: '' }
   },
@@ -26,6 +27,9 @@ export default {
         { title: '费用类型分析表', status: '根据费用类型自动生成分析', actions: ['查看'] }
       ]
     }
+  },
+  computed: {
+    visibleSheets () { return this.sheets.filter(sheet => !this.hideCostTypeAnalysis || sheet.title !== '费用类型分析表') }
   },
   methods: {
     notify (action, title) { this.$message.info(`${title}${action}功能待开发`) }

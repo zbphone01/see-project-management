@@ -58,7 +58,7 @@ router.beforeEach((to, from, next) => {
   if (to.name === 'recruitment-detail' && !Object.prototype.hasOwnProperty.call(recruitmentDetails, to.params.id)) {
     next({ name: 'available-projects', replace: true }); return
   }
-  if (to.name === 'project-form' && !editableDraftIds.some(id => String(id) === String(to.params.id))) {
+  if (to.name === 'project-form' && !(to.params.id === '8' && to.query.detailType === 'green-home') && !editableDraftIds.some(id => String(id) === String(to.params.id))) {
     next({ name: 'dashboard', replace: true }); return
   }
   if (to.name === 'project-detail' && !appliedProjects.some(project => String(project.id) === to.params.id)) {

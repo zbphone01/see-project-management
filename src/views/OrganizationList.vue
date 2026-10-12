@@ -19,7 +19,7 @@
           <template slot="contact" slot-scope="text, item"><div class="organization-contact"><span>{{ item.contactName }}</span><span>{{ item.contactPhone }}</span></div></template>
           <template slot="status" slot-scope="status"><span :class="['status-chip', states[status].tone]">{{ status }}</span></template>
           <template slot="operation" slot-scope="text, item">
-            <a-dropdown :trigger="['click']" placement="bottomRight">
+            <a-dropdown :trigger="['hover']" placement="bottomRight">
               <a-button class="operation-button" :aria-label="`${item.name}（${item.status}）的操作`">操作<a-icon type="down" /></a-button>
               <a-menu slot="overlay" @click="handleAction($event.key, item)"><a-menu-item v-for="action in item.id === 'org-1' ? ['查看详情', '审核', '上传年报'] : states[item.status].actions" :key="action">{{ action }}</a-menu-item></a-menu>
             </a-dropdown>

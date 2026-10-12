@@ -28,7 +28,7 @@
         <template slot="submittedAt" slot-scope="value"><span v-if="value" class="updated-time"><span>{{ value.split(' ')[0] }}</span><span>{{ value.split(' ')[1] }}</span></span><span v-else class="empty-value">—</span></template>
         <template slot="outcome" slot-scope="value"><span :class="{ 'empty-value': value === '-' }">{{ value === '-' ? '—' : value }}</span></template>
         <template slot="operation" slot-scope="text, report">
-          <a-dropdown v-if="report.status !== '进展放弃'" placement="bottomRight">
+          <a-dropdown v-if="report.status !== '进展放弃'" :trigger="['hover']" placement="bottomRight">
             <a-button class="operation-button">操作 <a-icon type="down" /></a-button>
             <a-menu slot="overlay" @click="showDemo($event.key, report)">
               <a-menu-item v-if="report.status === '进展待审'" key="审核">审核</a-menu-item>

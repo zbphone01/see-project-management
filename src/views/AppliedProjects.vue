@@ -82,7 +82,7 @@
               </span>
             </template>
             <template slot="operation" slot-scope="text, record">
-              <a-dropdown placement="bottomRight">
+              <a-dropdown placement="bottomRight" :trigger="['hover']">
                 <a-button class="operation-button">操作 <a-icon type="down" /></a-button>
                 <a-menu slot="overlay" @click="handleProjectAction($event, record)">
                   <template v-if="record.status === '申请待审'">
@@ -98,7 +98,31 @@
                   <template v-else-if="record.status === '进展待审'">
                     <a-menu-item key="audit-progress">审核</a-menu-item>
                     <a-menu-item key="project-detail">查看项目详情</a-menu-item>
+                    <a-menu-item key="download-progress-pdf">下载进展报告pdf</a-menu-item>
+                    <a-menu-item key="download-progress-word">下载进展报告word</a-menu-item>
+                  </template>
+                  <template v-else-if="record.id === 1 && record.status === '执行中'">
+                    <a-menu-item key="detail">查看详情</a-menu-item>
+                    <a-menu-item key="view-reports">查看进展/结项</a-menu-item>
+                    <a-sub-menu key="fundraising-status" title="变更筹款状态 ">
+                      <a-menu-item key="fundraising-active">筹款中</a-menu-item>
+                      <a-menu-item key="fundraising-complete">筹款完成</a-menu-item>
+                    </a-sub-menu>
                     <a-menu-item key="download-project-files">下载项目资料</a-menu-item>
+                    <a-menu-item key="abnormal-completion"><span style="color: #bfbfbf">*异常结项*</span></a-menu-item>
+                  </template>
+                  <template v-else-if="record.id === 2 && record.status === '审核流程中①'">
+                    <a-menu-item key="detail">查看详情</a-menu-item>
+                    <a-menu-item key="download-project-files">下载项目资料</a-menu-item>
+                    <a-sub-menu key="project-status" title="变更项目状态 ">
+                      <a-menu-item key="status-application-review">申请待审</a-menu-item>
+                      <a-menu-item key="status-application-edit">申请待修改</a-menu-item>
+                      <a-menu-item key="status-application-pending">申请待定</a-menu-item>
+                      <a-menu-item key="status-application-rejected">申请淘汰</a-menu-item>
+                      <a-menu-item key="status-executing">执行中</a-menu-item>
+                    </a-sub-menu>
+                    <a-menu-item key="upload-agreement-scan">上传协议扫描件</a-menu-item>
+                    <a-menu-item key="abnormal-completion"><span style="color: #bfbfbf">*异常结项*</span></a-menu-item>
                   </template>
                   <template v-else-if="record.detailType === 'green-home'">
                     <a-menu-item key="edit-green-home">编辑</a-menu-item>
@@ -143,7 +167,7 @@ export default {
         projectName: '',
         recruitmentName: ''
       },
-    appliedStatuses: ['审核流程中', '申请待审', '进展待审', '执行中', '修订中', '正常结项', '异常结项'],
+    appliedStatuses: ['审核流程中①', '申请待审', '进展待审', '执行中', '修订中', '正常结项', '异常结项'],
     appliedColumns: [
         { title: '项目名称', dataIndex: 'name', key: 'project', scopedSlots: { customRender: 'project' } },
         { title: '项目类型', dataIndex: 'type', key: 'type', width: 110, align: 'center', scopedSlots: { customRender: 'type' } },
@@ -187,7 +211,7 @@ export default {
     statusCount (status) { return this.appliedProjects.filter(project => project.status === status).length },
     appliedStatusTone (status) {
       const statusRoles = {
-        '审核流程中': 'neutral',
+        '审核流程中①': 'neutral',
         '执行中': 'active-approved',
         '修订中': 'action-rejected',
         '正常结项': 'neutral',
@@ -214,6 +238,18 @@ export default {
     handleAppliedTableChange (pagination) { this.appliedPage = pagination.current },
     exportSelected (type) { this.$message.info(`已选择 ${this.selectedProjectKeys.length} 个项目，准备导出${type}`) },
     handleProjectAction ({ key }, record) {
+      if (key === 'edit-green-home') {
+        this.$router.push({ name: 'project-form', params: { id: String(record.id) }, query: { detailType: 'green-home' } })
+        return
+      }
+      if (key === 'download-progress-pdf' || key === 'download-progress-word') {
+        this.$message.info('待后续开发')
+        return
+      }
+      if (((record.id === 1 && record.status === '执行中') || (record.id === 2 && record.status === '审核流程中①')) && key !== 'detail') {
+        this.$message.info('待后续开发')
+        return
+      }
       const labels = {
         detail: '查看详情',
         edit: '修改申请',

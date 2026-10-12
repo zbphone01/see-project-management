@@ -16,7 +16,7 @@
             <template slot="operation" slot-scope="text, record">
               <a-button v-if="record.id === 'plan-yangtze'" type="link" @click="handlePlanAction('edit', record)">编辑</a-button>
               <a-button v-else-if="record.id === 'plan-local'" type="link" @click="handlePlanAction('apply', record)">申请</a-button>
-              <a-dropdown v-else :trigger="['hover', 'click']" placement="bottomRight">
+              <a-dropdown v-else :trigger="['hover']" placement="bottomRight">
                 <a-button class="operation-button" :aria-label="`${record.name}的操作`">操作<a-icon type="down" /></a-button>
                 <a-menu slot="overlay" @click="handlePlanAction($event.key, record)">
                   <a-menu-item v-if="record.editable" key="edit">编辑</a-menu-item>

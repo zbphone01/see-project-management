@@ -46,7 +46,7 @@
         <strong>{{ breadcrumbRoot }}</strong>
         <span>/</span>
         <button v-if="activeNav === 'organization-detail'" class="breadcrumb-link" type="button" @click="navigate('organization-list')">机构列表</button>
-        <button v-else-if="activeNav === 'project-form'" class="breadcrumb-link" type="button" @click="navigate('dashboard')">工作台</button>
+        <button v-else-if="activeNav === 'project-form'" class="breadcrumb-link" type="button" @click="navigate($route.query.detailType === 'green-home' ? 'applied-projects' : 'dashboard')">{{ $route.query.detailType === 'green-home' ? '已申请项目' : '工作台' }}</button>
         <button v-else-if="activeNav === 'project-detail'" class="breadcrumb-link" type="button" @click="backToAppliedProjects">已申请项目</button>
         <button v-else-if="activeNav === 'report-detail'" class="breadcrumb-link" type="button" @click="navigate('project-reports')">进展/结项</button>
         <button v-else-if="['recruitment-detail', 'recruitment-form'].includes(activeNav)" class="breadcrumb-link" type="button" @click="navigate('available-projects')">可申请项目</button>
@@ -59,7 +59,7 @@
         <template v-if="activeNav === 'organization-detail'"><span>/</span><span>{{ $route.query.mode === 'audit' ? '审核机构' : '机构详情' }}</span></template>
         <template v-if="activeNav === 'recruitment-detail'"><span>/</span><span>招募详情</span></template>
         <template v-if="activeNav === 'recruitment-form'"><span>/</span><span>发布招募</span></template>
-        <template v-if="activeNav === 'project-form'"><span>/</span><span>填写项目申请</span></template>
+        <template v-if="activeNav === 'project-form'"><span>/</span><span>{{ $route.query.detailType === 'green-home' ? '编辑创绿家项目' : '填写项目申请' }}</span></template>
       </div>
       <div class="top-actions">
         <a-button class="icon-button" shape="circle" aria-label="查看历史系统通知" @click="openNoticeHistory"><a-icon type="bell" /></a-button>
