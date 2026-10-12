@@ -4,21 +4,19 @@
     <a-alert v-if="mode === 'audit' && !isAudit" type="info" show-icon message="该申请当前不处于待审状态，已切换为只读查看。" />
 
     <section id="plan-basic" class="panel detail-section">
-      <div class="detail-section-header"><span class="detail-section-icon"><a-icon type="file-text" /></span><div><h2>筹款规划申请 - {{ application.planName }}</h2><div class="detail-basic-meta"><span class="plan-department"><a-icon type="cluster" /> {{ application.department }}</span></div><p v-if="isAudit">点击字段内容可添加审核意见</p></div></div>
+      <div class="detail-section-header"><span class="detail-section-icon"><a-icon type="file-text" /></span><div><h2>筹款规划申请 - {{ application.planName }}</h2><div class="detail-basic-meta"><span class="plan-department"><a-icon type="cluster" /> {{ application.department }}</span></div><p v-if="isAudit && hasComments(basicFields.map(field => field.key))">点击字段内容可添加审核意见</p></div></div>
       <div class="description-grid">
         <div v-for="field in basicFields" :key="field.key" class="description-item" :class="[fieldClass(field.key), { wide: field.wide, 'project-name-item': field.key === 'name' }]" v-bind="reviewAttributes()" @click="openReview(field.key)" @keydown="reviewKeydown($event, field.key)"><span>{{ field.label }}</span><strong>{{ field.value || '暂无' }}</strong></div>
       </div>
-      <article class="rich-content">
+      <div class="detail-module-content">
         <p v-if="isAudit && hasComments(application.content.map(item => item.key))" class="plan-review-hint">请检查并修改标红的项目信息，点击信息小标题可添加具体审核意见</p>
-        <section v-for="section in orderedContent" :key="section.key" class="rich-text-section">
-          <h3><button v-if="isAudit" type="button" class="review-label-trigger" @click="openReview(section.key)">{{ section.title }}</button><template v-else>{{ section.title }}</template></h3>
-          <div class="rich-text-field" :class="fieldClass(section.key)"><div v-if="section.html" class="plan-saved-rich" v-html="safeHtml(section.html)"></div><template v-else><p v-for="(paragraph, index) in section.paragraphs" :key="index">{{ paragraph }}</p><p v-if="!section.paragraphs.length">暂无</p></template></div>
-        </section>
-      </article>
+        <plan-rich-content :sections="orderedContent" :is-audit="!!isAudit" :field-class="fieldClass" @review="openReview" />
+      </div>
     </section>
 
     <section id="plan-outputs" class="panel detail-section">
       <div class="detail-section-header"><span class="detail-section-icon orange"><a-icon type="project" /></span><div><h2>项目产出</h2><p v-if="isAudit && hasRowComments(['outputs', 'activities'])">请检查并修改标红的项目信息，点击行任意位置可添加具体审核意见</p></div></div>
+      <div class="detail-module-content">
       <div v-for="(output, outputIndex) in application.outputs" :key="output.id" class="output-block plan-output-block">
         <div class="plan-output-summary">
           <div class="output-title" :class="rowClass('outputs', output)" v-bind="reviewAttributes(output)" @click="openRowReview('outputs', output)" @keydown="rowKeydown($event, 'outputs', output)"><span>产出 {{ outputIndex + 1 }}</span><strong>{{ output.name }}</strong></div>
@@ -27,32 +25,33 @@
         <div class="detail-table-wrap plan-activities-table"><table class="detail-table"><colgroup><col style="width: 70px" /><col /><col style="width: 210px" /><col style="width: 210px" /></colgroup><thead><tr><th>序号</th><th>活动描述</th><th>活动时间</th><th>活动地点</th></tr></thead><tbody><tr v-for="(activity, index) in output.activities" :key="activity.id" :class="rowClass('activities', activity)" v-bind="reviewAttributes(activity)" @click="openRowReview('activities', activity)" @keydown="rowKeydown($event, 'activities', activity)"><td>{{ outputIndex + 1 }}.{{ index + 1 }}</td><td>{{ activity.description }}</td><td>{{ activity.time }}</td><td>{{ activity.location }}</td></tr><tr v-if="!output.activities.length"><td colspan="4">暂无活动</td></tr></tbody></table></div>
       </div>
       <p v-if="!application.outputs.length" class="plan-empty">暂无项目产出</p>
+      </div>
     </section>
 
     <section id="plan-budget" class="panel detail-section">
       <div class="detail-section-header"><span class="detail-section-icon gold"><a-icon type="fund" /></span><div><h2>项目预算</h2></div></div>
-      <budget-prototype :project-name="application.name" :budget="application.budget" />
+      <div class="detail-module-content"><budget-prototype embedded :project-name="application.name" :budget="application.budget" /></div>
     </section>
 
     <section id="plan-other" class="panel detail-section">
       <div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="profile" /></span><div><h2>其他信息</h2><p v-if="isAudit && hasComments(application.otherContent.map(item => item.key))">请检查并修改标红的项目信息，点击信息小标题可添加具体审核意见</p></div></div>
-      <article class="rich-content"><section v-for="section in application.otherContent" :key="section.key" class="rich-text-section"><h3><button v-if="isAudit" type="button" class="review-label-trigger" @click="openReview(section.key)">{{ section.title }}</button><template v-else>{{ section.title }}</template></h3><div class="rich-text-field" :class="fieldClass(section.key)"><div v-if="section.html" class="plan-saved-rich" v-html="safeHtml(section.html)"></div><template v-else><p v-for="(paragraph, index) in section.paragraphs" :key="index">{{ paragraph }}</p><p v-if="!section.paragraphs.length">暂无</p></template></div></section></article>
+      <div class="detail-module-content"><plan-rich-content :sections="application.otherContent" :is-audit="!!isAudit" :field-class="fieldClass" @review="openReview" /></div>
     </section>
 
     <section id="plan-attachments" class="panel detail-section">
       <div class="detail-section-header"><span class="detail-section-icon blue"><a-icon type="paper-clip" /></span><div><h2>附件</h2><p v-if="isAudit && hasRowComments(['attachments'])">请检查并修改标红的项目信息，点击行任意位置可添加具体审核意见</p></div></div>
-      <div class="attachment-list"><div v-for="file in application.attachments" :key="file.id" :class="rowClass('attachments', file)" v-bind="reviewAttributes(file)" @click="openRowReview('attachments', file)" @keydown="rowKeydown($event, 'attachments', file)"><div><strong>{{ file.name }}</strong><span>{{ file.uploadedAt }}</span></div><a-button type="link" @click.stop="previewAttachment(file)" @keydown.stop>预览</a-button><a-button type="link" @click.stop="downloadAttachment(file)" @keydown.stop>下载</a-button></div><p v-if="!application.attachments.length" class="plan-empty">暂无附件</p></div>
+      <div class="detail-module-content"><div class="attachment-list"><div v-for="file in application.attachments" :key="file.id" :class="rowClass('attachments', file)" v-bind="reviewAttributes(file)" @click="openRowReview('attachments', file)" @keydown="rowKeydown($event, 'attachments', file)"><div><strong>{{ file.name }}</strong><span>{{ file.uploadedAt }}</span></div><a-button type="link" @click.stop="previewAttachment(file)" @keydown.stop>预览</a-button><a-button type="link" @click.stop="downloadAttachment(file)" @keydown.stop>下载</a-button></div><p v-if="!application.attachments.length" class="plan-empty">暂无附件</p></div></div>
     </section>
 
     <section id="plan-history" class="panel detail-section">
       <div class="detail-section-header"><span class="detail-section-icon gray"><a-icon type="history" /></span><div><h2>审核信息</h2></div></div>
-      <a-timeline v-if="application.auditHistory.length" class="audit-timeline"><a-timeline-item v-for="record in application.auditHistory" :key="record.id" :color="record.result === '通过' ? '#70B603' : '#FF4D4F'"><div class="audit-entry"><strong>审核结果：{{ record.result }}</strong><div class="audit-result-row"><span class="audit-info-chip audit-time">{{ record.time }} · {{ record.account }}</span></div><div class="audit-result-details"><p><b>审核备注：</b>{{ record.remark || '暂无' }}</p></div></div></a-timeline-item></a-timeline>
-      <p v-else class="plan-empty">暂无审核信息</p>
+      <div class="detail-module-content"><a-timeline v-if="application.auditHistory.length" class="audit-timeline"><a-timeline-item v-for="record in application.auditHistory" :key="record.id" :color="record.result === '通过' ? '#70B603' : '#FF4D4F'"><div class="audit-entry"><strong>审核结果：{{ record.result }}</strong><div class="audit-result-row"><span class="audit-info-chip audit-time">{{ record.time }} · {{ record.account }}</span></div><div class="audit-result-details"><p><b>审核备注：</b>{{ record.remark || '暂无' }}</p></div></div></a-timeline-item></a-timeline>
+      <p v-else class="plan-empty">暂无审核信息</p></div>
     </section>
 
     <section v-if="isAudit" id="detail-audit" class="panel detail-section">
       <div class="detail-section-header"><span class="detail-section-icon red"><a-icon type="audit" /></span><div><h2>审核</h2></div></div>
-      <form class="project-audit-form" @submit.prevent="confirmAudit">
+      <div class="detail-module-content"><form class="project-audit-form" @submit.prevent="confirmAudit">
         <div class="audit-form-grid">
           <div class="audit-form-column">
             <div class="audit-form-row"><label for="plan-audit-result"><em>*</em> 审核结果：</label><a-select id="plan-audit-result" v-model="auditForm.result" @change="saveAuditDraft"><a-select-option value="approved">通过</a-select-option><a-select-option value="rejected">驳回</a-select-option></a-select><p v-if="formErrors.result" class="plan-error" role="alert">{{ formErrors.result }}</p></div>
@@ -61,7 +60,7 @@
           <div class="audit-form-column"><div class="audit-form-row"><label for="plan-audit-remark"><em v-if="auditForm.result === 'rejected'">*</em> 审核备注：</label><a-textarea id="plan-audit-remark" v-model="auditForm.remark" :rows="5" placeholder="驳回时必填" @change="saveAuditDraft" /><p v-if="formErrors.remark" class="plan-error" role="alert">{{ formErrors.remark }}</p></div></div>
         </div>
         <div class="audit-form-actions"><a-button :disabled="submitting" @click="goBack">取消</a-button><a-button type="primary" html-type="submit" :loading="submitting" :disabled="uploading">确认</a-button></div>
-      </form>
+      </form></div>
     </section>
 
     <a-modal v-if="isAudit" v-model="reviewVisible" title="编辑审核意见" :width="560" :mask-closable="false">
@@ -84,9 +83,37 @@ import { clonePlan, createPlanDetail, loadPlanDetail, savePlanDetail, readPlanSn
 const rowFields = { outputs: ['name', 'standard'], activities: ['description', 'time', 'location'], attachments: ['name', 'uploadedAt'] }
 const timestamp = () => { const date = new Date(); const pad = value => String(value).padStart(2, '0'); return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}` }
 
+// 两处富文本共用展示与分隔逻辑，审核入口仅出现在小标题。
+const PlanRichContent = {
+  functional: true,
+  props: {
+    sections: { type: Array, required: true },
+    isAudit: { type: Boolean, default: false },
+    fieldClass: { type: Function, required: true }
+  },
+  render (h, context) {
+    const nodes = []
+    context.props.sections.forEach((section, index) => {
+      if (index) nodes.push(h('div', { class: 'plan-rich-separator', attrs: { 'aria-hidden': 'true' } }, [h('span', { class: 'plan-rich-separator-dot' })]))
+      const title = context.props.isAudit
+        ? h('button', { class: 'review-label-trigger', attrs: { type: 'button' }, on: { click: () => context.listeners.review(section.key) } }, section.title)
+        : section.title
+      const paragraphs = section.paragraphs || []
+      const body = section.html
+        ? [h('div', { class: 'plan-saved-rich', domProps: { innerHTML: cleanFundraisingRichText(section.html) } })]
+        : (paragraphs.length ? paragraphs : ['暂无']).map((paragraph, i) => h('p', { key: i }, paragraph))
+      nodes.push(h('section', { key: section.key, class: 'rich-text-section' }, [
+        h('h3', [title]),
+        h('div', { class: ['rich-text-field', context.props.fieldClass(section.key)] }, body)
+      ]))
+    })
+    return h('article', { class: 'rich-content' }, nodes)
+  }
+}
+
 export default {
   name: 'FundraisingPlanDetail',
-  components: { BudgetPrototype },
+  components: { BudgetPrototype, PlanRichContent },
   props: { applicationId: { type: String, required: true }, mode: { type: String, default: 'view' } },
   data () {
     return { application: null, auditForm: { result: 'approved', remark: '', attachments: [] }, formErrors: {}, reviewVisible: false, reviewKey: '', reviewText: '', rowCommentsVisible: false, rowCommentItems: [], rowReviewKey: '', previewFile: null, previewUrl: '', previewType: '', uploading: false, submitting: false, loadToken: 0, previewToken: 0 }
@@ -115,7 +142,6 @@ export default {
   deactivated () { this.loadToken++; this.clearPreview(); this.closeDialogs() },
   beforeDestroy () { this.loadToken++; this.clearPreview() },
   methods: {
-    safeHtml: cleanFundraisingRichText,
     money (amount) { return Number(amount || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) },
     loadApplication () {
       this.loadToken++; this.clearPreview(); this.closeDialogs(); this.formErrors = {}; this.uploading = false; this.submitting = false
@@ -235,31 +261,42 @@ export default {
 .plan-detail-page .detail-section-header h2 { overflow-wrap: anywhere; }
 .plan-department { padding: 3px 6px; border-radius: 3px; color: #52a61a; background: #f6ffed; white-space: normal; overflow-wrap: anywhere; }
 .plan-detail-page .description-item strong, .plan-detail-page td, .plan-detail-page p { overflow-wrap: anywhere; white-space: pre-wrap; }
-.rich-content h3 { font-size: 16px; }
-.rich-text-field { padding: 8px; }
-.rich-text-field p:last-child { margin-bottom: 0; }
-.plan-saved-rich { overflow-wrap: anywhere; overflow-x: auto; }
-.plan-saved-rich >>> img { display: block; max-width: min(400px, 100%); max-height: 400px; width: auto; height: auto; object-fit: contain; }
-.plan-saved-rich >>> table { max-width: 100%; border-collapse: collapse; }
-.plan-saved-rich >>> td, .plan-saved-rich >>> th { border: 1px solid #e6ebf2; padding: 8px; }
-.review-label-trigger { padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
-.review-label-trigger:hover { color: #cf1322; }
+.detail-module-content { padding: 24px; --detail-inner-padding: 0; --detail-inner-margin: 0; }
+.description-grid { --detail-inner-padding: 0 22px 22px; }
+.description-item { gap: 8px; }
+.rich-content >>> h3 { margin: 0 0 12px; font-size: 16px; }
+.rich-content >>> .rich-text-section { margin: 0; }
+.rich-content >>> p { overflow-wrap: anywhere; white-space: pre-wrap; }
+.rich-content >>> h3::before, .rich-content >>> h3::after { content: none; }
+.rich-content >>> .rich-text-field > p:last-child, .rich-content >>> .plan-saved-rich > p:last-child { margin-bottom: 0; }
+.rich-content >>> .plan-rich-separator { position: relative; height: 1px; margin: 40px 0; background: linear-gradient(90deg, #b7dfcf 0%, #e4f2ec 42%, transparent 100%); }
+.rich-content >>> .plan-rich-separator-dot { position: absolute; left: -4px; top: 50%; width: 7px; height: 7px; transform: translateY(-50%); border: 2px solid #fff; border-radius: 50%; background: #18a66a; box-shadow: 0 0 0 2px #ccebdd; }
+.rich-content >>> .plan-saved-rich { overflow-wrap: anywhere; overflow-x: auto; }
+.rich-content >>> img { display: block; max-width: min(400px, 100%); max-height: 400px; width: auto; height: auto; object-fit: contain; }
+.rich-content >>> table { max-width: 100%; border-collapse: collapse; }
+.rich-content >>> td, .rich-content >>> th { border: 1px solid #e6ebf2; padding: 8px; }
+.rich-content >>> .review-label-trigger { padding: 3px 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.rich-content >>> .review-label-trigger:hover { color: #cf1322; }
+.rich-content >>> .review-label-trigger:focus-visible { outline: 2px solid #ff7875; outline-offset: -2px; }
+.rich-content >>> .review-has-comment { background: #fff1f0; }
 .description-item[role=button], .review-row-trigger { cursor: pointer; }
 .description-item[role=button]:hover, .review-row-trigger:hover { background: #f8fbff; }
 .review-row-trigger:hover > td { background: #f8fbff; }
 .review-has-comment, .review-row-has-comment { background: #fff1f0 !important; }
 .detail-table .review-row-has-comment > td { background: #fff1f0; }
 .review-row-has-comment:hover, .detail-table .review-row-has-comment:hover > td { background: #ffe7e5 !important; }
-.plan-output-summary.review-row-has-comment .output-title { background: transparent; }
-.review-label-trigger:focus-visible, [role=button]:focus-visible { outline: 2px solid #ff7875; outline-offset: -2px; }
+[role=button]:focus-visible { outline: 2px solid #ff7875; outline-offset: -2px; }
+.plan-output-block + .plan-output-block { margin-top: 24px; }
 .plan-output-summary .output-title { background: transparent; }
 .plan-activities-table { margin: 0; border: 0; border-top: 1px solid #e6ebf2; border-radius: 0; }
 .plan-activities-table table { table-layout: fixed; }
 .plan-activities-table td:first-child, .plan-activities-table th:first-child { text-align: center; }
 .plan-output-block .output-standard > div { min-width: 0; padding: 4px 0; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
-.plan-empty { margin: 22px; color: #718095; }
+.attachment-list > div:first-child { padding-top: 0; align-items: start; }
+#detail-audit > .detail-module-content { background: #fff; }
+.plan-empty { margin: 0; color: #718095; }
 .plan-error { margin: 8px 0 0; color: #ff4d4f; }
-.plan-review-hint { color: #718095; }
+.plan-review-hint { margin: 0 0 12px; color: #718095; }
 .review-dialog-actions { display: flex; justify-content: space-between; align-items: center; }
 .review-dialog-actions-right { display: flex; gap: 8px; margin-left: auto; }
 .review-dialog-actions-right > .ant-btn + .ant-btn { margin-left: 0; }
@@ -268,6 +305,5 @@ export default {
 .plan-comment-item .ant-btn { flex: none; }
 .plan-preview-image { display: block; width: auto; height: auto; max-width: 100%; max-height: 70vh; margin: auto; }
 .plan-preview-pdf { width: 100%; height: 65vh; border: 0; }
-.plan-view-action, .plan-view-action:hover, .plan-view-action:focus { color: #70b603; }
 .plan-not-found { padding: 50px; }
 </style>

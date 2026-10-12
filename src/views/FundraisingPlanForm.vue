@@ -11,12 +11,14 @@
         <div class="edit-field wide" :class="fieldClass('team')"><label for="plan-team"><em>*</em><review-comment-label :comment="comment('team')">执行团队</review-comment-label></label><a-input id="plan-team" v-model="draft.team" :max-length="200" placeholder="请填写执行团队" /></div>
         <div class="edit-field wide" :class="fieldClass('fundUsePlan')"><label for="plan-fund-use"><em>*</em><review-comment-label :comment="comment('fundUsePlan')">善款使用预案</review-comment-label></label><a-textarea id="plan-fund-use" v-model="draft.fundUsePlan" :rows="3" placeholder="请说明善款使用安排，以及筹款未达到最低执行额时的处理预案" /></div>
       </div>
-      <div v-for="section in draft.content" :key="section.key" class="rich-section"><h3><em>*</em><review-comment-label :comment="comment(section.key)">{{ section.title }}</review-comment-label></h3><fundraising-rich-editor :value="sectionHtml(section)" :label="section.title" :placeholder="richHint(section.key)" :class="fieldClass(section.key)" @input="value => updateRich(section, value)" @busy="value => setEditorBusy(section.key, value)" /></div>
+      <div class="plan-module-content rich-sections">
+        <div v-for="section in draft.content" :key="section.key" class="rich-section"><h3><em>*</em><review-comment-label :comment="comment(section.key)">{{ section.title }}</review-comment-label></h3><fundraising-rich-editor :value="sectionHtml(section)" :label="section.title" :placeholder="richHint(section.key)" :class="fieldClass(section.key)" @input="value => updateRich(section, value)" @busy="value => setEditorBusy(section.key, value)" /></div>
+      </div>
     </section>
 
     <section class="panel detail-section">
       <div class="detail-section-header"><span class="detail-section-icon orange"><a-icon type="project" /></span><div><h2>项目产出</h2><p v-if="hasRowComments(['outputs', 'activities'])">{{ rowHint }}</p></div></div>
-      <div class="section-body outputs-body">
+      <div class="plan-module-content">
         <a-empty v-if="!draft.outputs.length" class="empty-add" description="点击添加产出" role="button" tabindex="0" @click="openOutput()" @keydown.enter.native.prevent="openOutput()" @keydown.space.native.prevent="openOutput()" />
         <div v-for="(output, outputIndex) in draft.outputs" :key="output.id" class="output-block">
           <div class="output-summary">
@@ -31,17 +33,19 @@
 
     <section class="panel detail-section">
       <div class="detail-section-header"><span class="detail-section-icon gold"><a-icon type="fund" /></span><div><h2>项目预算</h2></div></div>
-      <div class="budget-sheet-list"><div class="budget-sheet-row"><div class="budget-sheet-info"><strong>{{ draft.name ? draft.name + '-预算表' : '填写申请名称后自动生成预算表名称' }}</strong><span>{{ draft.budget.status }}<template v-if="draft.budget.updatedAt"> · 编辑日期：{{ draft.budget.updatedAt }}</template></span></div><a-button type="link" @click="openBudget">编辑</a-button><a-button type="link" @click="budgetPreview = true">查看</a-button></div></div>
+      <div class="plan-module-content budget-sheet-list"><div class="budget-sheet-row"><div class="budget-sheet-info"><strong>{{ draft.name ? draft.name + '-预算表' : '填写申请名称后自动生成预算表名称' }}</strong><span>{{ draft.budget.status }}<template v-if="draft.budget.updatedAt"> · 编辑日期：{{ draft.budget.updatedAt }}</template></span></div><a-button type="link" @click="openBudget">编辑</a-button><a-button type="link" @click="budgetPreview = true">查看</a-button></div></div>
     </section>
 
-    <section class="panel detail-section other-info-section">
+    <section class="panel detail-section">
       <div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="profile" /></span><div><h2>其他信息</h2><p v-if="hasComments(draft.otherContent.map(item => item.key))">{{ fieldHint }}</p></div></div>
-      <div v-for="section in draft.otherContent" :key="section.key" class="rich-section"><h3><em>*</em><review-comment-label :comment="comment(section.key)">{{ section.title }}</review-comment-label></h3><fundraising-rich-editor :value="sectionHtml(section)" :label="section.title" :placeholder="richHint(section.key)" :class="fieldClass(section.key)" @input="value => updateRich(section, value)" @busy="value => setEditorBusy(section.key, value)" /></div>
+      <div class="plan-module-content rich-sections">
+        <div v-for="section in draft.otherContent" :key="section.key" class="rich-section"><h3><em>*</em><review-comment-label :comment="comment(section.key)">{{ section.title }}</review-comment-label></h3><fundraising-rich-editor :value="sectionHtml(section)" :label="section.title" :placeholder="richHint(section.key)" :class="fieldClass(section.key)" @input="value => updateRich(section, value)" @busy="value => setEditorBusy(section.key, value)" /></div>
+      </div>
     </section>
 
     <section class="panel detail-section">
       <div class="detail-section-header"><span class="detail-section-icon blue"><a-icon type="paper-clip" /></span><div><h2>附件</h2><p v-if="hasRowComments(['attachments'])">{{ rowHint }}</p></div></div>
-      <div class="section-body"><input ref="attachmentInput" class="hidden-input" type="file" aria-label="上传附件" @change="uploadAttachment" /><a-empty v-if="!draft.attachments.length" class="empty-add" description="点击添加附件" role="button" tabindex="0" @click="chooseAttachment" @keydown.enter.native.prevent="chooseAttachment" @keydown.space.native.prevent="chooseAttachment" />
+      <div class="plan-module-content"><input ref="attachmentInput" class="hidden-input" type="file" aria-label="上传附件" @change="uploadAttachment" /><a-empty v-if="!draft.attachments.length" class="empty-add" description="点击添加附件" role="button" tabindex="0" @click="chooseAttachment" @keydown.enter.native.prevent="chooseAttachment" @keydown.space.native.prevent="chooseAttachment" />
         <div v-else class="attachment-list"><div v-for="file in draft.attachments" :key="file.id" :class="rowClass('attachments', file)" v-bind="rowAttrs('attachments', file)" @click="openRowComments('attachments', file)" @keydown="rowKeydown($event, 'attachments', file)"><div><strong><a-popover v-if="commentsFor('attachments', file).length" :visible="rowReviewKey === 'attachments.' + file.id" trigger="click" placement="topLeft" @visibleChange="visible => changeRowCommentsVisibility('attachments', file, visible)"><template slot="content"><div class="row-review-content" @click.stop @keydown.stop><div><a-icon type="exclamation-circle" theme="filled" /><div class="row-review-messages"><p v-for="item in commentsFor('attachments', file)" :key="item.key">{{ item.text }}</p></div></div><a-button size="small" type="primary" @click.stop="rowReviewKey = ''">关闭</a-button></div></template><span>{{ file.name }}</span></a-popover><span v-else>{{ file.name }}</span></strong><span>{{ file.uploadedAt }}</span></div><a-button type="link" @click.stop="previewAttachment(file)" @keydown.stop>预览</a-button><a-button type="link" @click.stop="downloadAttachment(file)" @keydown.stop>下载</a-button><a-button type="link" class="danger-link" @click.stop="removeRow(draft.attachments, file, '附件')" @keydown.stop>删除</a-button></div></div>
         <a-button v-if="draft.attachments.length" type="dashed" icon="upload" class="add-more add-more-attachment" :loading="uploading" @click="chooseAttachment">添加更多附件</a-button>
       </div>
@@ -263,8 +267,8 @@ export default {
 .plan-form-page { min-width: 0; color: #18253c; padding-bottom: 18px; }
 .detail-section-header h2 { overflow-wrap: anywhere; }
 .plan-department { padding: 3px 6px; border-radius: 3px; color: #52a61a; background: #f6ffed; white-space: normal; overflow-wrap: anywhere; }
-.edit-grid { padding: 4px 22px 22px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.edit-field { min-width: 0; min-height: 76px; padding: 17px 18px; display: grid; align-content: start; gap: 7px; border-bottom: 1px solid #edf1f5; }
+.edit-grid { padding: 0 22px 22px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.edit-field { min-width: 0; min-height: 76px; padding: 17px 18px; display: grid; align-content: start; gap: 8px; border-bottom: 1px solid #edf1f5; }
 .edit-field.wide { grid-column: 1 / -1; }.edit-field > label { color: #7b899b; line-height: 1.6; font-weight: 400; }
 em { color: #ff4d4f; font-style: normal; margin-right: 6px; }
 .edit-field > .ant-input, .date-pair > .ant-input, .amount-input >>> .ant-input-number, .date-pair >>> .ant-select-selection { border-color: transparent; background: transparent; box-shadow: none; }
@@ -272,20 +276,23 @@ em { color: #ff4d4f; font-style: normal; margin-right: 6px; }
 .edit-field > .ant-input:focus, .date-pair > .ant-input:focus, .amount-input >>> .ant-input-number-focused { border-color: #1677ff; box-shadow: 0 0 0 2px rgba(22,119,255,.12); }
 .edit-grid >>> input.ant-input { height: 40px; padding: 8px 12px; line-height: 22px; }
 .edit-grid >>> .ant-input, .edit-grid >>> .ant-input-number-input { color: #27384e; font-size: 16px; }
+.edit-grid >>> input#plan-form-name.ant-input { padding: 0 12px; line-height: normal; }
+.edit-grid >>> input#plan-form-name.ant-input:placeholder-shown { font-size: 14px; }
+.edit-grid >>> .ant-input-number { height: 40px; }.edit-grid >>> .ant-input-number-input { height: 38px; padding: 0 12px; line-height: 38px; }
+.edit-grid >>> .ant-select-selection--single { height: 40px; }.edit-grid >>> .ant-select-selection__rendered { line-height: 38px; }.edit-grid >>> .ant-select-selection-selected-value { color: #27384e; font-size: 16px; }
 .plan-form-page >>> input::placeholder, .plan-form-page >>> textarea::placeholder, .plan-form-page >>> .ant-select-selection__placeholder { color: #5b8ff9; font-size: 14px; opacity: 1; }
 .date-pair { display: flex; align-items: center; gap: 12px; }.date-pair > .ant-input, .date-pair > .ant-select { flex: 1; min-width: 0; width: calc(50% - 20px); }.date-pair > span { color: #718095; }
 .amount-input { display: flex; align-items: center; gap: 8px; }.amount-input .ant-input-number { width: 210px; max-width: calc(100% - 30px); }.edit-field small { color: #718095; font-size: 14px; line-height: 1.6; }
-.rich-section { padding: 0 24px 24px; }.rich-section h3 { margin: 0 0 9px; font-size: 10pt; font-weight: 400; line-height: 1.6; }
-.rich-section + .rich-section { padding-top: 4px; }
-.other-info-section > .detail-section-header + .rich-section { padding-top: 24px; }
-.section-body { padding: 0 24px 24px; }.empty-add { padding: 20px 0; cursor: pointer; }.empty-add >>> .ant-empty-description { color: #5b8ff9; }.empty-add:focus-visible { outline: 2px solid #1677ff; }
+.plan-module-content { padding: 24px; }
+.rich-sections { display: grid; gap: 32px; }
+.rich-section { min-width: 0; display: grid; gap: 8px; }.rich-section h3 { margin: 0; font-family: inherit; font-size: 10pt; font-weight: 500; line-height: 1.6; }
+.empty-add { margin: 0; padding: 0; cursor: pointer; }.empty-add >>> .ant-empty-description { color: #5b8ff9; }.empty-add:focus-visible { outline: 2px solid #1677ff; }
 .add-more { width: 100%; margin-top: 14px; }.output-block { margin: 0; padding: 0; }.output-block + .output-block { margin-top: 24px; }
 .output-summary { padding: 0; }.output-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-right: 12px; }.output-title { min-width: 0; flex: 1; background: transparent; }.output-title strong { white-space: pre-wrap; overflow-wrap: anywhere; }
-.outputs-body { padding: 22px; }
 .output-standard > div { min-width: 0; padding: 4px 0; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
 .output-heading .output-title { display: flex; align-items: center; }.output-heading .output-title > span, .output-heading .output-title > strong { align-self: center; }
 .output-block > .detail-table-wrap { border: 0; border-top: 1px solid #e6ebf2; border-radius: 0; }.output-block .entry-table td { vertical-align: middle; }
-.detail-table-wrap { margin: 0; overflow-x: auto; }.entry-table { width: 100%; min-width: 850px; table-layout: fixed; }.index-col { width: 70px; }.actions-col { width: 130px; }.entry-table td { overflow-wrap: anywhere; vertical-align: middle; }.entry-table th:first-child, .entry-table td:first-child { text-align: center; }.budget-list th:first-child, .budget-list td:first-child { text-align: left; }
+.detail-table-wrap { margin: 0; overflow-x: auto; }.entry-table { width: 100%; min-width: 850px; table-layout: fixed; }.index-col { width: 70px; }.actions-col { width: 130px; }.entry-table td { overflow-wrap: anywhere; vertical-align: middle; }.entry-table th:first-child, .entry-table td:first-child, .entry-table th:last-child, .entry-table td:last-child { text-align: center; }.entry-table th:last-child, .entry-table td:last-child { padding-left: 12px; padding-right: 12px; }.entry-table td.row-actions { display: table-cell; }
 .row-actions { flex-shrink: 0; white-space: nowrap; }.row-actions .ant-btn { padding: 0 7px; }.danger-link { color: #ff4d4f; }.multiline { white-space: pre-wrap; }.empty-cell { color: #718095; text-align: center; }
 .output-block .add-activity-row > td { padding: 0; background: #e8f8f0; vertical-align: middle; }
 .add-activity-button { display: block; width: 100%; height: 32px; padding: 0 16px; color: #168b5a; border-radius: 0; }
@@ -299,15 +306,14 @@ em { color: #ff4d4f; font-style: normal; margin-right: 6px; }
 .row-review-messages { flex: 1; min-width: 0; }
 .row-review-messages p { margin: 0 0 14px; line-height: 1.6; overflow-wrap: anywhere; white-space: pre-wrap; }
 .row-review-content .ant-btn { display: block; margin-left: auto; }
-.budget-sheet-list { padding: 4px 22px 22px; }
-.budget-sheet-row { min-height: 72px; padding: 12px 4px; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 12px; }
+.budget-sheet-row { min-height: 60px; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: start; gap: 12px; }
 .budget-sheet-info { min-width: 0; display: grid; gap: 5px; }
 .budget-sheet-info strong { color: #18253c; font-weight: 600; overflow-wrap: anywhere; }
 .budget-sheet-info span { color: #8390a2; line-height: 1.55; overflow-wrap: anywhere; }
 .budget-sheet-row .ant-btn { padding: 0 8px; }
 .add-more-attachment { border-color: #91d5ff; border-style: dashed; color: #096dd9; background: #e6f7ff; }
 .add-more-attachment:hover, .add-more-attachment:focus { border-color: #40a9ff; color: #096dd9; background: #fff; }
-.attachment-list { padding: 0; }.attachment-list > div { grid-template-columns: minmax(0, 1fr) auto auto auto; }.attachment-list strong { overflow-wrap: anywhere; }.attachment-list .ant-btn { padding: 0 6px; }.hidden-input { display: none; }.file-hint { color: #718095; margin: 12px 0 0; }
+.attachment-list { margin: 0; padding: 0; }.attachment-list > div:first-child { padding-top: 0; align-items: start; }.attachment-list > div { grid-template-columns: minmax(0, 1fr) auto auto auto; }.attachment-list strong { overflow-wrap: anywhere; }.attachment-list .ant-btn { padding: 0 6px; }.hidden-input { display: none; }.file-hint { color: #718095; margin: 12px 0 0; }
 .basic-field-value { color: #27384e; font-weight: 500; line-height: 1.6; overflow-wrap: anywhere; }
 .form-footer { position: sticky; bottom: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 18px 24px; border: 1px solid #e6ebf2; border-radius: 12px; background: rgba(255,255,255,.98); box-shadow: 0 -4px 22px rgba(23,56,92,.07); }.form-footer > span { color: #718095; }.form-footer > div { display: flex; gap: 12px; }.form-footer .ant-btn { min-width: 100px; height: 32px; }
 .compact-modal-form { width: 470px; max-width: 100%; margin: auto; padding: 0; display: grid; gap: 16px; }.modal-field { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 18px; align-items: start; }.modal-field > label { text-align: right; line-height: 22px; padding-top: 5px; }.compact-modal-form >>> input, .compact-modal-form >>> textarea { font-size: 14px; }.compact-modal-form >>> input::placeholder, .compact-modal-form >>> textarea::placeholder { color: #bfbfbf; font-size: 14px; }.modal-date-pair { gap: 6px; }.modal-date-pair > .ant-input { border-color: #d9d9d9; padding-left: 5px; padding-right: 5px; }

@@ -1,8 +1,6 @@
 <template>
   <section v-if="report" class="project-detail-page report-detail-page">
     <div class="report-page-heading detail-back-row">
-      <div>
-      </div>
       <a-button class="detail-back" @click="goBack"><a-icon type="arrow-left" /> 返回</a-button>
     </div>
 
@@ -28,7 +26,7 @@
     </section>
 
     <section id="report-basic" class="panel detail-section">
-      <div class="detail-section-header"><span class="detail-section-icon"><a-icon type="profile" /></span><div><h2>{{ report.type }}{{ report.requestedCents ? '（需要请款）' : '' }}</h2><p v-if="isAudit">点击可修改字段的内容可添加或编辑审核意见</p><div class="detail-basic-meta"><span class="project-code"><a-icon type="flag" /> {{ report.projectCode }}</span><span class="report-code"><a-icon type="file-text" /> {{ report.id }}</span></div></div></div>
+      <div class="detail-section-header"><span class="detail-section-icon"><a-icon type="profile" /></span><div><h2>{{ report.type }}{{ report.requestedCents ? '（需要请款）' : '' }}</h2><p v-if="isAudit && basicFields.some(field => field.reviewable && reviewComment(field.key))">点击可修改字段的内容可添加或编辑审核意见</p><div class="detail-basic-meta"><span class="project-code"><a-icon type="flag" /> {{ report.projectCode }}</span><span class="report-code"><a-icon type="file-text" /> {{ report.id }}</span></div></div></div>
       <div class="description-grid">
         <div class="description-item wide project-name-item"><span>项目名称</span><strong>{{ report.projectName }}</strong></div>
         <div v-for="field in basicFields" :key="field.key" class="description-item" :class="[reportReviewClass(field.key), { wide: field.wide, 'review-label-trigger': isAudit && field.reviewable }]" :role="isAudit && field.reviewable ? 'button' : undefined" :tabindex="isAudit && field.reviewable ? 0 : undefined" @click="field.reviewable && openReview(field.key)" @keydown.enter.prevent="field.reviewable && openReview(field.key)" @keydown.space.prevent="field.reviewable && openReview(field.key)"><span>{{ field.label }}</span><strong>{{ field.value }}</strong></div>
@@ -36,7 +34,8 @@
     </section>
 
     <section id="report-progress" class="panel detail-section">
-      <div class="detail-section-header"><span class="detail-section-icon orange"><a-icon type="project" /></span><div><h2>项目执行进展</h2><p v-if="isAudit">点击蓝色产出或绿色活动的最新进展行可添加或编辑审核意见</p></div></div>
+      <div class="detail-section-header"><span class="detail-section-icon orange"><a-icon type="project" /></span><div><h2>项目执行进展</h2><p v-if="isAudit && report.outputs.some(output => reviewComment(outputReviewKey(output.id)) || output.activities.some(activity => reviewComment(activityReviewKey(activity.id))))">点击蓝色产出或绿色活动的最新进展行可添加或编辑审核意见</p></div></div>
+      <div class="detail-module-content">
       <article v-for="output in report.outputs" :key="output.id" class="output-block">
         <div class="output-title"><span>产出 {{ output.id }}</span><strong>{{ output.name }}</strong></div>
         <div class="output-standard"><span>产出衡量标准</span><div><p v-for="(paragraph, index) in output.standard" :key="index">{{ paragraph }}</p></div></div>
@@ -56,48 +55,62 @@
           </div>
         </section>
       </article>
+      </div>
     </section>
 
     <section id="report-other" class="panel detail-section">
-      <div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="read" /></span><div><h2>其他信息</h2><p v-if="isAudit">点击信息小标题可添加或编辑审核意见</p></div></div>
-      <article class="rich-content">
+      <div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="read" /></span><div><h2>其他信息</h2><p v-if="isAudit && report.otherInformation.some(item => reviewComment('otherInformation.' + item.id))">点击信息小标题可添加或编辑审核意见</p></div></div>
+      <div class="detail-module-content">
+      <detail-rich-content class="rich-content">
         <section v-for="item in report.otherInformation" :key="item.id" class="rich-text-section"><h3 :class="{ 'review-heading': isAudit }"><button v-if="isAudit" type="button" @click="openReview('otherInformation.' + item.id)">{{ item.title }}</button><template v-else>{{ item.title }}</template></h3><div class="rich-text-field" :class="reportReviewClass('otherInformation.' + item.id)"><p v-for="(paragraph, paragraphIndex) in item.paragraphs" :key="paragraphIndex">{{ paragraph }}</p></div></section>
-      </article>
+      </detail-rich-content>
+      </div>
     </section>
 
     <section id="report-communication" class="panel detail-section">
-      <div class="detail-section-header"><span class="detail-section-icon cyan"><a-icon type="notification" /></span><div><h2>传播信息</h2><p v-if="isAudit">点击信息小标题可添加或编辑审核意见</p></div></div>
-      <article class="rich-content"><section class="rich-text-section"><h3 :class="{ 'review-heading': isAudit }"><button v-if="isAudit" type="button" @click="openReview('communication')">项目传播情况</button><template v-else>项目传播情况</template></h3><div class="rich-text-field" :class="reportReviewClass('communication')"><p>{{ report.communication }}</p></div></section></article>
+      <div class="detail-section-header"><span class="detail-section-icon cyan"><a-icon type="notification" /></span><div><h2>传播信息</h2><p v-if="isAudit && reviewComment('communication')">点击信息小标题可添加或编辑审核意见</p></div></div>
+      <div class="detail-module-content">
+      <detail-rich-content class="rich-content"><section class="rich-text-section"><h3 :class="{ 'review-heading': isAudit }"><button v-if="isAudit" type="button" @click="openReview('communication')">项目传播情况</button><template v-else>项目传播情况</template></h3><div class="rich-text-field" :class="reportReviewClass('communication')"><p>{{ report.communication }}</p></div></section></detail-rich-content>
+      </div>
     </section>
 
     <section id="report-budget" class="panel detail-section">
       <div class="detail-section-header"><span class="detail-section-icon gold"><a-icon type="fund" /></span><div><h2>在线预算表</h2></div></div>
-      <budget-prototype :project-name="report.projectName" :budget="reportBudgetTemplate" />
+      <div class="detail-module-content">
+      <budget-prototype embedded :project-name="report.projectName" :budget="reportBudgetTemplate" />
+      </div>
     </section>
 
     <section id="report-attachments" class="panel detail-section">
       <div class="detail-section-header"><span class="detail-section-icon blue"><a-icon type="paper-clip" /></span><div><h2>附件</h2></div></div>
+      <div class="detail-module-content">
       <div v-if="report.attachments.length" class="attachment-list"><div v-for="file in report.attachments" :key="file.name"><div><strong>{{ file.name }}</strong><span>{{ file.type }} · {{ report.editedAt }}</span></div><a-button type="link" :aria-label="'预览' + file.name" @click="openAttachment(file, '预览')">预览</a-button><a-button type="link" :aria-label="'下载' + file.name" @click="openAttachment(file, '下载')">下载</a-button></div></div>
       <a-empty v-else class="report-empty" description="暂无附件" />
+      </div>
     </section>
 
     <section id="report-benefits" class="panel detail-section">
-      <div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="environment" /></span><div><h2>收益指标成果</h2><p v-if="isAudit">点击行任意位置可添加或编辑审核意见</p></div></div>
+      <div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="environment" /></span><div><h2>收益指标成果</h2><p v-if="isAudit && report.benefits.some(item => reviewComment('benefits.' + item.id))">点击行任意位置可添加或编辑审核意见</p></div></div>
+      <div class="detail-module-content">
       <div class="detail-table-wrap"><table class="detail-table report-benefits-table"><colgroup><col class="report-benefit-indicator" /><col /><col /><col /><col /><col /></colgroup><thead><tr><th>收益指标</th><th>分类</th><th>中文名</th><th>拉丁文名</th><th>受益数量</th><th>备注</th></tr></thead><tbody><tr v-for="benefit in report.benefits" :key="benefit.id" :class="[reportReviewClass('benefits.' + benefit.id), { 'review-row-trigger': isAudit }]" :role="isAudit ? 'button' : undefined" :tabindex="isAudit ? 0 : undefined" @click="openReview('benefits.' + benefit.id)" @keydown.enter.prevent="openReview('benefits.' + benefit.id)" @keydown.space.prevent="openReview('benefits.' + benefit.id)"><td>{{ benefit.indicator }}</td><td>{{ benefit.category }}</td><td>{{ benefit.name }}</td><td><i>{{ benefit.latinName }}</i></td><td>{{ benefit.quantity }}</td><td>{{ benefit.remark }}</td></tr><tr v-if="!report.benefits.length"><td colspan="6" class="report-empty">暂无收益指标成果</td></tr></tbody></table></div>
+      </div>
     </section>
 
     <section id="report-history" class="panel detail-section">
       <div class="detail-section-header"><span class="detail-section-icon gray"><a-icon type="history" /></span><div><h2>审核信息</h2></div></div>
+      <div class="detail-module-content">
       <a-timeline v-if="report.auditHistory.length" class="audit-timeline">
         <a-timeline-item v-for="entry in report.auditHistory" :key="entry.time" :color="entry.result === '通过' ? '#70B603' : '#FF4D4F'">
           <div class="audit-entry"><strong>审核结果：{{ entry.result }}</strong><div class="audit-result-row"><span class="audit-info-chip audit-time">{{ entry.time }} · {{ entry.reviewer }}</span></div><div class="audit-result-details"><p><b>审核备注：</b>{{ entry.remark || '—' }}</p></div></div>
         </a-timeline-item>
       </a-timeline>
       <a-empty v-else class="report-empty" description="暂无审核信息" />
+      </div>
     </section>
 
     <section v-if="isAudit" id="report-audit" class="panel detail-section">
       <div class="detail-section-header"><span class="detail-section-icon red"><a-icon type="audit" /></span><div><h2>审核</h2></div></div>
+      <div class="detail-module-content">
       <form class="project-audit-form" @submit.prevent="submitAudit">
         <div class="audit-form-grid">
           <div class="audit-form-column">
@@ -118,6 +131,7 @@
         </div>
         <div class="audit-form-actions"><a-button @click="backToDashboard">取消</a-button><a-button type="primary" html-type="submit">确认</a-button></div>
       </form>
+      </div>
     </section>
 
     <a-modal v-model="paymentMismatchVisible" :mask-closable="false" :closable="false" :width="480" :footer="null" class="report-mismatch-modal"><div class="report-mismatch-dialog"><div class="report-mismatch-heading"><a-icon type="close-circle" class="report-dialog-error-icon" /><h3>不能完成审核</h3></div><p class="report-mismatch-copy">请款状态确认与实际不符，请核实请款状态</p><div class="report-mismatch-actions"><a-button type="primary" @click="paymentMismatchVisible = false">关闭</a-button></div></div></a-modal>
@@ -220,9 +234,23 @@ const reports = [
 const emptyForm = () => ({ result: undefined, paymentCents: undefined, remark: '' })
 const emptyErrors = () => ({ result: '', payment: '', remark: '' })
 
+// 仅在相邻可见内容区块之间插入装饰分隔线。
+const DetailRichContent = {
+  functional: true,
+  render (h, context) {
+    const nodes = []
+    let count = 0
+    ;(context.children || []).forEach(node => {
+      if (node.tag === 'section' && count++) nodes.push(h('div', { class: 'detail-rich-separator', attrs: { 'aria-hidden': 'true' } }, [h('span', { class: 'detail-rich-separator-dot' })]))
+      nodes.push(node)
+    })
+    return h('article', context.data, nodes)
+  }
+}
+
 export default {
   name: 'ReportDetail',
-  components: { BudgetPrototype },
+  components: { BudgetPrototype, DetailRichContent },
   props: { reportId: { type: String, required: true }, mode: { type: String, default: 'view' } },
   data () { return {
     reports, auditForm: emptyForm(), formErrors: emptyErrors(), paymentOptions: [],
@@ -352,13 +380,24 @@ export default {
 </script>
 
 <style scoped>
+.detail-module-content { padding: 24px; --detail-inner-padding: 0; --detail-inner-margin: 0; }
+.description-grid { --detail-inner-padding: 0 22px 22px; }
+.description-item { gap: 8px; }
+.detail-module-content .output-block + .output-block { margin-top: 24px; }
+.attachment-list > div:first-child { padding-top: 0; align-items: start; }
+.rich-content > .rich-text-section { margin: 0; }
+.rich-content > .rich-text-section > h3 { margin: 0 0 12px; }
+.rich-content > .rich-text-section > h3::before, .rich-content > .rich-text-section > h3::after { content: none; }
+.rich-text-field > p:last-child { margin-bottom: 0; }
+.rich-content >>> .detail-rich-separator { position: relative; height: 1px; margin: 40px 0; background: linear-gradient(90deg, #b7dfcf 0%, #e4f2ec 42%, transparent 100%); }
+.rich-content >>> .detail-rich-separator-dot { position: absolute; left: -4px; top: 50%; width: 7px; height: 7px; transform: translateY(-50%); border: 2px solid #fff; border-radius: 50%; background: #18a66a; box-shadow: 0 0 0 2px #ccebdd; }
+#report-audit > .detail-module-content { background: #fff; }
+.report-benefits-table { table-layout: fixed; }
+.detail-module-content > .report-empty { padding: 0; margin: 0; }
 .review-dialog-actions { display: flex; justify-content: space-between; align-items: center; }
 .review-dialog-actions > .ant-btn-primary { margin-left: auto; }
 .review-dialog-actions-right { margin-left: auto; display: flex; gap: 8px; }
 .report-page-heading { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
-.report-page-heading > div { min-width: 0; }
-.report-page-heading h1 { margin: 0; color: #18253c; font-size: 16px; font-weight: 700; line-height: 1.6; overflow-wrap: anywhere; }
-.report-page-heading h1 > span { font-weight: 400; color: #718095; }
 .report-code { flex: none; padding: 2px 7px; border-radius: 3px; color: #5b8ff9; background: #f0f5ff; }
 .report-detail-page .description-item, .report-detail-page .output-title strong, .report-detail-page .activity-card strong { min-width: 0; overflow-wrap: anywhere; }
 .report-detail-page .review-label-trigger:focus-visible { outline: 2px solid #ff7875; outline-offset: -2px; }
@@ -369,15 +408,15 @@ export default {
 .report-benefits-table tr.review-has-comment:hover > td { background: #ffe7e5; }
 .report-benefits-table tr.review-row-trigger:focus-visible { outline: 2px solid #ff7875; outline-offset: -2px; }
 .report-detail-page .output-title > span { flex: none; }
-.report-progress-records { margin: 0 18px 20px; padding: 16px 18px; border: 1px solid #d9c8f0; border-radius: 10px; background: #fbf8ff; }
-.report-progress-records h3, .report-activity-label { margin: 0 0 12px; font-size: 14px; font-weight: 600; color: #7951a5; }
-.report-progress-entry { position: relative; display: grid; grid-template-columns: 94px minmax(0,1fr); gap: 16px; padding: 12px 0; border-top: 1px solid #eee5f7; }
-.report-progress-entry time { color: #7951a5; font-variant-numeric: tabular-nums; line-height: 1.7; }
+
+.report-progress-records h3, .report-activity-label { margin: 0 0 12px; color: #18253c; font-size: 14px; font-weight: 600; }
+.report-progress-entry { position: relative; display: grid; grid-template-columns: 94px minmax(0,1fr); gap: 16px; padding: 12px 0; border-top: 1px solid #edf1f5; }
+.report-progress-entry time { color: #18253c; font-variant-numeric: tabular-nums; line-height: 1.7; }
 .report-progress-entry p { position: relative; margin: 0; padding-left: 18px; color: #40536a; line-height: 1.7; overflow-wrap: anywhere; }
-.report-progress-entry p::before { content: ''; position: absolute; top: .65em; left: 0; width: 8px; height: 8px; border: 2px solid #9b72c5; border-radius: 50%; background: #fbf8ff; box-sizing: border-box; }
-.report-progress-entry p::after { content: ''; position: absolute; top: calc(.65em + 10px); bottom: -28px; left: 3px; width: 2px; background: #d9c8f0; }
+
+
 .report-progress-entry:last-child { padding-bottom: 0; }
-.report-progress-entry:last-child p::after { display: none; }
+
 .report-detail-page .output-standard > div { padding-top: 4px; }
 .output-progress-records { display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: start; gap: 8px; margin: 0; padding: 16px 18px; border: 0; border-radius: 0; background: #fff; }
 .output-progress-records > h3 { width: max-content; margin: 0; padding: 4px 9px; border-radius: 6px; color: #1677ff; background: #edf5ff; font-size: var(--text-14); line-height: 1.55; }
@@ -386,7 +425,7 @@ export default {
 .output-progress-list .report-progress-entry + .report-progress-entry { padding-top: 8px; border-top: 1px solid #edf1f5; }
 .output-progress-list .report-progress-entry time, .output-progress-list .report-progress-entry p { color: #18253c; font-size: var(--text-14); line-height: 1.65; }
 .output-progress-list .report-progress-entry p { min-width: 0; padding-left: 0; white-space: normal; overflow-wrap: anywhere; }
-.output-progress-list .report-progress-entry p::before, .output-progress-list .report-progress-entry p::after { display: none; }
+
 .output-progress-list .report-progress-entry.is-latest time, .output-progress-list .report-progress-entry.is-latest p { color: #1677ff; }
 .report-detail-page .activity-progress-records { margin: 18px 0 0; padding: 0; border: 0; border-radius: 0; background: transparent; }
 .report-detail-page .activity-progress-records h3 { margin: 0 0 8px; color: #18a66a; }
@@ -400,12 +439,6 @@ export default {
 .report-detail-page .activity-card > div:first-child > span { flex: none; }
 .report-detail-page .rich-content h3 { font-size: 16px; }
 .report-detail-page .rich-text-field { overflow-wrap: anywhere; }
-.report-resource-table, .report-benefits-table { table-layout: fixed; }
-.report-resource-table td { vertical-align: middle; overflow-wrap: anywhere; }
-.report-resource-table td:first-child > .anticon { margin-right: 5px; color: #718095; }
-.report-status-col { width: 150px; }.report-date-col { width: 190px; }.report-action-col { width: 140px; }.report-attachment-type-col { width: 160px; }
-.report-resource-table .ant-btn { height: 32px; padding: 0 8px; box-shadow: 0 2px 0 rgba(0,0,0,.043); }
-.report-file-actions { display: flex; align-items: center; gap: 4px; }
 .report-benefits-table td { overflow-wrap: anywhere; }
 .report-benefits-table .report-benefit-indicator { width: 120px; }
 .report-benefits-table th:first-child, .report-benefits-table td:first-child { text-align: center; }

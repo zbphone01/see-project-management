@@ -2,7 +2,7 @@
   <section class="project-detail-page fundraising-form-page">
     <div class="detail-back-row"><a-button class="detail-back" @click="goBack"><a-icon type="arrow-left" /> 返回</a-button></div>
     <section class="panel detail-section">
-      <div class="detail-section-header"><span class="detail-section-icon"><a-icon type="file-text" /></span><div><h2>{{ draft.recruitment || '招募名称' }} - 募捐申请书</h2></div></div>
+      <div class="detail-section-header"><span class="detail-section-icon"><a-icon type="file-text" /></span><div><h2>{{ draft.recruitment || '招募名称' }} - 募捐申请书</h2><p v-if="basicFieldsOrdered.some(field => comment(field.key)) || basicRichContent.some(section => comment(section.key))">{{ fieldReviewHint }}</p></div></div>
       <div class="edit-grid">
         <div v-for="field in basicFieldsOrdered" :key="field.key" class="edit-field" :class="[{ wide: field.key === 'name' }, reviewClass(field.key)]">
           <label :for="'fundraising-' + field.key"><em v-if="field.key !== 'organization'">*</em><review-comment-label :comment="comment(field.key)">{{ basicFieldLabel(field) }}</review-comment-label></label>
@@ -15,6 +15,7 @@
           <a-input v-else :id="'fundraising-' + field.key" v-model="field.value" :max-length="field.key === 'phone' ? 25 : 100" :placeholder="field.key === 'leader' ? '请负责人姓名' : field.key === 'phone' ? '请填写联系电话' : '请填写' + basicFieldLabel(field)" />
         </div>
       </div>
+      <div class="application-edit-content">
       <div v-for="section in basicRichContent" :key="section.key" class="section-body organization-introduction">
         <h3><review-comment-label :comment="comment(section.key)">{{ section.title }}</review-comment-label></h3>
         <fundraising-rich-editor :value="sectionHtml(section)" :label="section.title" :placeholder="contentHints[section.key]" :class="reviewClass(section.key)" @input="value => changeRichText(section, value)" @busy="value => editorBusy(section.key, value)" />
@@ -50,10 +51,10 @@
     <div v-for="section in remainingContent" :key="section.key" class="section-body merged-input-section">
       <div v-if="section.type !== 'amounts'" class="merged-input-heading">
         <div><h3><review-comment-label :comment="comment(section.key)">{{ section.title }}</review-comment-label></h3><p v-if="sectionHasReview(section)" class="annual-review-hint">{{ section.type === 'fundDirections' ? rowReviewHint : fieldReviewHint }}</p></div>
+        <span v-if="section.key === 'purpose'" class="word-count" :class="{ 'word-count-error': plainText(section).replace(/\s/g, '').length > 100 }">{{ plainText(section).replace(/\s/g, '').length }} / 100 字</span>
       </div>
       <div v-if="section.type === 'text'" class="section-body">
         <fundraising-rich-editor :value="sectionHtml(section)" :label="section.title" :placeholder="contentHints[section.key]" :class="reviewClass(section.key)" @input="value => changeRichText(section, value)" @busy="value => editorBusy(section.key, value)" />
-        <p v-if="section.key === 'purpose'" class="word-count" :class="{ 'form-error': plainText(section).replace(/\s/g, '').length > 100 }">{{ plainText(section).replace(/\s/g, '').length }} / 100 字</p>
       </div>
 
       <div v-else-if="section.type === 'amounts'" class="section-body">
@@ -89,6 +90,7 @@
         <p v-if="ratioTotal(draft.fundDirections) !== 100" class="form-error">资金分配比例合计须为 100%，当前为 {{ ratioTotal(draft.fundDirections) }}%。</p>
       </div>
     </div>
+      </div>
     </section>
 
     <section class="panel detail-section">
@@ -116,11 +118,12 @@
           <a-button class="add-more-attachment" type="dashed" icon="plus" @click="openAttachment(attachmentTypes[0])">添加更多附件</a-button>
         </template>
       </div>
+      </div>
     </section>
 
     <section class="panel detail-section">
       <div class="detail-section-header"><span class="detail-section-icon gray"><a-icon type="history" /></span><div><h2>审核信息</h2></div></div>
-      <a-timeline v-if="draft.auditHistory.length" class="audit-timeline">
+      <div class="section-body"><a-timeline v-if="draft.auditHistory.length" class="audit-timeline">
         <a-timeline-item v-for="record in draft.auditHistory" :key="record.id" color="blue">
           <div class="audit-entry">
             <strong>审核结果：{{ record.result }}</strong>
@@ -129,10 +132,10 @@
           </div>
         </a-timeline-item>
       </a-timeline>
-      <p v-else class="section-body muted">暂无审核信息</p>
+      <p v-else class="muted">暂无审核信息</p></div>
     </section>
 
-    <a-modal :visible="rowEditor.visible" :title="rowEditorTitle" :width="550" :mask-closable="false" ok-text="保存" cancel-text="取消" @ok="saveRow" @cancel="rowEditor.visible = false">
+    <a-modal wrap-class-name="standard-form-modal" :visible="rowEditor.visible" :title="rowEditorTitle" :width="550" :mask-closable="false" ok-text="保存" cancel-text="取消" @ok="saveRow" @cancel="rowEditor.visible = false">
       <div class="compact-modal-form">
         <div v-for="field in rowEditorFields" :key="field.key" class="modal-field"><label :for="'fundraising-row-' + field.key">{{ field.label }}</label><div>
           <a-input-number v-if="field.numeric" :id="'fundraising-row-' + field.key" v-model="rowEditor.value[field.key]" :min="0" :max="field.key === 'ratio' ? 100 : 1000000000" :precision="field.key === 'ratio' ? 2 : 4" :placeholder="field.placeholder" />
@@ -141,7 +144,7 @@
         </div></div>
       </div>
     </a-modal>
-    <a-modal :visible="attachmentPicker.visible" title="上传附件" :width="550" :mask-closable="false" :confirm-loading="uploading > 0" :closable="!uploading" :keyboard="!uploading" :cancel-button-props="{ props: { disabled: uploading > 0 } }" ok-text="上传" cancel-text="取消" @ok="confirmAttachment" @cancel="closeAttachment">
+    <a-modal wrap-class-name="standard-form-modal" :visible="attachmentPicker.visible" title="上传附件" :width="550" :mask-closable="false" :confirm-loading="uploading > 0" :closable="!uploading" :keyboard="!uploading" :cancel-button-props="{ props: { disabled: uploading > 0 } }" ok-text="上传" cancel-text="取消" @ok="confirmAttachment" @cancel="closeAttachment">
       <div class="compact-modal-form"><div class="modal-field"><label for="fundraising-file-type">附件类型</label><a-select id="fundraising-file-type" v-model="attachmentPicker.category" :disabled="uploading > 0"><a-select-option v-for="category in attachmentTypes" :key="category" :value="category">{{ category }}</a-select-option></a-select></div>
         <div class="modal-field"><label>选择文件</label><div><a-upload accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" :before-upload="selectAttachment" :show-upload-list="false" :disabled="uploading > 0"><a-button icon="upload" :disabled="uploading > 0">选择文件</a-button></a-upload><p v-if="attachmentPicker.file" class="picked-file">{{ attachmentPicker.file.name }}</p><p class="muted file-hint">支持 PDF、Word、Excel、PNG、JPG，单个文件不超过 20 MB。</p><p v-if="attachmentPicker.error" class="form-error" role="alert">{{ attachmentPicker.error }}</p></div></div>
       </div>
@@ -269,7 +272,6 @@ export default {
     plainText (section) { const node = document.createElement('div'); node.innerHTML = this.sectionHtml(section); return node.textContent || '' },
     changeRichText (section, value) { this.$set(section, 'html', cleanFundraisingRichText(value)) },
     editorBusy (key, value) { this.$set(this.busyEditors, key, value) },
-    addLink (section) { if (!Array.isArray(section.links)) this.$set(section, 'links', []); section.links.push({ label: '', url: '' }) },
     numberText (value, digits) { return value === null || value === '' ? '—' : Number(value).toLocaleString('zh-CN', { maximumFractionDigits: digits }) },
     amountTotal (rows) { return Math.round(rows.reduce((sum, row) => sum + (Number(row.amount) || 0), 0) * 10000) / 10000 },
     nextId (prefix) { return 'fundraising-' + prefix + '-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) },
@@ -399,11 +401,11 @@ export default {
 <style scoped>
 .fundraising-form-page { min-width: 0; color: #18253c; padding-bottom: 18px; }
 .basic-field-value { color: #27384e; font-weight: 500; line-height: 1.6; overflow-wrap: anywhere; }
-.edit-grid { padding: 4px 22px 22px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; }
+.edit-grid { padding: 0 22px 22px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; }
 .edit-grid .wide { grid-column: 1 / -1; }
-.edit-field { min-width: 0; min-height: 76px; padding: 17px 18px; display: grid; align-content: center; gap: 7px; border-bottom: 1px solid #edf1f5; }
+.edit-field { min-width: 0; min-height: 76px; padding: 17px 18px; display: grid; align-content: center; gap: 8px; border-bottom: 1px solid #edf1f5; }
 .edit-field > label { color: #7b899b; font-weight: 400; line-height: 1.6; }
-.edit-field >>> input.ant-input { height: 40px; padding: 8px 12px; line-height: 22px; }
+.edit-field >>> input.ant-input { height: 40px; padding: 0 12px; line-height: normal; }
 em { color: #ff4d4f; font-style: normal; margin-right: 6px; }
 .edit-field > .ant-input, .date-pair .ant-input, .amount-input >>> .ant-input-number { border-color: transparent; background: transparent; box-shadow: none; }
 .edit-field > .ant-input:hover, .date-pair .ant-input:hover, .amount-input >>> .ant-input-number:hover { border-color: #d9e1eb; }
@@ -411,20 +413,20 @@ em { color: #ff4d4f; font-style: normal; margin-right: 6px; }
 .date-pair { display: flex; gap: 12px; align-items: center; }
 .date-pair .ant-input { min-width: 0; width: calc(50% - 20px); }
 .date-pair > span, .muted, .edit-field small { color: #718095; }
-.edit-grid >>> .ant-input, .edit-grid >>> .ant-input-number-input, .link-edit >>> .ant-input { color: #27384e; font-size: 16px; }
+.edit-grid >>> .ant-input, .edit-grid >>> .ant-input-number-input { color: #27384e; font-size: 16px; }
 .edit-field >>> input.ant-input:placeholder-shown { font-size: 14px; }
 .fundraising-form-page >>> input::placeholder, .fundraising-form-page >>> textarea::placeholder { color: #5b8ff9; font-size: 14px; opacity: 1; }
-.section-body { padding: 24px; margin: 0; }
-.organization-introduction { padding-top: 0; }
-.organization-introduction + .organization-introduction { padding-top: 4px; }
-.organization-introduction h3 { margin: 0 0 9px; font-size: 10pt; font-weight: 400; line-height: 1.6; }
-.basic-annual-funds { padding-top: 4px; }
-.merged-input-section { padding-top: 4px; }
+.section-body { padding: 24px; margin: 0; --detail-inner-padding: 0; }
+.application-edit-content { padding: 24px; display: grid; gap: 32px; }
+.application-edit-content .section-body { padding: 0; }
+.organization-introduction h3 { margin: 0 0 8px; font-size: 10pt; font-weight: 500; line-height: 1.6; }
 .merged-input-section > .section-body { padding: 0; }
 .merged-input-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
 .merged-input-heading > div { flex: 1; min-width: 0; }
-.merged-input-heading h3 { margin: 0 0 9px; font-size: 10pt; font-weight: 400; line-height: 1.6; }
-.basic-annual-title { margin: 0 0 9px; font-size: 10pt; font-weight: 400; line-height: 1.6; }
+.merged-input-heading h3 { margin: 0 0 8px; font-size: 10pt; font-weight: 500; line-height: 1.6; }
+.word-count { flex: none; color: #718095; line-height: 1.6; white-space: nowrap; }
+.word-count-error { color: #ff4d4f; }
+.basic-annual-title { margin: 0 0 8px; font-size: 10pt; font-weight: 500; line-height: 1.6; }
 .basic-annual-funds .subheading h3 { color: #7b899b; font-size: 10pt; font-weight: 400; }
 .annual-entry-table th:nth-child(3), .annual-entry-table td:nth-child(3) { text-align: right; }
 .annual-entry-table th:nth-child(4), .annual-entry-table td:nth-child(4) { text-align: center; }
@@ -432,13 +434,10 @@ em { color: #ff4d4f; font-style: normal; margin-right: 6px; }
 .annual-input-row td:nth-child(3) >>> input, .annual-input-row td:nth-child(4) >>> input { text-align: left; }
 .annual-review-hint { margin: 0 0 9px; color: #718095; line-height: 1.6; }
 .input-hint { color: #5b8ff9; font-size: 14px; line-height: 1.7; margin: 0 0 16px; }
-.word-count { margin: 8px 0 0; text-align: right; color: #718095; }
-.link-edit { display: grid; grid-template-columns: 1fr 2fr auto; gap: 10px; margin: 12px 0; }
-.add-link { margin-top: 14px; }
-.subheading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+.subheading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 8px; }
 .subheading h3 { margin: 0; font-size: 16px; font-weight: 600; }
 .subheading > div { display: flex; gap: 12px; }
-.annual-group + .annual-group { margin-top: 28px; }
+.annual-group + .annual-group { margin-top: 16px; }
 .detail-table-wrap { margin: 0; overflow-x: auto; }
 .entry-table { table-layout: fixed; min-width: 760px; }
 .col-index { width: 70px; }.col-actions { width: 130px; }
@@ -448,7 +447,7 @@ em { color: #ff4d4f; font-style: normal; margin-right: 6px; }
 .fund-direction-entry-table th:nth-child(3), .fund-direction-entry-table td:nth-child(3) { text-align: center; }
 .fund-direction-input-row .ant-input-number { width: 100%; }
 .fund-direction-input-row td:nth-child(3) >>> input { text-align: left; }
-.entry-table .row-actions { white-space: nowrap; padding: 12px; }
+.entry-table .row-actions { display: table-cell; white-space: nowrap; padding: 12px; }
 .row-actions .ant-btn { padding: 0 7px; height: auto; }
 .total-row > td { background: #f8fbff; font-weight: 600; }
 .entry-table .total-row > td:first-child { text-align: left; }
@@ -457,7 +456,8 @@ em { color: #ff4d4f; font-style: normal; margin-right: 6px; }
 .amount-grid { padding: 0; }
 .amount-grid .edit-field { align-content: start; }
 .amount-input { display: inline-flex; justify-self: start; align-items: center; gap: 8px; }
-.amount-input >>> .ant-input-number { flex: none; width: 190px; }
+.amount-input >>> .ant-input-number { flex: none; width: 190px; height: 40px; }
+.amount-input >>> .ant-input-number-input { height: 38px; padding: 0 12px; line-height: 38px; }
 .amount-target-hint { margin: 0; }
 .amount-input > span { color: #536277; font-size: 16px; }
 .edit-field small { font-size: 14px; line-height: 1.6; }
@@ -478,17 +478,19 @@ em { color: #ff4d4f; font-style: normal; margin-right: 6px; }
 .detail-section-header .image-module-hint { color: #718095; font-size: 14px; margin: 4px 0 0; }
 .image-item .ant-btn { padding: 0 6px; }
 .image-button:focus-visible { outline: 2px solid #1677ff; outline-offset: 3px; }
-.attachment-group + .attachment-group { border-top: 1px solid #edf1f5; padding-top: 22px; margin-top: 22px; }
 .form-attachment-list { padding: 0; }
+.attachment-empty-add { margin: 0; }
+.form-attachment-list > div:first-child { padding-top: 0; align-items: start; }
 .attachment-empty-add { cursor: pointer; }
 .attachment-empty-add >>> .ant-empty-description { color: #5b8ff9; }
 .attachment-empty-add:focus-visible { outline: 2px solid #1677ff; outline-offset: 3px; }
-.add-more-attachment { width: 100%; margin-top: 12px; }
+.add-more-attachment { width: 100%; margin: 16px 0 0; border-color: #91d5ff; border-style: dashed; color: #096dd9 !important; background: #e6f7ff; }
+.add-more-attachment:hover, .add-more-attachment:focus { border-color: #40a9ff; color: #096dd9 !important; background: #fff; }
 .form-attachment-list > div { grid-template-columns: minmax(0, 1fr) auto auto auto; }
 .form-attachment-list strong { overflow-wrap: anywhere; }
 .form-attachment-list .ant-btn { padding: 0 6px; }
-.compact-modal-form { display: grid; gap: 16px; padding: 4px 4px 12px; }
-.modal-field { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 16px; align-items: start; }
+.compact-modal-form { display: grid; gap: 16px; width: 470px; max-width: 100%; margin: 0 auto; padding: 0; }
+.modal-field { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 18px; align-items: start; }
 .modal-field > label { text-align: right; padding-top: 5px; line-height: 22px; }
 .modal-field .ant-input-number, .modal-field > .ant-select { width: 100%; }
 .compact-modal-form >>> input, .compact-modal-form >>> textarea { font-size: 14px; }

@@ -7,11 +7,11 @@
     </section>
 
     <section class="panel detail-section application-document">
-      <div class="detail-section-header"><span class="detail-section-icon"><a-icon type="file-text" /></span><div><h2>募捐申请书</h2><div class="detail-basic-meta"><span class="application-version">{{ application.version }}</span><span class="application-agreement"><a-icon type="file-protect" /> {{ application.agreementCode || '暂无框架协议编号' }}</span><span class="project-recruitment"><a-icon type="notification" /> {{ application.recruitment }}</span></div><p v-if="isAudit">点击字段内容、信息小标题或表格行可添加审核意见</p></div></div>
+      <div class="detail-section-header"><span class="detail-section-icon"><a-icon type="file-text" /></span><div><h2>募捐申请书</h2><div class="detail-basic-meta"><span class="application-version">{{ application.version }}</span><span class="application-agreement"><a-icon type="file-protect" /> {{ application.agreementCode || '暂无框架协议编号' }}</span><span class="project-recruitment"><a-icon type="notification" /> {{ application.recruitment }}</span></div><p v-if="isAudit && Object.keys(application.reviewComments || {}).some(key => comment(key))">点击字段内容、信息小标题或表格行可添加审核意见</p></div></div>
       <div class="description-grid">
         <div v-for="field in basicFields" :key="field.key" class="description-item" :class="[fieldClass(field.key), { 'wide project-name-item': field.key === 'name' }]" v-bind="reviewAttributes()" @click="openReview(field.key)" @keydown.enter.prevent="openReview(field.key)" @keydown.space.prevent="openReview(field.key)"><span>{{ field.label }}</span><strong>{{ field.value || '暂无' }}</strong></div>
       </div>
-      <article class="rich-content application-content">
+      <detail-rich-content class="rich-content application-content">
 
         <section v-for="section in application.content" :key="section.key" class="rich-text-section">
           <h3><button v-if="isAudit && section.type === 'text'" type="button" class="review-label-trigger" @click="openReview(section.key)">{{ section.title }}</button><template v-else>{{ section.title }}</template></h3>
@@ -22,26 +22,33 @@
           <div v-else-if="section.type === 'amounts'" class="description-grid application-amounts"><div v-for="field in application.amountFields" :key="field.key" class="description-item" :class="fieldClass(field.key)" v-bind="reviewAttributes()" @click="openReview(field.key)" @keydown.enter.prevent="openReview(field.key)" @keydown.space.prevent="openReview(field.key)"><span>{{ field.label }}</span><strong>{{ field.value }}</strong></div></div>
           <div v-else-if="section.type === 'fundDirections'" class="detail-table-wrap"><table class="detail-table fund-directions-table"><colgroup><col style="width: 220px" /><col style="width: 150px" /><col /></colgroup><thead><tr><th>资金使用方向</th><th>资金分配比例</th><th>详细说明（具体支出）</th></tr></thead><tbody><tr v-for="row in application.fundDirections" :key="row.id" :class="rowClass('fundDirections', row)" v-bind="reviewAttributes(row)" @click="openRowReview('fundDirections', row)" @keydown.enter.prevent="openRowReview('fundDirections', row)" @keydown.space.prevent="openRowReview('fundDirections', row)"><td>{{ row.direction }}</td><td>{{ row.ratio }}</td><td class="multiline">{{ row.description }}</td></tr></tbody></table></div>
         </section>
-      </article>
+      </detail-rich-content>
     </section>
 
     <section id="detail-images" class="panel detail-section">
-      <div class="detail-section-header"><span class="detail-section-icon blue"><a-icon type="picture" /></span><div><h2><button v-if="isAudit" type="button" class="review-label-trigger" @click="openReview('images')">筹款图片</button><template v-else>筹款图片</template></h2><p v-if="isAudit">点击标题可添加审核意见，点击图片可查看大图</p></div></div>
+      <div class="detail-section-header"><span class="detail-section-icon blue"><a-icon type="picture" /></span><div><h2><button v-if="isAudit" type="button" class="review-label-trigger" @click="openReview('images')">筹款图片</button><template v-else>筹款图片</template></h2><p v-if="isAudit && comment('images')">点击标题可添加审核意见，点击图片可查看大图</p></div></div>
+      <div class="detail-module-content">
       <div class="fundraising-images fundraising-image-module" :class="fieldClass('images')"><button v-for="item in application.images" :key="item.id" type="button" class="fundraising-image-button" :aria-label="'查看筹款图片大图：' + item.alt" @click="openImage(item)"><img v-if="imageSource(item)" class="organization-avatar" :src="imageSource(item)" :alt="item.alt" /><span v-else class="image-unavailable">图片不可用</span></button><strong v-if="!application.images.length">暂无</strong></div>
+      </div>
     </section>
     <section id="detail-attachments" class="panel detail-section">
-      <div class="detail-section-header"><span class="detail-section-icon blue"><a-icon type="paper-clip" /></span><div><h2>附件</h2><p>{{ isAudit ? '点击附件行可添加审核意见' : '项目相关附件，如有需要请下载留存' }}</p></div></div>
+      <div class="detail-section-header"><span class="detail-section-icon blue"><a-icon type="paper-clip" /></span><div><h2>附件</h2><p v-if="!isAudit || application.attachments.some(file => rowComment('attachments', file))">{{ isAudit ? '点击附件行可添加审核意见' : '项目相关附件，如有需要请下载留存' }}</p></div></div>
+      <div class="detail-module-content">
       <div class="attachment-list"><div v-for="file in application.attachments" :key="file.id" :class="rowClass('attachments', file)" v-bind="reviewAttributes(file)" @click="openRowReview('attachments', file)" @keydown.enter.prevent="openRowReview('attachments', file)" @keydown.space.prevent="openRowReview('attachments', file)"><div><strong>{{ file.name }}</strong><span>{{ file.type }} · {{ file.uploadedAt }}</span></div><a-button type="link" @click.stop="previewAttachment(file)" @keydown.stop>预览</a-button><a-button type="link" @click.stop="downloadAttachment(file)" @keydown.stop>下载</a-button></div><p v-if="!application.attachments.length">暂无附件</p></div>
+      </div>
     </section>
 
     <section id="detail-history" class="panel detail-section">
       <div class="detail-section-header"><span class="detail-section-icon gray"><a-icon type="history" /></span><div><h2>审核信息</h2></div></div>
+      <div class="detail-module-content">
       <a-timeline class="audit-timeline"><a-timeline-item v-for="record in application.auditHistory" :key="record.id" :color="record.result === '通过' ? '#70B603' : '#FF4D4F'"><div class="audit-entry"><strong>审核结果：{{ record.result }}</strong><div class="audit-result-row"><span class="audit-info-chip audit-time">{{ formatAuditTime(record.time) }} · {{ record.account }}</span></div><div v-if="record.remark" class="audit-result-details"><p><b>审核备注：</b>{{ record.remark }}</p></div></div></a-timeline-item></a-timeline>
       <p v-if="!application.auditHistory.length" class="application-history-empty">暂无审核信息</p>
+      </div>
     </section>
 
     <section v-if="isAudit" id="detail-audit" class="panel detail-section">
       <div class="detail-section-header"><span class="detail-section-icon red"><a-icon type="audit" /></span><div><h2>审核</h2></div></div>
+      <div class="detail-module-content">
       <div class="project-audit-form">
         <div class="audit-form-grid">
           <div class="audit-form-column">
@@ -53,6 +60,7 @@
           <div class="audit-form-column"><div class="audit-form-row"><label for="application-audit-remark"><em>*</em> 审核备注信息：</label><a-textarea id="application-audit-remark" v-model="auditForm.remark" :rows="5" placeholder="请输入审核备注信息" /></div><div class="audit-funding-hint"><div class="audit-hint-title">提示信息</div><div><span>招募筹款目标</span><strong>{{ application.auditHints.recruitmentTarget }}</strong></div><div><span>审核通过后本招募筹款目标差</span><strong>{{ application.auditHints.targetDifference }}</strong></div></div></div>
         </div>
         <div class="audit-form-actions"><a-button @click="goBack">取消</a-button><a-button type="primary" @click="confirmAudit">确认</a-button></div>
+      </div>
       </div>
     </section>
 
@@ -72,11 +80,26 @@ import { fundraisingStorageKey as storageKey } from '../mock/fundraising-drafts'
 import { draftFile } from '../mock/project-drafts'
 const clone = value => JSON.parse(JSON.stringify(value))
 const rowFields = { annualFunds: ['source', 'amount', 'ratio'], fundDirections: ['direction', 'ratio', 'description'], attachments: ['name', 'type', 'uploadedAt'] }
+// 仅在相邻可见内容区块之间插入装饰分隔线。
+const DetailRichContent = {
+  functional: true,
+  render (h, context) {
+    const nodes = []
+    let count = 0
+    ;(context.children || []).forEach(node => {
+      if (node.tag === 'section' && count++) nodes.push(h('div', { class: 'detail-rich-separator', attrs: { 'aria-hidden': 'true' } }, [h('span', { class: 'detail-rich-separator-dot' })]))
+      nodes.push(node)
+    })
+    return h('article', context.data, nodes)
+  }
+}
+
 export default {
   name: 'FundraisingApplicationDetail',
+  components: { DetailRichContent },
   props: { mode: { type: String, default: 'view' } },
   data () {
-    return { application: clone(example), auditForm: { result: 'approved', agreementCode: example.agreementCode, reviewAttachment: '', agreementScan: '', remark: '' }, reviewVisible: false, reviewKey: '', reviewLabel: '', reviewText: '', relatedComments: '', previewFile: null, previewImage: null, previewUrl: '', previewType: '', imageUrls: {} }
+    return { application: clone(example), auditForm: { result: 'approved', agreementCode: example.agreementCode, reviewAttachment: '', agreementScan: '', remark: '' }, reviewVisible: false, reviewKey: '', reviewText: '', previewFile: null, previewImage: null, previewUrl: '', previewType: '', imageUrls: {} }
   },
   computed: {
     isAudit () { return this.mode === 'audit' },
@@ -119,19 +142,14 @@ export default {
       const extra = Object.keys(this.application.reviewComments).filter(key => key.indexOf(prefix + '.') === 0 && known.indexOf(key) < 0).sort()
       return [prefix].concat(known, extra).map(key => this.comment(key)).filter(Boolean).join('\n')
     },
-    rowClass (section, row) { return this.isAudit && row.editable !== false ? { 'review-row-has-comment': !!this.rowComment(section, row), 'review-row-trigger': true } : {} },
+    rowClass (section, row) { return this.isAudit && row.id && row.editable !== false ? { 'review-row-has-comment': !!this.rowComment(section, row), 'review-row-trigger': true } : {} },
     openRowReview (section, row) {
       if (!this.isAudit || !row.id || row.editable === false) return
-      this.openReview(section + '.' + row.id, row.source || row.direction || row.name)
-      const prefix = section + '.' + row.id
-      const known = (rowFields[section] || []).map(field => prefix + '.' + field)
-      const extra = Object.keys(this.application.reviewComments).filter(key => key.indexOf(prefix + '.') === 0 && known.indexOf(key) < 0).sort()
-      this.relatedComments = known.concat(extra).map(key => this.comment(key)).filter(Boolean).join('\n')
+      this.openReview(section + '.' + row.id)
     },
-    openReview (key, label) {
+    openReview (key) {
       if (!this.isAudit) return
-      const field = this.basicFields.concat(this.application.amountFields, this.application.content).find(item => item.key === key)
-      this.reviewKey = key; this.reviewLabel = label || (field && (field.label || field.title)) || '筹款图片'; this.reviewText = this.comment(key); this.relatedComments = ''; this.reviewVisible = true
+      this.reviewKey = key; this.reviewText = this.comment(key); this.reviewVisible = true
     },
     persist () {
       try { window.localStorage.setItem(storageKey, JSON.stringify({ application: this.application, auditForm: this.auditForm })); return true } catch (error) { this.$message.error('本地保存失败，请检查浏览器存储空间或权限'); return false }
@@ -196,6 +214,19 @@ export default {
 </script>
 
 <style scoped>
+.detail-module-content { padding: 24px; --detail-inner-padding: 0; --detail-inner-margin: 0; }
+.description-grid { --detail-inner-padding: 0 22px 22px; }
+.description-item { gap: 8px; }
+.detail-module-content .output-block + .output-block { margin-top: 24px; }
+.attachment-list > div:first-child { padding-top: 0; align-items: start; }
+.rich-content > .rich-text-section { margin: 0; }
+.rich-content > .rich-text-section > h3 { margin: 0 0 12px; }
+.rich-content > .rich-text-section > h3::before, .rich-content > .rich-text-section > h3::after { content: none; }
+.rich-text-field > p:last-child { margin-bottom: 0; }
+.rich-content >>> .detail-rich-separator { position: relative; height: 1px; margin: 40px 0; background: linear-gradient(90deg, #b7dfcf 0%, #e4f2ec 42%, transparent 100%); }
+.rich-content >>> .detail-rich-separator-dot { position: absolute; left: -4px; top: 50%; width: 7px; height: 7px; transform: translateY(-50%); border: 2px solid #fff; border-radius: 50%; background: #18a66a; box-shadow: 0 0 0 2px #ccebdd; }
+#detail-audit > .detail-module-content { background: #fff; }
+.saved-rich-content >>> p:last-child { margin-bottom: 0; }
 .review-dialog-actions { display: flex; justify-content: space-between; align-items: center; }
 .review-dialog-actions-right { margin-left: auto; display: flex; gap: 8px; }
 .application-version, .application-agreement { flex: none; padding: 2px 7px; border-radius: 3px; font-weight: 400; }
@@ -204,7 +235,7 @@ export default {
 .organization-avatar { display: block; width: 80px; height: 80px; object-fit: cover; border-radius: 13px; }
 .image-unavailable { display: grid; place-items: center; width: 80px; height: 80px; border: 1px dashed #d9e1eb; border-radius: 13px; color: #718095; }
 .fundraising-images { display: flex; flex-wrap: wrap; gap: 12px; }
-.fundraising-image-module { padding: 22px; }
+.fundraising-image-module { padding: 0; }
 .fundraising-image-button { padding: 0; border: 0; border-radius: 13px; background: transparent; cursor: zoom-in; }
 .fundraising-image-button:focus-visible { outline: 2px solid #1677ff; outline-offset: 3px; }
 .fundraising-image-preview { display: block; max-width: 100%; max-height: 70vh; width: auto; height: auto; margin: 0 auto; object-fit: contain; }
@@ -213,15 +244,15 @@ export default {
 .annual-funds-table th:nth-child(2), .annual-funds-table td:nth-child(2) { text-align: right; }
 .annual-funds-table th:last-child, .annual-funds-table td:last-child { text-align: center; }
 .application-notice-text { white-space: pre-line; overflow-wrap: anywhere; }
-.application-content { padding-top: 12px; }
-.application-content .detail-table-wrap { margin: 16px 0 0; }
+.application-content { padding: 24px; --detail-inner-padding: 0; --detail-inner-margin: 0; }
+.application-content .detail-table-wrap { margin: 0; }
 .application-content h3 { font-size: 16px; }
 .application-content p, .detail-table td { overflow-wrap: anywhere; }
 .saved-rich-content >>> img { max-width: 100%; height: auto; }
 .saved-rich-content >>> table { max-width: 100%; border-collapse: collapse; }
 .saved-rich-content >>> td, .saved-rich-content >>> th { border: 1px solid #e6ebf2; padding: 6px 8px; }
 .application-amounts { padding: 0; }
-.review-label-trigger { padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.review-label-trigger { padding: 3px 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .description-item[role=button], .review-row-trigger { cursor: pointer; }
 .description-item[role=button]:hover, .review-row-trigger:hover > td { background: #f8fbff; }
 .review-has-comment { background: #fff1f0 !important; }
@@ -230,10 +261,9 @@ export default {
 .review-label-trigger:focus-visible, .description-item[role=button]:focus-visible, .review-row-trigger:focus-visible { outline: 2px solid #ff7875; outline-offset: -2px; }
 .review-label-trigger:hover { color: #cf1322; }
 .multiline { white-space: pre-wrap; }
-.rich-image figcaption { padding: 8px 12px; color: #718095; }
 .attachment-list > .review-row-has-comment { background: #fff1f0; }
 .attachment-list > .review-row-has-comment:hover { background: #ffe7e5; }
-.application-history-empty { margin: 22px; color: #718095; }
+.application-history-empty { margin: 0; color: #718095; }
 
 .detail-table .ant-btn-link { padding: 0 4px; height: 32px; }
 .audit-upload-item { border-radius: 6px; }
