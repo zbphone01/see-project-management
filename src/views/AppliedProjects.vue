@@ -238,8 +238,8 @@ export default {
     handleAppliedTableChange (pagination) { this.appliedPage = pagination.current },
     exportSelected (type) { this.$message.info(`已选择 ${this.selectedProjectKeys.length} 个项目，准备导出${type}`) },
     handleProjectAction ({ key }, record) {
-      if (key === 'edit-green-home') {
-        this.$router.push({ name: 'project-form', params: { id: String(record.id) }, query: { detailType: 'green-home' } })
+      if (key === 'edit-green-home' || key === 'edit-grass') {
+        this.$router.push({ name: 'project-form', params: { id: String(record.id) }, query: { detailType: key === 'edit-grass' ? 'grass' : 'green-home' } })
         return
       }
       if (key === 'download-progress-pdf' || key === 'download-progress-word') {
@@ -253,8 +253,6 @@ export default {
       const labels = {
         detail: '查看详情',
         edit: '修改申请',
-        'edit-green-home': '编辑入口暂未配置',
-        'edit-grass': '编辑入口暂未配置',
         'edit-one-time-donation': '编辑入口暂未配置',
         history: '变更记录',
         'audit-progress': '审核进展',

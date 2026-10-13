@@ -110,8 +110,8 @@
       }
     ],
     "benefits": [
-      { "indicator": "物种", "category": "动物", "name": "大熊猫", "latinName": "Ailuropoda melanoleuca", "quantity": "—", "remark": "栖息地监测与保护，个体数量持续核查中" },
-      { "indicator": "物种", "category": "植物", "name": "珙桐", "latinName": "Davidia involucrata", "quantity": "120", "remark": "完成监测样地内植株登记" }
+      { "id": "benefit-1", "indicator": "物种", "category": "动物", "name": "大熊猫", "latinName": "Ailuropoda melanoleuca", "quantity": "—", "remark": "栖息地监测与保护，个体数量持续核查中" },
+      { "id": "benefit-2", "indicator": "物种", "category": "植物", "name": "珙桐", "latinName": "Davidia involucrata", "quantity": "120", "remark": "完成监测样地内植株登记" }
     ],
     "auditHistory": [
       { "time": "2026-06-02 15:20", "result": "通过", "reviewer": "张三", "remark": "OA付款明细单金额为50,000元。" },

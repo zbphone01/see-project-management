@@ -1,4 +1,4 @@
-import reportDetails from './report-progress-detail.json'
+import reportExamples from './report-examples'
 
 const storageKey = (projectId, type) => `see-report-draft-example-v4-${projectId}-${type}`
 const reviewedExampleKey = reportId => `see-reviewed-report-draft-example-${reportId}`
@@ -85,9 +85,9 @@ export function loadReportDraft (projectId, type) {
     if (!merged.filledAt) merged.filledAt = defaults.filledAt
     if (typeof merged.contact === 'string' && merged.contact.includes('*')) merged.contact = defaults.contact
     if (saved.schemaVersion !== defaults.schemaVersion) { merged.schemaVersion = defaults.schemaVersion; merged.requestNeeded = false; merged.requested = 0 }
-    merged.outputs = defaults.outputs.map((defaultOutput, outputIndex) => {
-      const savedOutput = merged.outputs[outputIndex] || {}
-      return { ...defaultOutput, ...savedOutput, progressHistory: defaultOutput.progressHistory, activities: defaultOutput.activities.map((defaultActivity, activityIndex) => ({ ...defaultActivity, ...(savedOutput.activities || [])[activityIndex], progressHistory: defaultActivity.progressHistory })) }
+    merged.outputs = defaults.outputs.map(defaultOutput => {
+      const savedOutput = merged.outputs.find(output => output.id === defaultOutput.id) || {}
+      return { ...defaultOutput, ...savedOutput, progressHistory: defaultOutput.progressHistory, activities: defaultOutput.activities.map(defaultActivity => ({ ...defaultActivity, ...(savedOutput.activities || []).find(activity => activity.id === defaultActivity.id), progressHistory: defaultActivity.progressHistory })) }
     })
     return merged
   } catch (error) {
@@ -95,15 +95,24 @@ export function loadReportDraft (projectId, type) {
   }
 }
 
-export function loadReviewedReportExample (projectId) {
-  const reportId = 'P-001006', source = reportDetails[reportId], basic = source.basic
+export function loadReviewedReportExample (projectId, reportId = 'P-001006') {
+  const source = reportExamples.find(report => report.id === reportId)
+  if (!source) return loadReportDraft(projectId, 'progress')
+  const basic = source, isCompletion = source.type === '结项报告'
+  const dateValue = value => value.replace(/年|月/g, '-').replace(/日/g, '')
+  const escape = value => value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   const draft = {
-    ...createReportDraft(projectId, 'progress'),
+    ...createReportDraft(projectId, isCompletion ? 'completion' : 'progress'),
     exampleReportId: reportId, reportCode: reportId,
     projectName: basic.projectName, projectCode: basic.projectCode,
     projectType: basic.projectType, strategy: basic.strategy, issue: basic.issue,
     organization: basic.organization, projectPeriod: basic.projectPeriod,
-    periodStart: '2026-01-01', periodEnd: '2026-05-31', filledAt: '2026-06-03',
+    periodStart: dateValue(basic.reportPeriod.split(' 至 ')[0]), periodEnd: dateValue(basic.reportPeriod.split(' 至 ')[1]), filledAt: dateValue(basic.filledAt),
+    executed: source.budgetRows.reduce((sum, row) => sum + row.executedCents, 0) / 100,
+    beneficiaryAid: basic.beneficiaryAid ? '是' : '否', aidCompleted: basic.beneficiaryAid ? (basic.aidCompleted ? '是' : '否') : undefined,
+    ...source.otherInformation.reduce((values, field) => { values[field.id] = field.paragraphs.map(text => '<p>' + escape(text) + '</p>').join(''); return values }, {}),
+    communication: '<p>' + escape(source.communication) + '</p>',
+    benefits: clone(source.benefits), benefitsInitialized: true,
     funding: basic.fundingCents / 100, requestNeeded: !!basic.requestedCents,
     requested: basic.requestedCents / 100, paid: basic.paidCents / 100,
     reporter: basic.reporter, contact: basic.contact,
@@ -117,16 +126,16 @@ export function loadReviewedReportExample (projectId) {
         progress: activity.progress.length ? activity.progress[activity.progress.length - 1].content : ''
       }))
     })),
-    auditHistory: clone(source.auditHistory),
-    reviewComments: {
-      'outputs.output-1': '请补充最新产出进展对应的监测资料、核查结果及成果归档情况。',
-      'activities.activity-1-1': '请补充最新活动进展的执行记录及设备维护问题处理结果。'
+    auditHistory: source.auditHistory.map(entry => ({ ...entry, id: reportId + '-' + entry.time })),
+    reviewComments: { ...(source.reviewComments || {}),
+      ...(!isCompletion ? { 'outputs.output-1': '请补充最新产出进展对应的监测资料、核查结果及成果归档情况。',
+      'activities.activity-1-1': '请补充最新活动进展的执行记录及设备维护问题处理结果。' } : {})
     }
   }
   let result = draft
   try {
     const saved = JSON.parse(localStorage.getItem(reviewedExampleKey(reportId)))
-    if (saved && saved.exampleReportId === reportId) result = { ...draft, ...saved, projectId }
+    if (saved && saved.exampleReportId === reportId) result = { ...draft, ...saved, projectId, benefits: saved.benefitsInitialized || (Array.isArray(saved.benefits) && saved.benefits.length) ? saved.benefits : draft.benefits, reviewComments: { ...draft.reviewComments, ...(saved.reviewComments || {}) } }
   } catch (error) { /* Invalid local draft falls back to the example. */ }
   try {
     const audit = JSON.parse(localStorage.getItem('see-report-review-example-' + reportId))
