@@ -17,7 +17,7 @@
           <div class="table-project">
             <div :class="['table-project-cover', report.cover]"><img v-if="report.image" :src="report.image" :alt="report.name" /><a-icon v-else :type="report.icon" /></div>
             <div>
-              <button class="report-project-link" :title="report.name" @click="openProject(report)">{{ report.name }}</button>
+              <div class="report-project-name">{{ report.name }}</div>
               <div class="project-primary-meta"><span class="project-code"><a-icon type="flag" /> {{ report.code }}</span></div>
             </div>
           </div>
@@ -92,7 +92,6 @@ export default {
     queryReports () { this.appliedFilters = { ...this.filters }; this.page = 1 },
     resetFilters () { this.filters = emptyFilters(); this.queryReports() },
     changePage (pagination) { this.page = pagination.pageSize !== this.pageSize ? 1 : pagination.current; this.pageSize = pagination.pageSize },
-    openProject (report) { this.$router.push({ name: 'project-detail', params: { id: String(report.projectId) } }) },
     showDemo (action, report) {
       if (action === '编辑示例') { this.$router.push({ name: 'report-form', params: { id: String(report.projectId) }, query: { type: 'progress', example: report.reportCode } }); return }
       if (action === '审核' || action === '查看进展报告' || action === '查看报告') {
@@ -119,6 +118,5 @@ export default {
 .reports-page ::v-deep .applied-table .ant-table-scroll table { width: 100% !important; min-width: 1140px !important; table-layout: fixed; }
 .reports-page ::v-deep .operation-button { gap: 2px; }
 .reports-page ::v-deep .operation-button > span + .anticon { margin-left: 0; }
-.report-project-link { max-width: 100%; min-width: 0; padding: 0; margin-bottom: 5px; border: 0; background: none; color: #18253c; font-size: 16px; text-align: left; white-space: normal; overflow-wrap: anywhere; line-height: 1.5; cursor: pointer; }
-.report-project-link:hover, .report-project-link:focus { color: #1677ff; }
+.report-project-name { max-width: 100%; min-width: 0; margin-bottom: 5px; color: #18253c; font-size: 16px; text-align: left; white-space: normal; overflow-wrap: anywhere; line-height: 1.5; }
 </style>

@@ -6,6 +6,24 @@ export const clone = value => JSON.parse(JSON.stringify(value))
 export const money = value => (Number(value) || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 export const roundMoney = value => Math.round((Number(value) || 0) * 100) / 100
 
+export function createFreshOrganizationDraft (example) {
+  const draft = clone(example), blank = createDraft(example.id)
+  for (const key of ['name', 'targets', 'thirdParties', 'start', 'end', 'rural', 'aid', 'total', 'requested', 'matching', 'leader', 'phone', 'areas', 'team', 'outputs', 'stakeholders', 'risks', 'monitoring', 'attachments', 'experience', 'savedAt', 'reviewComments', 'auditHistory']) draft[key] = blank[key]
+  Object.assign(draft, { fresh: true, environmentalFieldSelection: [], otherLocalFundingDescription: '', otherLocalFundingAmount: null, email: '', mailingAddress: '', postalCode: '', organizationMembers: [], decisionBodySelection: [], decisionBodyOther: '', coachingSelection: [], coachingOther: '', coachingOtherSelected: false })
+  const organization = draft.organizationBasicInfo
+  for (const key of ['entrepreneurshipOverview', 'businessLogic', 'coreProjects', 'governanceStructure']) if (key in organization) organization[key] = ''
+  organization.members = []
+  organization.staffCounts = (organization.staffCounts || []).map(item => ({ ...item, count: 0 }))
+  if (organization.fundraising) {
+    organization.fundraising.rows = organization.fundraising.rows.map(row => ({ ...row, funders: '', amount: null, supportRatio: null }))
+    organization.fundraising.total = 0
+  }
+  if (organization.highestDecisionMakingBody) organization.highestDecisionMakingBody = []
+  for (const key of ['background', 'growthNeeds']) if (draft.organizationDevelopment[key]) draft.organizationDevelopment[key].forEach(item => { item.content = ''; if (item.paragraphs) item.paragraphs = [] })
+  draft.budget = { ...draft.budget, ...blank.budget }
+  return draft
+}
+
 export function createDraft (id = draftId) {
   const draft = {
     id, name: '', code: '草稿 · 尚未提交', recruitment: '',
@@ -54,18 +72,29 @@ export function createDraft (id = draftId) {
   }
 }
 
-const storageKey = id => `see-project-draft-example-v3-${id}`
-export function loadDraft (id = draftId) {
-  const raw = localStorage.getItem(storageKey(id))
-  if (!raw) return createDraft(id)
+export function createDashboardDraft (id) {
+  const draft = createDraft(revisionDraftId)
+  draft.id = id
+  if (id === draftId) {
+    const desert = JSON.parse(JSON.stringify(draft).replace(/湿地/g, '荒漠').replace(/候鸟/g, '本土物种'))
+    Object.assign(draft, desert, { name: '荒漠化防治示范项目', code: '草稿 · 尚未提交', strategy: '荒漠化防治', issue: '荒漠生态保护', reviewComments: {}, auditHistory: [] })
+  }
+  draft.attachments = [{ id: 'dashboard-attachment-' + id, name: '项目实施方案.pdf', category: '其他附件', time: '2026-03-03 12:59:59', example: true }]
+  return draft
+}
+
+const storageKey = (id, dashboardExample = false) => `see-project-draft-example-v3-${id}` + (dashboardExample ? '-dashboard-filled' : '')
+export function loadDraft (id = draftId, dashboardExample = false) {
+  const defaults = dashboardExample ? createDashboardDraft(id) : createDraft(id)
+  const raw = localStorage.getItem(storageKey(id, dashboardExample))
+  if (!raw) return defaults
   const draft = JSON.parse(raw)
   if (draft.id !== id || !['areas', 'team', 'outputs', 'stakeholders', 'risks', 'monitoring', 'attachments', 'targets', 'thirdParties'].every(key => Array.isArray(draft[key])) || !draft.budget || !Array.isArray(draft.budget.rows) || !Array.isArray(draft.budget.personnel)) throw new Error('草稿格式无法读取')
-  const defaults = createDraft(id)
   return { ...defaults, ...draft, auditHistory: Array.isArray(draft.auditHistory) ? draft.auditHistory : defaults.auditHistory, reviewComments: { ...defaults.reviewComments, ...(draft.reviewComments || {}) } }
 }
-export function saveDraft (draft) {
+export function saveDraft (draft, dashboardExample = false) {
   const savedAt = new Date().toLocaleString('zh-CN', { hour12: false })
-  localStorage.setItem(storageKey(draft.id), JSON.stringify({ ...draft, savedAt }))
+  localStorage.setItem(storageKey(draft.id, dashboardExample), JSON.stringify({ ...draft, savedAt }))
   return savedAt
 }
 

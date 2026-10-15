@@ -1,5 +1,5 @@
 import source from './project-grass-detail.json'
-import { createDraft, clone, roundMoney } from './project-drafts'
+import { createDraft, clone, roundMoney, createFreshOrganizationDraft } from './project-drafts'
 const storageKey = 'see-grass-project-draft-v1-9'
 const escape = text => String(text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 const rich = paragraphs => paragraphs.map(text => '<p>' + escape(text).replace(/\n/g, '<br>') + '</p>').join('')
@@ -10,7 +10,7 @@ export const grassDecisionOptions = [
   { id: 'decision-body-3', label: '组织负责人（主任、CEO、会长等职务）' },
   { id: 'decision-body-4', label: '其他' }
 ]
-export function createGrassDraft () {
+export function createGrassDraft (fresh = false) {
   const data = clone(source), basic = data.basic, organization = data.organizationBasicInfo
   const funding = String(basic.otherLocalFunding || '').match(/(?:^|\n)([\d,]+(?:\.\d+)?)\s*元[^\n]*$/)
   const draft = { ...createDraft(9), ...basic, detailType: 'grass', code: 'ZZ-1764740243', recruitment: '劲草项目招募',
@@ -34,16 +34,17 @@ export function createGrassDraft () {
   organization.fundraising.rows.forEach(row => { row.amount = Number(row.amount.replace(/,/g, '')); row.supportRatio = Number(row.supportRatio.replace('%', '')) })
   draft.organizationDevelopment.plan.forEach(item => { item.content = rich(item.paragraphs) })
   draft.organizationCode = source.basic.organizationCode
-  return draft
+  return fresh ? createFreshOrganizationDraft(draft) : draft
 }
-export function loadGrassDraft () {
-  const defaults = createGrassDraft(), raw = localStorage.getItem(storageKey)
+export function loadGrassDraft (fresh = false) {
+  const defaults = createGrassDraft(fresh), raw = localStorage.getItem(storageKey + (fresh ? '-fresh' : ''))
   let draft = defaults
   if (raw) {
     const saved = JSON.parse(raw)
-    if (saved.id !== 9 || saved.detailType !== 'grass' || !saved.organizationBasicInfo || !saved.organizationBasicInfo.fundraising || !Array.isArray(saved.organizationBasicInfo.fundraising.rows) || !saved.organizationDevelopment || !['growthNeeds', 'plan'].every(key => Array.isArray(saved.organizationDevelopment[key])) || !['organizationMembers', 'outputs', 'risks', 'targets', 'thirdParties', 'decisionBodySelection', 'coachingSelection', 'environmentalFieldSelection'].every(key => Array.isArray(saved[key])) || !saved.budget || !Array.isArray(saved.budget.rows) || !Array.isArray(saved.budget.personnel)) throw new Error('劲草草稿格式无法读取')
+    if (!!saved.fresh !== fresh || saved.id !== 9 || saved.detailType !== 'grass' || !saved.organizationBasicInfo || !saved.organizationBasicInfo.fundraising || !Array.isArray(saved.organizationBasicInfo.fundraising.rows) || !saved.organizationDevelopment || !['growthNeeds', 'plan'].every(key => Array.isArray(saved.organizationDevelopment[key])) || !['organizationMembers', 'outputs', 'risks', 'targets', 'thirdParties', 'decisionBodySelection', 'coachingSelection', 'environmentalFieldSelection'].every(key => Array.isArray(saved[key])) || !saved.budget || !Array.isArray(saved.budget.rows) || !Array.isArray(saved.budget.personnel)) throw new Error('劲草草稿格式无法读取')
     draft = { ...defaults, ...saved, coachingOtherSelected: typeof saved.coachingOtherSelected === 'boolean' ? saved.coachingOtherSelected : !!String(saved.coachingOther || '').trim(), reviewComments: { ...defaults.reviewComments, ...(saved.reviewComments || {}) } }
   }
+  if (fresh) return draft
   try {
     const reviewed = localStorage.getItem('see-project-review-example-9')
     if (reviewed) { const saved = JSON.parse(reviewed); if (saved.reviewComments && typeof saved.reviewComments === 'object' && !Array.isArray(saved.reviewComments)) draft.reviewComments = clone(saved.reviewComments) }
@@ -51,7 +52,7 @@ export function loadGrassDraft () {
   draft.organizationCode = source.basic.organizationCode
   return draft
 }
-export function saveGrassDraft (draft) {
+export function saveGrassDraft (draft, fresh = false) {
   const savedAt = new Date().toLocaleString('zh-CN', { hour12: false })
   const saved = clone(draft)
   saved.environmentalFields = saved.environmentalFieldSelection.join('、')
@@ -60,7 +61,7 @@ export function saveGrassDraft (draft) {
   saved.organizationBasicInfo.highestDecisionMakingBody = saved.decisionBodySelection.map(id => ({ id, content: id === 'decision-body-4' ? saved.decisionBodyOther : grassDecisionOptions.find(option => option.id === id).label }))
   saved.organizationBasicInfo.fundraising.total = saved.organizationBasicInfo.fundraising.rows.reduce((sum, row) => roundMoney(sum + Number(row.amount || 0)), 0)
   saved.organizationDevelopment.growthNeeds.find(item => item.key === 'organizationCoachingNeeds').content = saved.coachingSelection.concat(saved.coachingOtherSelected && saved.coachingOther.trim() ? [saved.coachingOther.trim()] : []).join('、')
-  localStorage.setItem(storageKey, JSON.stringify({ ...saved, savedAt }))
+  localStorage.setItem(storageKey + (fresh ? '-fresh' : ''), JSON.stringify({ ...saved, savedAt }))
   return savedAt
 }
 

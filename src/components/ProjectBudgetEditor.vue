@@ -14,6 +14,7 @@
 export default {
   name: 'ProjectBudgetEditor',
   props: {
+    donationProject: { type: Boolean, default: false },
     hideCostTypeAnalysis: { type: Boolean, default: false },
     value: { type: Object, required: true },
     projectName: { type: String, default: '' }
@@ -29,7 +30,7 @@ export default {
     }
   },
   computed: {
-    visibleSheets () { return this.sheets.filter(sheet => !this.hideCostTypeAnalysis || sheet.title !== '费用类型分析表') }
+    visibleSheets () { return this.donationProject ? [{ title: '北京市企业家环保基金会联合公益项目预算表', status: '已编辑', actions: ['编辑', '查看'] }] : this.sheets.filter(sheet => !this.hideCostTypeAnalysis || sheet.title !== '费用类型分析表') }
   },
   methods: {
     notify (action, title) { this.$message.info(`${title}${action}功能待开发`) }

@@ -209,7 +209,7 @@ export default {
       if (project.id === 1 && action.label === '提交结项') {
         this.$router.push({ name: 'report-form', params: { id: project.id }, query: { type: 'completion' } }); return
       }
-      if ((project.status === '草稿' && action.label === '编辑草稿') || (project.status === '申请待修改' && action.label === '修改申请')) this.$router.push({ name: 'project-form', params: { id: project.id } })
+      if ((project.status === '草稿' && action.label === '编辑草稿') || (project.status === '申请待修改' && action.label === '修改申请')) this.$router.push({ name: 'project-form', params: { id: String(project.id) }, query: { example: 'filled', from: 'dashboard' } })
       else this.notify(action.label)
     },
     search () { this.$message.success(this.keyword ? `正在搜索：${this.keyword}` : '请输入招募名称') },

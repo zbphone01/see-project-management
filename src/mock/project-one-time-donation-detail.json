@@ -2,7 +2,7 @@
   "basic": {
     "code": "ZZ-1764740244",
     "recruitment": "次捐项目招募",
-    "name": "联合公益项目示例",
+    "name": "联合公益-次捐项目示例",
     "type": "联合公益",
     "strategy": "联合公益",
     "issue": "次捐",
@@ -21,7 +21,7 @@
     "fundraisingPeriod": "2025年05月01日 至 2026年03月31日",
     "requested": "100,000 元（壹拾万元整）",
     "matching": "0 元（零元整）",
-    "minimumExecutionAmount": "200,000 元",
+    "minimumExecutionAmount": "200,000 元（贰拾万元整）",
     "publicFundraiserManagementFeeRatio": "5%",
     "donationUsePlan": "善款拟用于项目活动实施、社区公众参与及相关物资支持，按照项目预算和协议约定使用，并定期公开善款使用情况。",
     "leader": "次捐示例负责人",
@@ -66,12 +66,22 @@
       "content": "次捐示例的项目基础信息已完整填写，建议审核时核对筹款说明与预算金额的一致性。"
     }
   ],
+  "attachments": [
+    { "id": "donation-attachment-1", "name": "诚信承诺函.pdf", "type": "诚信承诺函", "uploadedAt": "2026-09-18 10:00:00" },
+    { "id": "donation-attachment-2", "name": "上线文案.docx", "type": "上线文案", "uploadedAt": "2026-09-18 10:00:00" },
+    { "id": "donation-attachment-3", "name": "项目预算表.xlsx", "type": "预算表", "uploadedAt": "2026-09-18 10:00:00" },
+    { "id": "donation-attachment-4", "name": "项目实施方案.pdf", "type": "其他附件", "uploadedAt": "2026-09-18 10:00:00" }
+  ],
   "auditHistory": [
+    { "id": "donation-audit-3", "time": "2026-09-20 15:30:00", "result": "审核通过", "reviewer": "示例赠款管理审核人", "approvedAmount": "200,000 元（贰拾万元整）", "review": true, "snapshot": true, "remark": "已核对诚信承诺函、上线文案及预算表，同意按框架协议开展筹款。本记录为本地演示。" },
+    { "id": "donation-audit-2", "time": "2026-09-19 11:00:00", "result": "项目组审核通过", "reviewer": "示例项目组审核人", "review": true, "remark": "项目组复核修订内容，确认项目目标与执行策略一致。本记录为本地演示。" },
+    { "id": "donation-audit-1", "time": "2026-09-17 09:30:00", "result": "退回修改", "reviewer": "示例项目组审核人", "review": true, "remark": "请补充上线文案中的善款使用说明，并核对最低执行额与预算。本记录为本地演示。" },
     {
       "id": 1,
       "time": "2026-09-21 10:00:00",
       "result": "执行中",
       "reviewer": "示例审核人",
+      "agreement": true,
       "remark": "本地演示数据，仅用于查看详情入口。"
     }
   ]

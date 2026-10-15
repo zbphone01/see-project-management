@@ -217,7 +217,6 @@ export default {
 .detail-module-content { padding: 24px; --detail-inner-padding: 0; --detail-inner-margin: 0; }
 .description-grid { --detail-inner-padding: 0 22px 22px; }
 .description-item { gap: 8px; }
-.detail-module-content .output-block + .output-block { margin-top: 24px; }
 .attachment-list > div:first-child { padding-top: 0; align-items: start; }
 .rich-content > .rich-text-section { margin: 0; }
 .rich-content > .rich-text-section > h3 { margin: 0 0 12px; }
@@ -247,6 +246,7 @@ export default {
 .application-content { padding: 24px; --detail-inner-padding: 0; --detail-inner-margin: 0; }
 .application-content .detail-table-wrap { margin: 0; }
 .application-content h3 { font-size: 16px; }
+.application-content h4 { font-family: inherit; font-size: 10pt; font-weight: 500; line-height: 1.6; }
 .application-content p, .detail-table td { overflow-wrap: anywhere; }
 .saved-rich-content >>> img { max-width: 100%; height: auto; }
 .saved-rich-content >>> table { max-width: 100%; border-collapse: collapse; }

@@ -126,16 +126,19 @@
                   </template>
                   <template v-else-if="record.detailType === 'green-home'">
                     <a-menu-item key="edit-green-home">编辑</a-menu-item>
+                    <a-menu-item key="edit-fresh-green-home">全新编辑</a-menu-item>
                     <a-menu-item key="audit">审核</a-menu-item>
                     <a-menu-item key="detail">查看详情</a-menu-item>
                   </template>
                   <template v-else-if="record.detailType === 'grass'">
                     <a-menu-item key="edit-grass">编辑</a-menu-item>
+                    <a-menu-item key="edit-fresh-grass">全新编辑</a-menu-item>
                     <a-menu-item key="audit">审核</a-menu-item>
                     <a-menu-item key="detail">查看详情</a-menu-item>
                   </template>
-                  <template v-else-if="record.detailType === 'one-time-donation'">
+                  <template v-else-if="['one-time-donation', 'monthly-donation'].includes(record.detailType)">
                     <a-menu-item key="edit-one-time-donation">编辑</a-menu-item>
+                    <a-menu-item key="edit-fresh-one-time-donation">全新编辑</a-menu-item>
                     <a-menu-item key="audit">审核</a-menu-item>
                     <a-menu-item key="detail">查看详情</a-menu-item>
                   </template>
@@ -238,8 +241,16 @@ export default {
     handleAppliedTableChange (pagination) { this.appliedPage = pagination.current },
     exportSelected (type) { this.$message.info(`已选择 ${this.selectedProjectKeys.length} 个项目，准备导出${type}`) },
     handleProjectAction ({ key }, record) {
-      if (key === 'edit-green-home' || key === 'edit-grass') {
-        this.$router.push({ name: 'project-form', params: { id: String(record.id) }, query: { detailType: key === 'edit-grass' ? 'grass' : 'green-home' } })
+      if ([2, 3].includes(record.id) && key === 'detail') {
+        this.$message.info('待后续开发')
+        return
+      }
+      if (['edit-fresh-one-time-donation', 'edit-fresh-green-home', 'edit-fresh-grass'].includes(key)) {
+        this.$router.push({ name: 'project-form', params: { id: String(record.id) }, query: { detailType: record.detailType, fresh: '1' } })
+        return
+      }
+      if (key === 'edit-green-home' || key === 'edit-grass' || key === 'edit-one-time-donation') {
+        this.$router.push({ name: 'project-form', params: { id: String(record.id) }, query: { detailType: key === 'edit-one-time-donation' ? record.detailType : key === 'edit-grass' ? 'grass' : 'green-home' } })
         return
       }
       if (key === 'download-progress-pdf' || key === 'download-progress-word') {
@@ -253,7 +264,6 @@ export default {
       const labels = {
         detail: '查看详情',
         edit: '修改申请',
-        'edit-one-time-donation': '编辑入口暂未配置',
         history: '变更记录',
         'audit-progress': '审核进展',
         'project-detail': '查看项目详情',

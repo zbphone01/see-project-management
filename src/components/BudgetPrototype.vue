@@ -1,13 +1,13 @@
 <template>
   <div class="budget-prototype" :class="{ 'budget-prototype-embedded': embedded }">
     <a-tabs v-model="activeTab" :animated="false">
-      <a-tab-pane v-for="(title, index) in budget.tabs" :key="String(index)" :tab="title">
-        <div v-if="index === 0" class="budget-sheet-scroll" tabindex="0" aria-label="预算及执行明细表，可左右滚动">
+      <a-tab-pane v-for="(title, index) in visibleTabs" :key="String(index)" :tab="title">
+        <div v-if="index === 0" class="budget-sheet-scroll" tabindex="0" :aria-label="(donationProject ? donationBudgetTitle : '预算及执行明细表') + '，可左右滚动'">
           <table class="budget-sheet">
             <colgroup><col v-for="(width, i) in budget.widths" :key="i" :style="{ width: width + 'px' }" /></colgroup>
             <thead>
               <tr><th colspan="15" class="sheet-project">{{ projectName }}</th></tr>
-              <tr><th colspan="15" class="sheet-heading">项目预算及执行情况明细表 <span>（待审）</span></th></tr>
+              <tr><th colspan="15" class="sheet-heading">{{ donationProject ? donationBudgetTitle : '项目预算及执行情况明细表' }} <span>（待审）</span></th></tr>
               <tr><td colspan="9" class="sheet-meta">编制单位（全称）：{{ budget.organization }}</td><td colspan="6" class="sheet-meta">项目周期：{{ budget.period }}</td></tr>
               <tr><td colspan="9" class="sheet-meta">合作多方：{{ budget.partners }}</td><td colspan="6" class="sheet-meta">执行金额截止日期：{{ budget.executionCutoff }}</td></tr>
               <tr><td colspan="15" class="sheet-meta">金额单位：元</td></tr>
@@ -39,11 +39,15 @@
 export default {
   name: 'BudgetPrototype',
   props: {
+    donationProject: { type: Boolean, default: false },
     embedded: { type: Boolean, default: false },
     projectName: { type: String, default: '项目名称' },
     budget: { type: Object, required: true }
   },
-  data () { return { activeTab: '0' } }
+  data () { return { activeTab: '0', donationBudgetTitle: '北京市企业家环保基金会联合公益项目预算表' } },
+  computed: {
+    visibleTabs () { return this.donationProject ? [this.donationBudgetTitle] : this.budget.tabs }
+  }
 }
 </script>
 

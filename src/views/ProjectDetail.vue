@@ -34,19 +34,19 @@
             <div class="description-item wide project-name-item" :class="basicReviewClass('name')" v-bind="reviewAttributes('name')" v-on="reviewEvents('name')"><span>项目名称</span><strong>{{ basicInfo.name }}</strong></div>
             <div class="description-item"><span>项目类型</span><strong>{{ basicInfo.type }}</strong></div>
             <div class="description-item"><span>项目策略</span><strong>{{ basicInfo.strategy }}</strong></div>
-            <div class="description-item"><span>项目议题</span><strong>{{ basicInfo.issue }}</strong></div>
+            <div class="description-item"><span>项目议题/筹款方式</span><strong>{{ basicInfo.issue }}</strong></div>
             <div v-if="basicInfo.funding" class="description-item"><span>资金来源</span><strong>{{ basicInfo.funding }}</strong></div>
             <div class="description-item" :class="basicReviewClass('targets')" v-bind="reviewAttributes('targets')" v-on="reviewEvents('targets')">
               <span>项目目标板块</span><strong>{{ basicInfo.targets }}</strong>
             </div>
-            <div v-for="field in basicReviewFields.slice(2)" :key="field.key" class="description-item" :class="[field.wide ? 'wide' : '', basicReviewClass(field.key)]" v-bind="reviewAttributes(field.key)" v-on="reviewEvents(field.key)"><span>{{ field.label }}</span><strong v-if="field.key === 'mailingAddress'" class="basic-field-multiline">{{ basicInfo.mailingAddress }}<br>邮编：{{ basicInfo.postalCode }}</strong><strong v-else :class="{ 'basic-field-multiline': field.multiline }">{{ basicInfo[field.valueKey] }}</strong></div>
+            <div v-for="field in basicReviewFields.slice(2)" :key="field.key" class="description-item" :class="[field.wide ? 'wide' : '', basicReviewClass(field.key)]" v-bind="reviewAttributes(field.key)" v-on="reviewEvents(field.key)"><span>{{ field.label }}<template v-if="detailType === 'monthly-donation' && mode === 'audit' && field.key === 'requested'">（预算调整比例 ±100%）</template></span><strong v-if="field.key === 'mailingAddress'" class="basic-field-multiline">{{ basicInfo.mailingAddress }}<br>邮编：{{ basicInfo.postalCode }}</strong><strong v-else :class="{ 'basic-field-multiline': field.multiline }">{{ basicInfo[field.valueKey] }}</strong></div>
           </div>
         </section>
 
         <section v-if="isGreenHomeExample && detailTableData.organizationBasicInfo" id="detail-organization-basic" class="panel detail-section">
           <div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="bank" /></span><div><h2>机构基本信息</h2><p v-if="hasOrganizationReviewComments">点击字段内容、信息小标题或行任意位置可添加审核意见</p></div></div><div class="detail-module-content">
           <div class="description-grid">
-            <div class="description-item wide" :class="basicReviewClass(organizationReviewKey('entrepreneurshipOverview'))" v-bind="reviewAttributes(organizationReviewKey('entrepreneurshipOverview'))" v-on="reviewEvents(organizationReviewKey('entrepreneurshipOverview'))"><span>机构简介</span><strong class="basic-field-multiline">{{ detailTableData.organizationBasicInfo.entrepreneurshipOverview }}</strong></div>
+            <div class="description-item wide" :class="basicReviewClass(organizationReviewKey('entrepreneurshipOverview'))" v-bind="reviewAttributes(organizationReviewKey('entrepreneurshipOverview'))" v-on="reviewEvents(organizationReviewKey('entrepreneurshipOverview'))"><span>{{ detailType === 'grass' ? '机构简介' : '创业概述' }}</span><strong class="basic-field-multiline">{{ detailTableData.organizationBasicInfo.entrepreneurshipOverview }}</strong></div>
             <div v-for="item in detailTableData.organizationBasicInfo.staffCounts" :key="item.key || item.label" class="description-item"><span>{{ item.label }}</span><strong>{{ item.count }}</strong></div>
           </div>
           <h3 class="table-subtitle">组织信息</h3>
@@ -54,13 +54,13 @@
             <table class="detail-table team-table">
               <colgroup><col class="project-detail-index-col" /><col class="team-col-name" /><col class="team-col-role" /><col /><col class="organization-work-type-col" /></colgroup>
               <thead><tr><th>序号</th><th>姓名</th><th>职位</th><th>团队分工</th><th>工作性质</th></tr></thead>
-              <tbody><tr v-for="(member, index) in detailTableData.organizationBasicInfo.members" :key="member.id" :class="reviewRowClass(organizationMemberSection, member.id)" v-bind="reviewAttributes(rowReviewKey(organizationMemberSection, member.id))" v-on="reviewEvents(rowReviewKey(organizationMemberSection, member.id))"><td><review-row-comments :comment="rowCellReviewComment(organizationMemberSection, member.id)">{{ index + 1 }}</review-row-comments></td><td>{{ member.name }}</td><td>{{ member.position }}</td><td>{{ member.responsibilities }}</td><td>{{ member.workType }}</td></tr></tbody>
+              <tbody><tr v-for="(member, index) in detailTableData.organizationBasicInfo.members" :key="member.id" :class="reviewRowClass(organizationMemberSection, member.id)" v-bind="reviewAttributes(rowReviewKey(organizationMemberSection, member.id))" v-on="reviewEvents(rowReviewKey(organizationMemberSection, member.id))"><td><review-row-comments :comment="rowCellReviewComment(organizationMemberSection, member.id)">{{ index + 1 }}</review-row-comments></td><td>{{ member.name }}</td><td>{{ member.position }}</td><td>{{ member.responsibilities }}</td><td>{{ member.usesLingxi ? member.workType + ' / ' + (member.usesLingxi === '是' ? '领薪' : '不领薪') : member.workType }}</td></tr></tbody>
             </table>
           </div>
-          <project-rich-content class="rich-content">
-            <section class="rich-text-section"><h3 :class="{ 'review-heading': mode === 'audit' }"><button v-if="mode === 'audit'" type="button" @click="openReview(organizationReviewKey('businessLogic'))">业务逻辑</button><template v-else>业务逻辑</template></h3><div class="rich-text-field" :class="contentReviewClass(organizationReviewKey('businessLogic'))"><p v-for="(paragraph, index) in detailTableData.organizationBasicInfo.businessLogic" :key="index">{{ paragraph }}</p></div></section>
-            <section class="rich-text-section"><h3 :class="{ 'review-heading': mode === 'audit' }"><button v-if="mode === 'audit'" type="button" @click="openReview(organizationReviewKey('coreProjects'))">核心项目/产品简介</button><template v-else>核心项目/产品简介</template></h3><div class="rich-text-field" :class="contentReviewClass(organizationReviewKey('coreProjects'))"><p v-for="(paragraph, index) in detailTableData.organizationBasicInfo.coreProjects" :key="index">{{ paragraph }}</p></div></section>
-            <section v-if="detailType === 'grass' && detailTableData.organizationBasicInfo.governanceStructure" class="rich-text-section"><h3 :class="{ 'review-heading': mode === 'audit' }"><button v-if="mode === 'audit'" type="button" @click="openReview(organizationReviewKey('governanceStructure'))">工作 / 管理 / 治理结构图</button><template v-else>工作 / 管理 / 治理结构图</template></h3><div class="rich-text-field" :class="contentReviewClass(organizationReviewKey('governanceStructure'))"><p v-for="(paragraph, index) in detailTableData.organizationBasicInfo.governanceStructure.paragraphs" :key="index">{{ paragraph }}</p><img :src="detailTableData.organizationBasicInfo.governanceStructure.image" alt="示例结构图：理事会下设机构负责人，机构负责人管理项目执行组和行政财务组" style="display: block; width: 100%; max-width: 680px; height: auto; margin: 16px auto;" /></div></section>
+          <project-rich-content v-if="detailType === 'grass'" class="rich-content">
+            <section class="project-rich-section"><h3 :class="{ 'review-heading': mode === 'audit' }"><button v-if="mode === 'audit'" type="button" @click="openReview(organizationReviewKey('businessLogic'))">业务逻辑</button><template v-else>业务逻辑</template></h3><div class="rich-text-field" :class="contentReviewClass(organizationReviewKey('businessLogic'))"><p v-for="(paragraph, index) in detailTableData.organizationBasicInfo.businessLogic" :key="index">{{ paragraph }}</p></div></section>
+            <section class="project-rich-section"><h3 :class="{ 'review-heading': mode === 'audit' }"><button v-if="mode === 'audit'" type="button" @click="openReview(organizationReviewKey('coreProjects'))">核心项目/产品简介</button><template v-else>核心项目/产品简介</template></h3><div class="rich-text-field" :class="contentReviewClass(organizationReviewKey('coreProjects'))"><p v-for="(paragraph, index) in detailTableData.organizationBasicInfo.coreProjects" :key="index">{{ paragraph }}</p></div></section>
+            <section v-if="detailType === 'grass' && detailTableData.organizationBasicInfo.governanceStructure" class="project-rich-section"><h3 :class="{ 'review-heading': mode === 'audit' }"><button v-if="mode === 'audit'" type="button" @click="openReview(organizationReviewKey('governanceStructure'))">工作 / 管理 / 治理结构图</button><template v-else>工作 / 管理 / 治理结构图</template></h3><div class="rich-text-field" :class="contentReviewClass(organizationReviewKey('governanceStructure'))"><p v-for="(paragraph, index) in detailTableData.organizationBasicInfo.governanceStructure.paragraphs" :key="index">{{ paragraph }}</p><img :src="detailTableData.organizationBasicInfo.governanceStructure.image" alt="示例结构图：理事会下设机构负责人，机构负责人管理项目执行组和行政财务组" style="display: block; width: 100%; max-width: 680px; height: auto; margin: 16px auto;" /></div></section>
           </project-rich-content>
           <div v-if="detailType === 'grass' && detailTableData.organizationBasicInfo.highestDecisionMakingBody" class="detail-table-wrap">
             <table class="detail-table"><thead><tr><th>机构最高决策层</th></tr></thead><tbody><tr v-for="item in detailTableData.organizationBasicInfo.highestDecisionMakingBody" :key="item.id" :class="reviewRowClass('highestDecisionMakingBody', item.id)" v-bind="reviewAttributes(rowReviewKey('highestDecisionMakingBody', item.id))" v-on="reviewEvents(rowReviewKey('highestDecisionMakingBody', item.id))"><td><review-row-comments :comment="rowCellReviewComment('highestDecisionMakingBody', item.id)">{{ item.content }}</review-row-comments></td></tr></tbody></table>
@@ -77,7 +77,7 @@
             <div v-for="item in detailTableData.organizationDevelopment.growthNeeds" :key="item.key" class="description-item wide" :class="basicReviewClass(item.key)" v-bind="reviewAttributes(item.key)" v-on="reviewEvents(item.key)"><span>{{ item.title }}</span><strong class="basic-field-multiline">{{ item.content }}</strong></div>
           </div>
           <project-rich-content v-else class="rich-content">
-            <section v-for="item in detailTableData.organizationDevelopment.background" :key="item.key" class="rich-text-section">
+            <section v-for="item in detailTableData.organizationDevelopment.background" :key="item.key" class="project-rich-section">
               <h3 :class="{ 'review-heading': mode === 'audit' }"><button v-if="mode === 'audit'" type="button" @click="openReview(developmentReviewKey('background', item))">{{ item.title }}</button><template v-else>{{ item.title }}</template></h3>
               <div class="rich-text-field" :class="contentReviewClass(developmentReviewKey('background', item))"><p v-for="(paragraph, index) in item.paragraphs" :key="index">{{ paragraph }}</p></div>
             </section>
@@ -87,7 +87,7 @@
         <section v-if="isGreenHomeExample && detailTableData.organizationDevelopment" id="detail-organization-plan" class="panel detail-section">
           <div class="detail-section-header"><span class="detail-section-icon blue"><a-icon type="compass" /></span><div><h2>发展目标与实施计划</h2><p v-if="hasDevelopmentReviewComments('plan')">请检查并修改标红的项目信息，点击信息小标题可添加具体审核意见</p></div></div><div class="detail-module-content">
           <project-rich-content class="rich-content">
-            <section v-for="item in detailTableData.organizationDevelopment.plan" :key="item.key" class="rich-text-section">
+            <section v-for="item in detailTableData.organizationDevelopment.plan" :key="item.key" class="project-rich-section">
               <h3 :class="{ 'review-heading': mode === 'audit' }"><button v-if="mode === 'audit'" type="button" @click="openReview(developmentReviewKey('plan', item))">{{ item.title }}</button><template v-else>{{ item.title }}</template></h3>
               <div class="rich-text-field" :class="contentReviewClass(developmentReviewKey('plan', item))"><p v-for="(paragraph, index) in item.paragraphs" :key="index">{{ paragraph }}</p></div>
             </section>
@@ -95,22 +95,22 @@
         </div></section>
 
         <section v-if="!isGreenHomeExample" id="detail-content" class="panel detail-section">
-          <div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="read" /></span><div><h2>{{ detailType === 'one-time-donation' ? '详细资料' : '附加信息' }}</h2><p v-if="hasAdditionalReviewComments">请检查并修改标红的项目信息，点击信息小标题可添加具体审核意见</p></div></div><div class="detail-module-content">
-          <project-rich-content v-if="detailType === 'one-time-donation'" class="rich-content">
-            <section v-for="field in detailTableData.detailedMaterials" :key="field.key" class="rich-text-section" :data-field="field.key">
+          <div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="read" /></span><div><h2>{{ isDonationProject ? '详细资料' : '附加信息' }}</h2><p v-if="hasAdditionalReviewComments">{{ isDonationProject ? '点击信息小标题可添加审核意见' : '请检查并修改标红的项目信息，点击信息小标题可添加具体审核意见' }}</p></div></div><div class="detail-module-content">
+          <project-rich-content v-if="isDonationProject" class="rich-content">
+            <section v-for="field in detailTableData.detailedMaterials" :key="field.key" class="project-rich-section" :data-field="field.key">
               <h3 :class="{ 'review-heading': mode === 'audit' }"><button v-if="mode === 'audit'" type="button" @click="openReview(field.key)">{{ field.title }}</button><template v-else>{{ field.title }}</template></h3>
               <div class="rich-text-field" :class="contentReviewClass(field.key)"><p v-for="(paragraph, index) in field.paragraphs" :key="index">{{ paragraph }}</p></div>
             </section>
           </project-rich-content>
           <project-rich-content v-else class="rich-content">
-            <section class="rich-text-section" data-field="projectOverview">
+            <section class="project-rich-section" data-field="projectOverview">
               <h3 :class="{ 'review-heading': mode === 'audit' }"><button v-if="mode === 'audit'" type="button" @click="openReview('overview')">项目概述</button><template v-else>项目概述</template></h3>
               <div class="rich-text-field" :class="contentReviewClass('overview')">
                 <p>本项目拟通过对青海省玉树州治多县扎河乡牧户进行入户调研、宣传并指导零废弃家庭建设，推广高海拔地区零废弃社区建设经验，指导牧民研发资源再生利用产品。</p>
                 <p>项目将从源头减少三江源环境脆弱地区不可降解垃圾的产生，缓解经济发展与生态保护之间的矛盾，<strong>调动牧民参与零废弃行动的积极性</strong>。</p>
               </div>
             </section>
-            <section class="rich-text-section" data-field="projectBackground">
+            <section class="project-rich-section" data-field="projectBackground">
               <h3 :class="{ 'review-heading': mode === 'audit' }"><button v-if="mode === 'audit'" type="button" @click="openReview('background')">项目背景</button><template v-else>项目背景</template></h3>
               <div class="rich-text-field" :class="contentReviewClass('background')">
                 <h4>一、现状和问题</h4>
@@ -123,7 +123,7 @@
                 <p>青海省三江源生态环境保护协会长期围绕环保骨干培养、水源保护行动、零废弃社区与乡村生态文明建设开展工作。协会愿景是<u>传承青藏高原独特的生态智慧，使丰富的生命和多样的文化生生不息</u>。</p>
               </div>
             </section>
-            <section class="rich-text-section" data-field="projectGoal">
+            <section class="project-rich-section" data-field="projectGoal">
               <h3 :class="{ 'review-heading': mode === 'audit' }"><button v-if="mode === 'audit'" type="button" @click="openReview('goal')">项目总目标</button><template v-else>项目总目标</template></h3>
               <div class="rich-text-field" :class="contentReviewClass('goal')">
                 <p>在三江源国家公园长江园区扎河乡口前村建立 20 户管护员家庭作为示范，使每户每年生活垃圾减少到 10 公斤以内，并共同制定和持续遵守禁塑减废制度。</p>
@@ -133,12 +133,12 @@
         </div></section>
 
         <section v-if="!isGreenHomeExample" id="detail-area" class="panel detail-section">
-          <div class="detail-section-header"><span class="detail-section-icon cyan"><a-icon type="environment" /></span><div><h2>项目实施区域</h2><p v-if="hasAreaReviewComments">请检查并修改标红的项目信息，点击行任意位置可添加具体审核意见</p></div></div><div class="detail-module-content">
+          <div class="detail-section-header"><span class="detail-section-icon cyan"><a-icon type="environment" /></span><div><h2>项目实施区域</h2><p v-if="hasAreaReviewComments">{{ isDonationProject ? '点击行任意位置可添加审核意见' : '请检查并修改标红的项目信息，点击行任意位置可添加具体审核意见' }}</p></div></div><div class="detail-module-content">
           <div class="detail-table-wrap"><table class="detail-table project-area-table"><colgroup><col class="project-detail-index-col" /><col /><col /><col /></colgroup><thead><tr><th>序号</th><th>省 / 直辖市</th><th>地级市 / 直辖市区</th><th>行政区</th></tr></thead><tbody><tr v-for="(row, rowIndex) in detailTableData.areas" :key="row.id" :class="reviewRowClass('areas', row.id)" v-bind="reviewAttributes(rowReviewKey('areas', row.id))" v-on="reviewEvents(rowReviewKey('areas', row.id))"><td><review-row-comments :comment="rowCellReviewComment('areas', row.id)">{{ rowIndex + 1 }}</review-row-comments></td><td>{{ row.province }}</td><td>{{ row.city }}</td><td>{{ row.district }}</td></tr></tbody></table></div>
         </div></section>
 
         <section v-if="!isGreenHomeExample" id="detail-team" class="panel detail-section">
-          <div class="detail-section-header"><span class="detail-section-icon violet"><a-icon type="team" /></span><div><h2>执行团队</h2><p v-if="hasTeamReviewComments">请检查并修改标红的项目信息，点击信息小标题或行任意位置可添加具体审核意见</p></div></div><div class="detail-module-content">
+          <div class="detail-section-header"><span class="detail-section-icon violet"><a-icon type="team" /></span><div><h2>执行团队</h2><p v-if="hasTeamReviewComments">{{ isDonationProject ? '点击信息小标题或行任意位置可添加审核意见' : '请检查并修改标红的项目信息，点击信息小标题或行任意位置可添加具体审核意见' }}</p></div></div><div class="detail-module-content">
           <div class="detail-table-wrap">
             <table class="detail-table team-table">
               <colgroup><col class="project-detail-index-col" /><col class="team-col-name" /><col class="team-col-role" /><col /></colgroup>
@@ -147,7 +147,7 @@
             </table>
           </div>
           <project-rich-content class="rich-content">
-            <section class="rich-text-section" data-field="teamManagementExperience">
+            <section class="project-rich-section" data-field="teamManagementExperience">
               <h3 :class="{ 'review-heading': mode === 'audit' }"><button v-if="mode === 'audit'" type="button" @click="openReview('experience')">团队或成员项目管理执行经验</button><template v-else>团队或成员项目管理执行经验</template></h3>
               <div class="rich-text-field" :class="contentReviewClass('experience')">
                 <p>团队曾持续推动三江源地区零废弃家庭建设，具备<strong>社区动员、环境教育、物资管理与项目监测</strong>等综合经验。</p>
@@ -166,7 +166,7 @@
           </div>
         </div></section>
 
-        <section v-if="detailType !== 'one-time-donation'" id="detail-management" class="panel detail-section">
+        <section v-if="!isDonationProject" id="detail-management" class="panel detail-section">
           <div class="detail-section-header"><span class="detail-section-icon red"><a-icon type="safety-certificate" /></span><div><h2>项目管理计划</h2><p v-if="mode === 'audit' && (detailType !== 'grass' || detailTableData.risks.some(row => hasReviewComment(reviewComments[rowReviewKey('risks', row.id)])))">点击行任意位置可添加审核意见</p></div></div><div class="detail-module-content">
           <template v-if="!isGreenHomeExample">
             <h3 class="table-subtitle">项目相关方</h3>
@@ -188,12 +188,34 @@
 
         <section id="detail-budget" class="panel detail-section">
           <div class="detail-section-header"><span class="detail-section-icon gold"><a-icon type="fund" /></span><div><h2>在线预算表</h2><p>项目预算及执行情况概览</p></div></div><div class="detail-module-content">
-          <budget-prototype embedded :project-name="detailProject.name" :budget="detailTableData.budget" />
+          <budget-prototype embedded :donation-project="isDonationProject" :project-name="detailProject.name" :budget="detailTableData.budget" />
         </div></section>
 
         <section v-if="!isGreenHomeExample" id="detail-attachments" class="panel detail-section">
           <div class="detail-section-header"><span class="detail-section-icon blue"><a-icon type="paper-clip" /></span><div><h2>附件</h2><p>项目相关附件，如有需要请下载留存</p></div></div><div class="detail-module-content">
-          <div class="attachment-list"><div><div><strong>项目预算表.xlsx</strong><span>预算表 · 2025-12-28 23:59</span></div><a-button type="link" @click="notify('预览项目预算表')">预览</a-button><a-button type="link" @click="notify('下载项目预算表')">下载</a-button></div><div><div><strong>项目实施方案.pdf</strong><span>其他附件 · 2025-12-28 23:59</span></div><a-button type="link" @click="notify('预览项目实施方案')">预览</a-button><a-button type="link" @click="notify('下载项目实施方案')">下载</a-button></div></div>
+          <div class="attachment-list"><div v-for="file in detailAttachments" :key="file.id"><div><strong>{{ file.name }}</strong><span>{{ file.type }} · {{ file.uploadedAt }}</span></div><a-button type="link" @click="notify('预览' + file.name + '（演示入口）')">预览</a-button><a-button type="link" @click="notify('下载' + file.name + '（演示入口）')">下载</a-button></div></div>
+        </div></section>
+
+        <section v-if="detailTableData.auditHistory && detailTableData.auditHistory.length" id="detail-history" class="panel detail-section">
+          <div class="detail-section-header"><span class="detail-section-icon gray"><a-icon type="history" /></span><div><h2>审核信息</h2></div></div><div class="detail-module-content">
+          <a-timeline class="audit-timeline">
+            <a-timeline-item v-for="entry in detailTableData.auditHistory" :key="entry.id" color="blue">
+              <div class="audit-entry">
+                <strong>审核结果：{{ entry.result }}</strong>
+                <div class="audit-result-row">
+                  <span class="audit-info-chip audit-time">{{ entry.time }} · {{ entry.reviewer }}</span>
+                  <span v-if="entry.approvedAmount" class="audit-info-chip audit-approved-amount">审核金额：{{ entry.approvedAmount }}</span>
+                  <span v-if="entry.paymentAmount" class="audit-info-chip audit-requested-amount">请款金额：{{ entry.paymentAmount }}</span>
+                  <button v-if="entry.review" class="audit-resource-link audit-review-resource" type="button" @click="notify('查看评审资料')">评审资料</button>
+                  <button v-if="entry.agreement" class="audit-resource-link audit-agreement-resource" type="button" @click="notify('查看协议扫描件')">协议扫描件</button>
+                  <button v-if="entry.snapshot" class="audit-resource-link audit-snapshot-resource" type="button" @click="notify('查看申请书快照')">申请书快照</button>
+                </div>
+                <div v-if="entry.remark" class="audit-result-details">
+                  <p><b>审核备注：</b>{{ entry.remark }}</p>
+                </div>
+              </div>
+            </a-timeline-item>
+          </a-timeline>
         </div></section>
 
         <section v-if="mode === 'audit'" id="detail-audit" :key="auditModule.type" :data-audit-type="auditModule.type" class="panel detail-section">
@@ -249,27 +271,6 @@
           </div>
         </div></section>
 
-        <section v-else id="detail-history" class="panel detail-section">
-          <div class="detail-section-header"><span class="detail-section-icon gray"><a-icon type="history" /></span><div><h2>审核信息</h2></div></div><div class="detail-module-content">
-          <a-timeline class="audit-timeline">
-            <a-timeline-item v-for="entry in detailTableData.auditHistory" :key="entry.id" color="blue">
-              <div class="audit-entry">
-                <strong>审核结果：{{ entry.result }}</strong>
-                <div class="audit-result-row">
-                  <span class="audit-info-chip audit-time">{{ entry.time }} · {{ entry.reviewer }}</span>
-                  <span v-if="entry.approvedAmount" class="audit-info-chip audit-approved-amount">审核金额：{{ entry.approvedAmount }}</span>
-                  <span v-if="entry.paymentAmount" class="audit-info-chip audit-requested-amount">请款金额：{{ entry.paymentAmount }}</span>
-                  <button v-if="entry.review" class="audit-resource-link audit-review-resource" type="button" @click="notify('查看评审资料')">评审资料</button>
-                  <button v-if="entry.agreement" class="audit-resource-link audit-agreement-resource" type="button" @click="notify('查看协议扫描件')">协议扫描件</button>
-                  <button v-if="entry.snapshot" class="audit-resource-link audit-snapshot-resource" type="button" @click="notify('查看申请书快照')">申请书快照</button>
-                </div>
-                <div v-if="entry.remark" class="audit-result-details">
-                  <p><b>审核备注：</b>{{ entry.remark }}</p>
-                </div>
-              </div>
-            </a-timeline-item>
-          </a-timeline>
-        </div></section>
       <a-modal v-if="mode === 'audit'" v-model="targetReviewVisible" title="编辑审核意见" :width="560" :mask-closable="false" @cancel="targetReviewVisible = false">
       <a-textarea v-model="targetReviewDraft" aria-label="审核意见" placeholder="请输入审核意见" :rows="5" />
       <template slot="footer">
@@ -286,6 +287,7 @@
 import defaultTableData from '../mock/project-tables.json'
 import greenHomeTableData from '../mock/project-green-home-detail.json'
 import grassTableData from '../mock/project-grass-detail.json'
+import monthlyDonationTableData from '../mock/project-monthly-donation-detail.json'
 import oneTimeDonationTableData from '../mock/project-one-time-donation-detail.json'
 import BudgetPrototype from '../components/BudgetPrototype.vue'
 import ReviewCommentLabel from '../components/ReviewCommentLabel.vue'
@@ -350,7 +352,7 @@ const organizationReviewFields = (() => {
   })()
 const detailFieldVariants = {
   default: basicReviewFields,
-  'green-home': organizationReviewFields,
+  'green-home': organizationReviewFields.filter(field => !['email', 'mailingAddress'].includes(field.key)),
   grass: organizationReviewFields,
   'one-time-donation': (() => {
     const fields = basicReviewFields.map(field => {
@@ -372,13 +374,17 @@ const detailFieldVariants = {
       { key: 'donationUsePlan', label: '善款使用预案', valueKey: 'donationUsePlan', wide: true, multiline: true })
     return fields
   })(),
-  'monthly-donation': basicReviewFields
+  'monthly-donation': null
 }
+detailFieldVariants['monthly-donation'] = detailFieldVariants['one-time-donation']
+  .filter(field => !['total', 'fundraisingPeriod', 'minimumExecutionAmount', 'publicFundraiserManagementFeeRatio', 'donationUsePlan'].includes(field.key))
+  .map(field => ['frameworkAgreementNumber', 'requested', 'matching'].includes(field.key) ? { ...field, readonly: true } : field)
 const detailTableDataByType = {
   default: defaultTableData,
   'green-home': greenHomeTableData,
   grass: grassTableData,
-  'one-time-donation': oneTimeDonationTableData
+  'one-time-donation': oneTimeDonationTableData,
+  'monthly-donation': monthlyDonationTableData
 }
 export default {
   name: 'ProjectDetail',
@@ -392,7 +398,7 @@ export default {
   },
   data () {
     const typeTableData = detailTableDataByType[this.detailType] || defaultTableData
-    const sourceTableData = this.tableData || (this.detailType === 'one-time-donation'
+    const sourceTableData = this.tableData || (['one-time-donation', 'monthly-donation'].includes(this.detailType)
       ? { ...defaultTableData, ...typeTableData, basic: { ...defaultTableData.basic, ...typeTableData.basic } }
       : typeTableData)
     const comments = Object.prototype.hasOwnProperty.call(sourceTableData, 'reviewComments') ? { ...sourceTableData.reviewComments } : { targets: '请补充各项目目标板块对应的成果指标及衡量方式。', overview: '请补充项目受益范围和社区参与方式。', 'areas.areas-1': '请核实实施区域与活动地点的一致性。', 'outputs.output-1': '请明确产出的数量、完成时间和验收依据。', 'activities.activity-2-1': '请补充活动实施安排及执行人员分工。' }
@@ -419,15 +425,29 @@ export default {
     auditExecutingFundingTotal: 5000
   } },
   computed: {
+    isDonationProject () { return ['one-time-donation', 'monthly-donation'].includes(this.detailType) },
     reviewComments () { return this.detailTableData.reviewComments },
+    detailAttachments () {
+      if (this.isDonationProject) {
+        const order = ['诚信承诺函', '上线文案', '预算表', '其他附件']
+        return (this.detailTableData.attachments || []).slice().sort((a, b) => {
+          const rank = type => { const index = order.indexOf(type); return index < 0 ? order.length : index }
+          return rank(a.type) - rank(b.type)
+        })
+      }
+      return [
+        { id: 'budget', name: '项目预算表.xlsx', type: '预算表', uploadedAt: '2025-12-28 23:59' },
+        { id: 'plan', name: '项目实施方案.pdf', type: '其他附件', uploadedAt: '2025-12-28 23:59' }
+      ]
+    },
     organizationMemberSection () { return this.detailType === 'grass' ? 'organizationMembers' : 'organizationBasicInfo.members' },
     hasOrganizationReviewComments () {
-      const keys = ['entrepreneurshipOverview', 'businessLogic', 'coreProjects'].map(this.organizationReviewKey)
+      const keys = (this.detailType === 'grass' ? ['entrepreneurshipOverview', 'businessLogic', 'coreProjects'] : ['entrepreneurshipOverview']).map(this.organizationReviewKey)
       keys.push(...this.reviewRowKeys(this.organizationMemberSection, this.detailTableData.organizationBasicInfo.members))
       if (this.detailType === 'grass') { keys.push('governanceStructure', ...this.reviewRowKeys('highestDecisionMakingBody', this.detailTableData.organizationBasicInfo.highestDecisionMakingBody), ...this.reviewRowKeys('organizationFundraising', this.detailTableData.organizationBasicInfo.fundraising.rows)) }
       return this.hasModuleReviewComments(keys)
     },
-    hasAdditionalReviewComments () { return this.hasModuleReviewComments(this.detailType === 'one-time-donation' ? this.detailTableData.detailedMaterials.map(field => field.key) : ['overview', 'background', 'goal']) },
+    hasAdditionalReviewComments () { return this.hasModuleReviewComments(this.isDonationProject ? this.detailTableData.detailedMaterials.map(field => field.key) : ['overview', 'background', 'goal']) },
     hasAreaReviewComments () { return this.hasModuleReviewComments(this.reviewRowKeys('areas', this.detailTableData.areas)) },
     hasTeamReviewComments () { return this.hasModuleReviewComments(['experience'].concat(this.reviewRowKeys('team', this.detailTableData.team))) },
     hasOutputReviewComments () { return this.hasModuleReviewComments(this.reviewRowKeys('outputs', this.detailTableData.outputs).concat(...(this.detailTableData.outputs || []).map(output => this.reviewRowKeys('activities', output.activities)))) },
@@ -638,7 +658,7 @@ export default {
 #detail-basic .description-item { gap: 8px; }
 
 
-.detail-module-content .rich-content > .rich-text-section > h3 { margin: 0 0 12px; }
+.detail-module-content .rich-content > .project-rich-section > h3 { margin: 0 0 12px; }
 .project-rich-separator { position: relative; height: 1px; margin: 40px 0; background: linear-gradient(90deg, #b7dfcf 0%, #e4f2ec 42%, transparent 100%); }
 .project-rich-separator-dot { position: absolute; left: -4px; top: 50%; width: 7px; height: 7px; transform: translateY(-50%); border: 2px solid #fff; border-radius: 50%; background: #18a66a; box-shadow: 0 0 0 2px #ccebdd; }
 .detail-module-content .table-subtitle { font-family: inherit; font-size: 10pt; font-weight: 500; line-height: 1.6; }

@@ -420,14 +420,12 @@ em { color: #ff4d4f; font-style: normal; margin-right: 6px; }
 .application-edit-content { padding: 24px; display: grid; gap: 32px; }
 .application-edit-content .section-body { padding: 0; }
 .organization-introduction h3 { margin: 0 0 8px; font-size: 10pt; font-weight: 500; line-height: 1.6; }
-.merged-input-section > .section-body { padding: 0; }
 .merged-input-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
 .merged-input-heading > div { flex: 1; min-width: 0; }
 .merged-input-heading h3 { margin: 0 0 8px; font-size: 10pt; font-weight: 500; line-height: 1.6; }
 .word-count { flex: none; color: #718095; line-height: 1.6; white-space: nowrap; }
 .word-count-error { color: #ff4d4f; }
 .basic-annual-title { margin: 0 0 8px; font-size: 10pt; font-weight: 500; line-height: 1.6; }
-.basic-annual-funds .subheading h3 { color: #7b899b; font-size: 10pt; font-weight: 400; }
 .annual-entry-table th:nth-child(3), .annual-entry-table td:nth-child(3) { text-align: right; }
 .annual-entry-table th:nth-child(4), .annual-entry-table td:nth-child(4) { text-align: center; }
 .annual-input-row .ant-input-number { width: 100%; }
@@ -435,8 +433,7 @@ em { color: #ff4d4f; font-style: normal; margin-right: 6px; }
 .annual-review-hint { margin: 0 0 9px; color: #718095; line-height: 1.6; }
 .input-hint { color: #5b8ff9; font-size: 14px; line-height: 1.7; margin: 0 0 16px; }
 .subheading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 8px; }
-.subheading h3 { margin: 0; font-size: 16px; font-weight: 600; }
-.subheading > div { display: flex; gap: 12px; }
+.subheading h3 { margin: 0; font-family: inherit; font-size: 10pt; font-weight: 500; line-height: 1.6; }
 .annual-group + .annual-group { margin-top: 16px; }
 .detail-table-wrap { margin: 0; overflow-x: auto; }
 .entry-table { table-layout: fixed; min-width: 760px; }
@@ -451,7 +448,6 @@ em { color: #ff4d4f; font-style: normal; margin-right: 6px; }
 .row-actions .ant-btn { padding: 0 7px; height: auto; }
 .total-row > td { background: #f8fbff; font-weight: 600; }
 .entry-table .total-row > td:first-child { text-align: left; }
-.empty-cell .ant-btn, .empty-add { color: #5b8ff9; }
 .multiline { white-space: pre-wrap; }
 .amount-grid { padding: 0; }
 .amount-grid .edit-field { align-content: start; }
@@ -476,12 +472,10 @@ em { color: #ff4d4f; font-style: normal; margin-right: 6px; }
 .image-upload-placeholder:disabled { cursor: wait; opacity: .5; }
 .image-upload-placeholder:focus-visible { outline: 2px solid #1677ff; outline-offset: 3px; }
 .detail-section-header .image-module-hint { color: #718095; font-size: 14px; margin: 4px 0 0; }
-.image-item .ant-btn { padding: 0 6px; }
 .image-button:focus-visible { outline: 2px solid #1677ff; outline-offset: 3px; }
 .form-attachment-list { padding: 0; }
-.attachment-empty-add { margin: 0; }
+.attachment-empty-add { margin: 0; cursor: pointer; }
 .form-attachment-list > div:first-child { padding-top: 0; align-items: start; }
-.attachment-empty-add { cursor: pointer; }
 .attachment-empty-add >>> .ant-empty-description { color: #5b8ff9; }
 .attachment-empty-add:focus-visible { outline: 2px solid #1677ff; outline-offset: 3px; }
 .add-more-attachment { width: 100%; margin: 16px 0 0; border-color: #91d5ff; border-style: dashed; color: #096dd9 !important; background: #e6f7ff; }
@@ -513,5 +507,4 @@ em { color: #ff4d4f; font-style: normal; margin-right: 6px; }
 .danger-link { color: #ff4d4f; }
 .form-footer { position: sticky; bottom: 0; z-index: 5; border: 1px solid #e6ebf2; border-radius: 12px; background: rgba(255,255,255,.98); box-shadow: 0 -4px 22px rgba(23,56,92,.07); padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
 .form-footer > span { color: #718095; }.form-footer > div { display: flex; gap: 12px; }.form-footer .ant-btn { min-width: 100px; }
-.detail-section-header > .ant-btn { height: 32px; border-radius: 6px; }
 </style>
