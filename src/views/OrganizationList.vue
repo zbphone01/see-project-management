@@ -48,7 +48,10 @@ export default {
     return {
       approvalOptions,
       states: organizationStates,
-      organizations: createOrganizations(),
+      organizations: createOrganizations().map(item => {
+        const detail = loadOrganizationDetail(item.id)
+        return detail.formVersion ? Object.assign({}, item, { name: detail.fields.name, organizationName: detail.fields.organizationName, registrationType: detail.fields.registrationType, contactName: detail.fields.leader, contactPhone: detail.fields.phone, image: detail.fields.avatar, status: detail.status, charityQualification: detail.fields.isCharity + ' / ' + detail.fields.hasFundraisingQualification }) : item
+      }),
       filters: { name: '', approval: undefined },
       appliedFilters: { name: '', approval: undefined },
       page: 1,
@@ -83,6 +86,8 @@ export default {
     handleAction (action, item) {
       if (action === '查看详情' || (action === '审核' && item.id === 'org-1')) {
         this.$router.push({ name: 'organization-detail', params: { id: item.id }, query: action === '审核' ? { mode: 'audit' } : {} })
+      } else if (action === '修改') {
+        this.$router.push({ name: 'organization-form', params: { id: item.id } })
       } else if (action === '上传年报') {
         this.clearReport()
         this.selectedOrganization = item

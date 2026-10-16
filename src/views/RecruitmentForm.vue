@@ -47,18 +47,21 @@
     </a-spin>
     <footer class="form-footer"><span><a-icon type="info-circle" /> {{ dirty ? '填写内容尚未提交' : savedAt ? '已保留本地提交记录，可继续修改' : '填写完成后提交招募信息' }}</span><div><a-button :disabled="saving" @click="goBack">取消</a-button><a-button type="primary" :loading="saving" :disabled="loading" @click="submit">提交</a-button></div></footer>
     <a-modal v-model="submittedVisible" title="招募信息已保存在本地" :mask-closable="false" :footer="null"><p>“{{ form.name }}”已通过填写校验。当前为前端演示，信息与附件仅保存在当前浏览器，尚未实际发布招募。</p><div class="result-actions"><a-button @click="submittedVisible = false">继续编辑</a-button><a-button type="primary" @click="goBack">返回</a-button></div></a-modal>
+    <avatar-crop-modal ref="coverCrop" title="裁剪招募头图" image-label="招募头图" @busy="coverCropping = $event" @confirm="confirmCoverCrop" />
     <a-modal v-model="previewVisible" :title="previewName" :width="960" :mask-closable="false" :footer="null" @afterClose="clearPreview"><img v-if="previewType === 'image'" :src="previewUrl" :alt="previewName" class="attachment-preview-image" /><iframe v-else-if="previewType === 'pdf'" :src="previewUrl" :title="previewName" class="attachment-preview-pdf"></iframe><p v-else>此格式请下载后使用对应办公软件查看。</p></a-modal>
   </section>
 </template>
 
 <script>
+import AvatarCropModal from '../components/AvatarCropModal.vue'
 import { uppercaseMoney } from '../mock/project-drafts'
 import { recruitmentAccount, projectRecruitmentStrategies, jointRecruitmentStrategy, jointRecruitmentTopics, unspecifiedOrganizationId, unspecifiedSecondaryOrganizationId, recruitmentDirections, recruitmentOrganizations, createRecruitmentForm, validateRecruitmentForm, recruitmentLocalRecord } from '../mock/recruitment-form'
 
 export default {
   name: 'RecruitmentForm',
+  components: { AvatarCropModal },
   data () {
-    return { form: createRecruitmentForm(), account: recruitmentAccount, organizations: recruitmentOrganizations, unspecifiedOrganizationId, unspecifiedSecondaryOrganizationId, organizationSearch: '', organizationDropdownVisible: false, organizationDropdownWidth: 0, errors: [], dirty: false, loading: true, saving: false, submittedVisible: false, savedAt: '', coverUrl: '', attachmentSequence: 0, previewVisible: false, previewName: '', previewUrl: '', previewType: '' }
+    return { form: createRecruitmentForm(), account: recruitmentAccount, organizations: recruitmentOrganizations, unspecifiedOrganizationId, unspecifiedSecondaryOrganizationId, organizationSearch: '', organizationDropdownVisible: false, organizationDropdownWidth: 0, errors: [], dirty: false, loading: true, saving: false, submittedVisible: false, savedAt: '', coverUrl: '', coverCropping: false, pendingCoverName: '', attachmentSequence: 0, previewVisible: false, previewName: '', previewUrl: '', previewType: '' }
   },
   computed: {
     isJoint () { return this.form.type === '联合公益' },
@@ -130,11 +133,19 @@ export default {
       const file = event.target.files[0]; event.target.value = ''
       if (!file) return
       if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024 || !file.size) { this.$message.error('请选择 5 MB 以内的有效 JPG、PNG 或 WebP 图片'); return }
-      const url = URL.createObjectURL(file)
-      const image = new Image()
-      image.onload = () => { this.removeCover(); this.form.cover = { name: file.name, file }; this.coverUrl = url }
-      image.onerror = () => { URL.revokeObjectURL(url); this.$message.error('图片无法读取，请重新选择') }
-      image.src = url
+      if (this.coverCropping || this.loading || this.saving) return
+      this.pendingCoverName = file.name
+      this.$refs.coverCrop.open(file)
+    },
+    confirmCoverCrop (data) {
+      try {
+        const binary = atob(data.split(',')[1]); const bytes = new Uint8Array(binary.length)
+        for (let index = 0; index < binary.length; index++) bytes[index] = binary.charCodeAt(index)
+        const name = (this.pendingCoverName.replace(/\.[^.]+$/, '') || '招募头图') + '.png'
+        const file = new File([bytes], name, { type: 'image/png', lastModified: Date.now() })
+        const url = URL.createObjectURL(file)
+        this.removeCover(); this.form.cover = { name, file }; this.coverUrl = url
+      } catch (error) { this.$message.error('裁剪结果读取失败，请重新选择图片') }
     },
     selectAttachments (event) {
       const files = Array.from(event.target.files); event.target.value = ''
@@ -152,7 +163,7 @@ export default {
     removeAttachment (file) { this.form.attachments = this.form.attachments.filter(item => item.id !== file.id) },
     localTime () { const now = new Date(); const pad = value => String(value).padStart(2, '0'); return now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) + ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes()) },
     async submit () {
-      if (this.saving || this.loading) return
+      if (this.saving || this.loading || this.coverCropping) return
       this.errors = validateRecruitmentForm(this.form)
       if (this.errors.length) { this.$nextTick(() => this.$el.querySelector('.validation-summary').scrollIntoView({ block: 'center', behavior: 'smooth' })); return }
       this.saving = true

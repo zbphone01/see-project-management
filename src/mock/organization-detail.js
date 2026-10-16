@@ -60,12 +60,7 @@ export function loadOrganizationDetail (id) {
     const saved = JSON.parse(localStorage.getItem(storageKey) || '{}')[id]
     if (saved && saved.id === id) {
       const fields = Object.assign({}, defaults.fields, saved.fields || {})
-      // 注册资料按原型展示；保留本地审核意见、上传记录及其他模块数据。
-      organizationFieldGroups.find(group => group.key === 'registration').fields.forEach(field => { fields[field[0]] = defaults.fields[field[0]] })
-      fields.officeAddress = defaults.fields.officeAddress
-      fields.postalCode = defaults.fields.postalCode
-      ;['honors', 'ratingAndParty'].forEach(key => { if (!fields[key] || fields[key] === '-') fields[key] = defaults.fields[key] })
-      const members = (saved.members || defaults.members).map(section => section.key === 'supervisors' ? defaults.members.find(item => item.key === 'supervisors') : section)
+      const members = saved.members || defaults.members
       const history = (saved.history || []).filter(entry => !['history-1', 'history-example-approved', 'history-example-rejected'].includes(entry.id)).concat(defaults.history)
       return Object.assign({}, defaults, saved, { fields, members, history, reviewComments: Object.assign({}, defaults.reviewComments, saved.reviewComments || {}) })
     }

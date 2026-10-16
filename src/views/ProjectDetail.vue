@@ -647,20 +647,13 @@ export default {
 .output-review-trigger:focus-visible { outline: 2px solid #ff7875; outline-offset: -2px; }
 
 /* 本页内容容器负责外围留白，共用组件内部内容仍沿用业务样式。 */
-.detail-module-content { padding: 24px; --detail-inner-padding: 0; --detail-inner-margin: 0; --detail-subtitle-margin: 32px 0 8px; }
 .detail-module-content .output-block + .output-block { margin-top: 24px; }
 .detail-module-content > .table-subtitle:first-child { margin-top: 0; }
 .detail-module-content > .rich-content:not(:first-child) { margin-top: 32px; }
-.detail-module-content .rich-text-field > p:last-child { margin-bottom: 0; }
-.detail-module-content .attachment-list > div:first-child { padding-top: 0; align-items: start; }
-#detail-audit > .detail-module-content { background: #fff; }
 #detail-basic > .description-grid { --detail-inner-padding: 0 22px 22px; }
 #detail-basic .description-item { gap: 8px; }
 
 
-.detail-module-content .rich-content > .project-rich-section > h3 { margin: 0 0 12px; }
-.project-rich-separator { position: relative; height: 1px; margin: 40px 0; background: linear-gradient(90deg, #b7dfcf 0%, #e4f2ec 42%, transparent 100%); }
-.project-rich-separator-dot { position: absolute; left: -4px; top: 50%; width: 7px; height: 7px; transform: translateY(-50%); border: 2px solid #fff; border-radius: 50%; background: #18a66a; box-shadow: 0 0 0 2px #ccebdd; }
 .detail-module-content .table-subtitle { font-family: inherit; font-size: 10pt; font-weight: 500; line-height: 1.6; }
 #detail-organization-basic .description-grid > .description-item:first-child,
 .grass-growth-details > .description-item:first-child { min-height: 0; padding-top: 0; align-content: start; }

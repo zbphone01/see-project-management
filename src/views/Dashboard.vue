@@ -5,7 +5,7 @@
             <div class="registration-banner-copy">
               <h2 id="registration-banner-title"><a-icon type="warning" theme="filled" aria-hidden="true" />请注意</h2>
               <p>只有完成伙伴机构注册才能进行项目的申请</p>
-              <a-button class="registration-banner-action" @click="notify('注册申请入口暂未配置')">注册</a-button>
+              <a-button class="registration-banner-action" @click="$router.push({ name: 'organization-form', params: { id: 'new' } })">注册</a-button>
             </div>
           </section>
           <section class="panel project-panel">
@@ -203,6 +203,9 @@ export default {
       this.$router.push({ name: 'recruitment-detail', params: { id: String(item.id) }, query: { from: 'dashboard' } })
     },
     handleProjectAction (project, action) {
+      if (project.status === '修订中' && action.label === '项目修订') {
+        this.$router.push({ name: 'project-form', params: { id: '5' }, query: { example: 'filled', from: 'dashboard', revisionMode: 'with-progress' } }); return
+      }
       if (project.id === 1 && action.label === '提交进展') {
         this.$router.push({ name: 'report-form', params: { id: project.id }, query: { type: 'progress' } }); return
       }

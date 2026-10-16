@@ -80,7 +80,7 @@
         <a-button class="add-activity" type="dashed" icon="plus" @click="openActivity(index)">增加活动</a-button></article><a-button v-if="draft.outputs.length" class="add-output" type="dashed" icon="plus" @click="openOutput()">增加产出</a-button></div>
     </div></section>
 
-    <section v-if="!isDonationProject" class="panel form-section"><div class="detail-section-header"><span class="detail-section-icon red"><a-icon type="safety-certificate" /></span><div><h2>项目管理计划</h2><p v-if="hasManagementReviewComments">请检查并修改标红的项目信息，点击行任意位置可查看具体审核意见</p></div></div><div class="project-module-content"><div v-for="section in tableSections.filter(section => isOrganizationProject ? section.key === 'risks' : ['stakeholders', 'risks', 'monitoring'].includes(section.key))" :key="section.key" class="management-section"><div class="field organization-table-heading"><label>{{ section.title }}</label></div><div class="detail-table-wrap management-table-wrap"><table class="detail-table management-entry-table" :class="{ 'green-home-risk-table': isOrganizationProject && section.key === 'risks' }"><colgroup><col class="management-col-index" /><col v-for="field in section.fields" :key="field.key" /><col class="management-col-actions" /></colgroup><thead><tr><th>序号</th><th v-for="field in section.fields" :key="field.key">{{ isOrganizationProject && section.key === 'risks' && field.key === 'likelihood' ? '可能性' : field.label }}</th><th>操作</th></tr></thead><tbody><tr v-for="(row, index) in draft[section.key]" :key="row.id" :class="rowReviewClass(section.key, row)" :role="rowReviewComment(section.key, row) ? 'button' : undefined" :tabindex="rowReviewComment(section.key, row) ? 0 : undefined" @click="openRowReview(section.key, row)" @keydown.enter.prevent="openRowReview(section.key, row)" @keydown.space.prevent="openRowReview(section.key, row)"><td><a-popover v-if="rowReviewComment(section.key, row)" :visible="rowReviewKey === section.key + '.' + row.id" trigger="click" placement="topLeft" @visibleChange="visible => changeRowReviewVisibility(section.key, row, visible)"><template slot="content"><div class="row-review-content"><div><a-icon type="exclamation-circle" theme="filled" /><p>{{ rowReviewComment(section.key, row) }}</p></div><a-button size="small" type="primary" @click.stop="rowReviewKey = ''">关闭</a-button></div></template><span class="row-review-anchor">{{ index + 1 }}</span></a-popover><template v-else>{{ index + 1 }}</template></td><td v-for="field in section.fields" :key="field.key" :class="reviewClass(section.key + '.' + row.id + '.' + field.key)"><review-comment-label :comment="reviewComment(section.key + '.' + row.id + '.' + field.key)">{{ row[field.key] }}</review-comment-label></td><td class="management-actions" @click.stop @keydown.stop><a-button type="link" @click="openRow(section.key, index)">编辑</a-button><a-button type="link" class="danger-link" @click="removeRow(section.key, index)">删除</a-button></td></tr><tr class="management-entry-row"><td>{{ draft[section.key].length + 1 }}</td><td v-for="field in section.fields" :key="field.key"></td><td class="management-actions"><a-button type="link" @click="openRow(section.key)">新增</a-button></td></tr></tbody></table></div></div></div></section>
+    <section v-if="!isDonationProject" class="panel form-section"><div class="detail-section-header"><span class="detail-section-icon red"><a-icon type="safety-certificate" /></span><div><h2>项目管理计划</h2><p v-if="hasManagementReviewComments">请检查并修改标红的项目信息，点击行任意位置可查看具体审核意见</p></div></div><div class="project-module-content"><div v-for="section in tableSections.filter(section => isOrganizationProject ? section.key === 'risks' : ['stakeholders', 'risks', 'monitoring'].includes(section.key))" :key="section.key" class="management-section"><div class="field organization-table-heading"><label>{{ section.title }}</label></div><div class="detail-table-wrap management-table-wrap"><table class="detail-table management-entry-table" :class="{ 'green-home-risk-table': section.key === 'risks' }"><colgroup><col class="management-col-index" /><col v-for="field in section.fields" :key="field.key" /><col class="management-col-actions" /></colgroup><thead><tr><th>序号</th><th v-for="field in section.fields" :key="field.key">{{ section.key === 'risks' && field.key === 'likelihood' ? '可能性' : field.label }}</th><th>操作</th></tr></thead><tbody><tr v-for="(row, index) in draft[section.key]" :key="row.id" :class="rowReviewClass(section.key, row)" :role="rowReviewComment(section.key, row) ? 'button' : undefined" :tabindex="rowReviewComment(section.key, row) ? 0 : undefined" @click="openRowReview(section.key, row)" @keydown.enter.prevent="openRowReview(section.key, row)" @keydown.space.prevent="openRowReview(section.key, row)"><td><a-popover v-if="rowReviewComment(section.key, row)" :visible="rowReviewKey === section.key + '.' + row.id" trigger="click" placement="topLeft" @visibleChange="visible => changeRowReviewVisibility(section.key, row, visible)"><template slot="content"><div class="row-review-content"><div><a-icon type="exclamation-circle" theme="filled" /><p>{{ rowReviewComment(section.key, row) }}</p></div><a-button size="small" type="primary" @click.stop="rowReviewKey = ''">关闭</a-button></div></template><span class="row-review-anchor">{{ index + 1 }}</span></a-popover><template v-else>{{ index + 1 }}</template></td><td v-for="field in section.fields" :key="field.key" :class="reviewClass(section.key + '.' + row.id + '.' + field.key)"><review-comment-label :comment="reviewComment(section.key + '.' + row.id + '.' + field.key)">{{ section.key === 'risks' && field.key === 'affectedActivities' ? riskTargetLabel(row) : row[field.key] }}</review-comment-label></td><td class="management-actions" @click.stop @keydown.stop><a-button type="link" @click="openRow(section.key, index)">编辑</a-button><a-button type="link" class="danger-link" @click="removeRow(section.key, index)">删除</a-button></td></tr><tr class="management-entry-row"><td>{{ draft[section.key].length + 1 }}</td><td v-for="field in section.fields" :key="field.key"></td><td class="management-actions"><a-button type="link" @click="openRow(section.key)">新增</a-button></td></tr></tbody></table></div></div></div></section>
 
         <section id="form-budget" class="panel form-section budget-section"><div class="detail-section-header"><span class="detail-section-icon gold"><a-icon type="fund" /></span><div><h2>{{ isDonationProject ? '在线预算表' : '预算表' }}</h2></div></div><div class="project-module-content"><project-budget-editor :donation-project="isDonationProject" :hide-cost-type-analysis="isOrganizationProject" v-model="draft.budget" :project-name="draft.name" /></div></section>
 
@@ -95,12 +95,16 @@
       </a-timeline>
     </div></section>
 
-    <footer class="form-footer"><span><a-icon type="info-circle" /> {{ dirty ? '填写内容尚未保存' : draft.savedAt ? '草稿内容已保留' : '请填写项目信息，可随时存为草稿' }}</span><div><a-button @click="goBack">取消</a-button><a-button icon="save" :disabled="uploading > 0" @click="save">存为草稿</a-button><a-button type="primary" :disabled="uploading > 0" @click="submit">提交申请</a-button></div></footer>
+    <footer class="form-footer"><span><a-icon type="info-circle" /> {{ dirty ? '填写内容尚未保存' : draft.savedAt ? '草稿内容已保留' : '请填写项目信息，可随时存为草稿' }}</span><div><a-button @click="goBack">取消</a-button><a-button icon="save" :disabled="uploading > 0" @click="save">存为草稿</a-button><a-button type="primary" :class="{ 'revision-progress-submit': revisionMode === 'with-progress' }" :disabled="uploading > 0" @click="submit">{{ submitLabel }}</a-button></div></footer>
 
     <a-modal v-model="modal.visible" wrap-class-name="standard-form-modal" :title="modal.title" :width="modal.kind === 'team' || modal.kind === 'organizationMembers' || modal.kind === 'output' || modal.kind === 'activity' || modal.kind === 'stakeholders' || modal.kind === 'monitoring' || modal.kind === 'risks' ? 550 : 620" :mask-closable="false" :body-style="modal.kind === 'output' ? { overflowY: 'visible' } : { maxHeight: '65vh', overflowY: 'auto' }">
       <div v-if="modal.kind === 'team' || modal.kind === 'organizationMembers'" class="area-picker team-picker" :class="{ 'organization-member-picker': modal.kind === 'organizationMembers' }"><div v-for="field in modal.fields" :key="field.key" class="area-picker-row"><label :for="'dialog-team-' + field.key">{{ field.label }}：</label><a-select v-if="field.options" :id="'dialog-team-' + field.key" v-model="modal.value[field.key]" placeholder="请选择"><a-select-option v-for="option in field.options" :key="option">{{ option }}</a-select-option></a-select><a-textarea v-else-if="field.type === 'textarea'" :id="'dialog-team-' + field.key" v-model="modal.value[field.key]" :rows="3" :placeholder="'请填写' + field.label" /><a-input v-else :id="'dialog-team-' + field.key" v-model="modal.value[field.key]" :placeholder="'请填写' + field.label" /></div><p v-if="modal.error" class="form-error" role="alert">{{ modal.error }}</p></div>
       <div v-else class="modal-form" :class="{ 'output-modal-form': modal.kind === 'output', 'compact-modal-form': modal.kind === 'stakeholders' || modal.kind === 'monitoring', 'area-standard-modal-form': modal.kind === 'risks' || modal.kind === 'activity' || modal.kind === 'areas' }"><div v-for="field in modal.fields" v-if="field.key !== 'end'" :key="field.key" class="modal-field" :class="{ 'activity-divider': field.key === 'name' && modal.kind === 'output' }"><label :for="'dialog-' + field.key">{{ field.key === 'start' ? '开展时间' : field.label }}</label>
-        <a-select v-if="field.key === 'people'" :id="'dialog-' + field.key" v-model="modal.value[field.key]" class="people-select" :mode="isOrganizationProject && !isGrass ? 'tags' : 'multiple'" :token-separators="isOrganizationProject && !isGrass ? ['、', ',', '，'] : undefined" :disabled="!(isOrganizationProject && !isGrass) && !teamMemberOptions.length" :placeholder="isOrganizationProject && !isGrass ? '请输入活动执行人员姓名，按回车确认' : teamMemberOptions.length ? '请选择活动执行人员' : '请先添加执行团队成员'"><a-select-option v-for="name in teamMemberOptions" :key="name" :value="name">{{ name }}</a-select-option></a-select>
+        <div v-if="modal.kind === 'risks' && field.key === 'affectedActivities'" class="risk-target-input">
+          <a-tree-select id="dialog-affectedActivities" v-model="riskTargetSelection" class="risk-target-tree" :tree-data="riskTargetTree" :dropdown-match-select-width="true" tree-default-expand-all :show-search="false" dropdown-class-name="risk-target-tree-dropdown" :dropdown-style="{ maxHeight: '320px', overflowY: 'auto', overflowX: 'hidden' }" placeholder="请选择" @change="changeRiskTarget" />
+          <a-textarea v-if="riskTargetSelection === 'other'" v-model="modal.value.affectedActivities" :rows="3" aria-label="自定义风险影响的目标或活动" placeholder="请填写风险影响的目标或活动" />
+        </div>
+        <a-select v-else-if="field.key === 'people'" :id="'dialog-' + field.key" v-model="modal.value[field.key]" class="people-select" :mode="isOrganizationProject && !isGrass ? 'tags' : 'multiple'" :token-separators="isOrganizationProject && !isGrass ? ['、', ',', '，'] : undefined" :disabled="!(isOrganizationProject && !isGrass) && !teamMemberOptions.length" :placeholder="isOrganizationProject && !isGrass ? '请输入活动执行人员姓名，按回车确认' : teamMemberOptions.length ? '请选择活动执行人员' : '请先添加执行团队成员'"><a-select-option v-for="name in teamMemberOptions" :key="name" :value="name">{{ name }}</a-select-option></a-select>
         <a-select v-else-if="field.options" :id="'dialog-' + field.key" v-model="modal.value[field.key]" placeholder="请选择"><a-select-option v-for="option in field.options" :key="option">{{ option }}</a-select-option></a-select>
         <div v-else-if="field.key === 'start'" class="activity-period-inputs"><input id="dialog-start" v-model="modal.value.start" type="month" class="ant-input" /><span>至</span><input id="dialog-end" v-model="modal.value.end" type="month" class="ant-input" /></div>
         <a-auto-complete v-else-if="field.key === 'province'" :id="'dialog-' + field.key" v-model="modal.value[field.key]" :data-source="provinces" :filter-option="filterOption" placeholder="请选择或输入省 / 直辖市" @change="resetRegion" />
@@ -285,9 +289,30 @@ export default {
     ],
     attachmentCategories: ['预算表', '其他附件'], attachmentVisible: false, attachmentDraft: { category: undefined, file: null, error: '' }, modal: { visible: false, kind: '', title: '', fields: [], value: {}, index: -1, parent: -1, error: '' },
     areaVisible: false, areaSelection: { province: undefined, city: undefined, district: undefined }, areaError: '', rowReviewKey: '', thirdVisible: false, thirdQuery: '', thirdSearch: '', thirdDraft: [], thirdOptions: ['武汉观鸟会', '青海省三江源生态环境保护协会', '社区生态保护合作组织'],
-    previewVisible: false, previewName: '', previewUrl: '', previewType: ''
+    riskTargetSelection: undefined, previewVisible: false, previewName: '', previewUrl: '', previewType: ''
   } },
   computed: {
+    riskTargetOptions () {
+      const options = []
+      this.draft.outputs.forEach((output, outputIndex) => {
+        if (output.id && String(output.name || '').trim()) options.push({ key: 'output:' + output.id, text: output.name, label: '产出' + (outputIndex + 1) + '：' + output.name })
+        ;(output.activities || []).forEach((activity, activityIndex) => {
+          if (activity.id && String(activity.name || '').trim()) options.push({ key: 'activity:' + output.id + ':' + activity.id, text: activity.name, label: '活动' + (outputIndex + 1) + '.' + (activityIndex + 1) + '：' + activity.name })
+        })
+      })
+      return options
+    },
+    riskTargetTree () {
+      const nodes = this.draft.outputs.map(output => {
+        const parent = this.riskTargetOptions.find(option => option.key === 'output:' + output.id)
+        if (!parent) return null
+        const children = (output.activities || []).map(activity => this.riskTargetOptions.find(option => option.key === 'activity:' + output.id + ':' + activity.id)).filter(Boolean).map(option => ({ key: option.key, value: option.key, title: option.label }))
+        return { key: parent.key, value: parent.key, title: parent.label, children }
+      }).filter(Boolean)
+      return nodes.concat({ key: 'other', value: 'other', title: '其他' })
+    },
+    revisionMode () { return ['normal', 'with-progress'].includes(this.$route.query.revisionMode) ? this.$route.query.revisionMode : '' },
+    submitLabel () { return this.revisionMode === 'with-progress' ? '继续按修订提交进展' : this.revisionMode === 'normal' ? '提交修订' : '提交申请' },
     isDashboardExample () { return this.$route.query.example === 'filled' && ['3', '5'].includes(this.$route.params.id) && !this.isOrganizationProject && !this.isDonationProject },
     isAutomaticBudgetTotal () { return this.draft.type === '项目' && !this.isDonationProject },
     automaticBudgetTotal () {
@@ -427,9 +452,25 @@ export default {
     goBack () { this.$router.push({ name: this.isOrganizationProject || this.isDonationProject ? 'applied-projects' : 'dashboard' }) },
     filterOption (input, option) { return option.componentOptions.children[0].text.includes(input) },
     resetRegion () { this.modal.value.city = ''; this.modal.value.district = '' },
+    riskTargetLabel (row) {
+      const option = this.riskTargetOptions.find(item => item.key === row.affectedTargetKey)
+      return option ? option.label : row.affectedActivities
+    },
+    changeRiskTarget (key) {
+      const option = this.riskTargetOptions.find(item => item.key === key)
+      this.$set(this.modal.value, 'affectedActivities', option ? option.text : '')
+      this.$set(this.modal.value, 'affectedTargetKey', option ? option.key : '')
+      this.modal.error = ''
+    },
     openRow (key, index = -1) {
       const section = this.tableSections.find(item => item.key === key)
       const value = index < 0 ? Object.fromEntries(section.fields.map(field => [field.key, undefined])) : clone(this.draft[key][index])
+      if (key === 'risks') {
+        const option = this.riskTargetOptions.find(item => item.key === value.affectedTargetKey)
+        this.riskTargetSelection = option ? option.key : value.affectedActivities ? 'other' : undefined
+        if (option) value.affectedActivities = option.text
+        else value.affectedTargetKey = ''
+      }
       this.modal = { visible: true, kind: key, title: (index < 0 ? '增加' : '编辑') + (key === 'team' ? '执行团队成员' : section.title), fields: section.fields, value, index, parent: -1, error: '' }
     },
     openAreaPicker () { this.areaSelection = { province: undefined, city: undefined, district: undefined }; this.areaError = ''; this.areaVisible = true },
@@ -549,7 +590,7 @@ export default {
       }
       this.errors = errors
       if (errors.length) { this.$nextTick(() => this.$el.querySelector('.validation-summary').scrollIntoView({ behavior: 'smooth', block: 'center' })); return }
-      this.$confirm({ title: '确认提交申请', content: '本次为前端演示，将保存本地草稿并展示提交结果，不会发送申请或改变真实项目状态。', maskClosable: false, okText: '确认提交', cancelText: '继续编辑', onOk: () => { if (this.save()) this.$success({ title: '申请校验通过', content: '演示提交已完成，资料已存为本地草稿，尚未发送到服务器。', maskClosable: false, okText: '返回填写页' }) } })
+      this.$confirm({ title: '确认' + this.submitLabel, content: this.revisionMode ? '本次为前端演示，将保存本地修订草稿并展示校验结果，不会发送修订或进展、改变真实项目状态。' : '本次为前端演示，将保存本地草稿并展示提交结果，不会发送申请或改变真实项目状态。', maskClosable: false, okText: '确认提交', cancelText: '继续编辑', onOk: () => { if (this.save()) this.$success({ title: this.revisionMode ? '修订校验通过' : '申请校验通过', content: '演示提交已完成，资料已存为本地草稿，尚未发送到服务器。', maskClosable: false, okText: '返回填写页' }) } })
     },
     openAttachmentPicker () { this.resetAttachmentPicker(); this.attachmentVisible = true },
     resetAttachmentPicker () { this.attachmentDraft = { category: undefined, file: null, error: '' } },
@@ -577,6 +618,15 @@ export default {
 </script>
 
 <style scoped>
+.risk-target-input { display: grid; gap: 8px; min-width: 0; }
+.risk-target-input >>> .ant-select { width: 100%; }
+.risk-target-input >>> .risk-target-tree .ant-select-selection--single { height: auto; min-height: 32px; }
+.risk-target-input >>> .risk-target-tree .ant-select-selection__rendered { line-height: 22px; padding: 4px 0; }
+.risk-target-input >>> .risk-target-tree .ant-select-selection-selected-value { max-width: 100%; white-space: normal; overflow: visible; overflow-wrap: anywhere; text-overflow: clip; padding-right: 20px; }
+
+.form-footer .revision-progress-submit.ant-btn-primary { color: #fff; background: #c280ff; border-color: #c280ff; }
+.form-footer .revision-progress-submit.ant-btn-primary:hover, .form-footer .revision-progress-submit.ant-btn-primary:focus { color: #fff; background: #ad68eb; border-color: #ad68eb; }
+.form-footer .revision-progress-submit.ant-btn-primary[disabled] { color: rgba(0,0,0,.25); background: #f5f5f5; border-color: #d9d9d9; }
 .one-time-donation-fields .basic-field-value { overflow-wrap: anywhere; }
 .field small.budget-total-note { color: #929baa; font-size: 14px; line-height: 1.6; }
 .donation-allocation-prompt { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
@@ -941,4 +991,16 @@ export default {
 .third-add-text:hover { color: #40a9ff; }
 .third-add-text:focus-visible { outline: 2px solid #1677ff; outline-offset: 2px; }
 .third-add-text:disabled { color: #bfbfbf; cursor: default; }
+</style>
+
+<style>
+.risk-target-tree-dropdown .ant-select-tree li { white-space: normal; }
+.risk-target-tree-dropdown .ant-select-tree-node-content-wrapper { height: auto; min-height: 24px; white-space: normal; vertical-align: top; }
+.risk-target-tree-dropdown .ant-select-tree-title { white-space: normal; overflow-wrap: anywhere; line-height: 1.6; }
+</style>
+<style scoped>
+/* Keep these rules after the shared compact modal control heights. */
+.risk-target-input >>> .risk-target-tree .ant-select-selection--single { height: auto; min-height: 32px; }
+.risk-target-input >>> .risk-target-tree .ant-select-selection--single .ant-select-selection__rendered { min-height: 30px; line-height: 22px; padding: 4px 0; }
+.risk-target-input >>> .risk-target-tree .ant-select-selection-selected-value { float: none; width: 100%; white-space: normal; overflow: visible; overflow-wrap: anywhere; text-overflow: clip; }
 </style>

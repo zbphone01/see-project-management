@@ -343,3 +343,12 @@ button { cursor: pointer; }
 .standard-form-modal .ant-modal-footer { box-sizing: border-box; height: 55px; padding: 0 16px; display: flex; align-items: center; justify-content: flex-end; }
 .standard-form-modal .ant-modal-close-x { width: 55px; height: 55px; line-height: 55px; }
 .standard-form-modal .ant-modal-body { padding: 32px 24px; }
+
+/* 项目与机构查看/审核页共用布局。 */
+.detail-module-content { padding: 24px; --detail-inner-padding: 0; --detail-inner-margin: 0; --detail-subtitle-margin: 32px 0 8px; }
+.detail-module-content .rich-text-field > p:last-child { margin-bottom: 0; }
+.detail-module-content .attachment-list > div:first-child { padding-top: 0; align-items: start; }
+#detail-audit > .detail-module-content { background: #fff; }
+.detail-module-content .rich-content > .project-rich-section > h3 { margin: 0 0 12px; }
+.project-rich-separator { position: relative; height: 1px; margin: 40px 0; background: linear-gradient(90deg, #b7dfcf 0%, #e4f2ec 42%, transparent 100%); }
+.project-rich-separator-dot { position: absolute; left: -4px; top: 50%; width: 7px; height: 7px; transform: translateY(-50%); border: 2px solid #fff; border-radius: 50%; background: #18a66a; box-shadow: 0 0 0 2px #ccebdd; }

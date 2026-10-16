@@ -52,6 +52,13 @@
     </aside>
 
     <FundraisingPlanModal ref="planModal" />
+    <a-modal v-model="revision.visible" title="请求修订" wrap-class-name="standard-form-modal" :width="550" :mask-closable="false" ok-text="确定" cancel-text="取消" @ok="confirmRevision">
+      <div class="revision-form">
+        <div class="revision-field"><label for="revision-result">审核结果</label><a-select id="revision-result" v-model="revision.result" placeholder="请选择" @change="revision.operation = '正常修订'"><a-select-option value="同意">同意</a-select-option><a-select-option value="驳回">驳回</a-select-option></a-select></div>
+        <div v-if="revision.result === '同意'" class="revision-field"><label for="revision-operation">修订操作</label><a-select v-if="canSelectRevisionOperation" id="revision-operation" v-model="revision.operation" placeholder="请选择"><a-select-option value="正常修订">正常修订</a-select-option><a-select-option value="修订并发布进展">修订并发布进展</a-select-option></a-select><span v-else class="revision-readonly">正常修订</span></div>
+        <div class="revision-field"><label for="revision-remark">审核备注</label><a-textarea id="revision-remark" v-model="revision.remark" :rows="3" placeholder="请填写备注" /></div>
+      </div>
+    </a-modal>
     <a-modal v-model="dialog.visible" :title="dialog.title" :mask-closable="false" :footer="null" :width="560">
       <div class="see-dialog">
         <time v-if="dialog.date">{{ dialog.date }}</time>
@@ -73,7 +80,7 @@ export default {
   data () { return {
     statistics: seeDashboardContent.statistics,
     shortcuts: [{ label: '发起招募', icon: 'notification', tone: 'see-blue' }, { label: '发起筹款规划', icon: 'file-add', tone: 'see-green' }, { label: '申请筹款规划', icon: 'form', tone: 'see-orange' }, { label: '募捐申请待审', icon: 'audit', tone: 'see-pending' }],
-    projects: seeDashboardContent.projects,
+    projects: seeDashboardContent.projects.map(project => ({ ...project })),
     notices: [
       { title: '关于做好项目进展材料审核工作的通知', date: '2026-03-03', content: '请各项目负责人及时关注待办事项，核对项目进展材料的完整性，并与伙伴机构保持沟通。具体审核要求以正式发布的通知为准。' },
       { title: '项目协议归档及扫描件上传提醒', date: '2026-03-03', content: '请核对协议金额与签署信息，并检查协议扫描件是否清晰、完整。具体归档安排以正式通知为准。' },
@@ -84,11 +91,34 @@ export default {
       { title: '所属部门资助的项目需要申请筹款怎么办？', content: '可从“申请筹款规划”入口了解办理事项，并联系项目负责人确认筹款安排和所需材料。当前页面为前端演示，尚未接入申请业务。' },
       { title: '项目列表为什么看不到驳回的进展或结项？', content: '项目状态与单次进展、结项报告的审核状态可能不同。请进入对应项目详情，查看进展或结项记录及审核意见；具体显示规则以业务系统为准。' }
     ],
-    dialog: { visible: false, title: '', content: '', date: '', project: '' }
+    dialog: { visible: false, title: '', content: '', date: '', project: '' },
+    revision: { visible: false, project: null, result: '同意', remark: '', operation: '正常修订' }
   } },
+  computed: {
+    canSelectRevisionOperation () {
+      return !['项目组', '项目中心'].includes((this.revision.project || {}).reviewDepartment)
+    }
+  },
   methods: {
+    confirmRevision () {
+      const { project, result, remark, operation } = this.revision
+      if (!project || project.status !== '请求修订') return
+      const revisionOperation = result === '同意' ? (this.canSelectRevisionOperation ? operation : '正常修订') : ''
+      this.$set(project, 'revisionReview', { result, remark: remark.trim(), operation: revisionOperation })
+      if (result === '同意') {
+        project.status = '修订中'
+        project.tone = 'revision-active'
+        project.actions = []
+      }
+      this.revision.visible = false
+      this.$message.success('本地演示：已记录审核结果，未提交服务器')
+    },
     openInformation (title, content, date = '') { this.dialog = { visible: true, title, content, date, project: '' } },
     previewAction (action, project) {
+      if (project && project.status === '请求修订' && (action === '同意' || action === '驳回')) {
+        this.revision = { visible: true, project, result: action, remark: '', operation: '正常修订' }
+        return
+      }
       if (action === '发起筹款规划') {
         this.$refs.planModal.open()
         return
@@ -139,4 +169,14 @@ export default {
 .see-row-actions { display: grid; justify-items: center; gap: 0; }.see-row-actions button { min-height: 24px; padding: 0 2px; border: 0; background: transparent; color: #1677ff; border-radius: 5px; }.see-row-actions button:hover { background: #f0f7ff; }.see-row-actions .anticon { margin-left: 4px; font-size: 10px; }.see-row-actions .see-reject { color: #ff4d4f; }.see-row-actions .see-agree { color: #70b603; }
 .see-row-actions .see-audit { color: #fa8c16; }.see-row-actions .see-audit:hover,.see-row-actions .see-audit:focus { color: #fa8c16; background: #fff7e6; }
 .see-information { overflow-y: auto; }.see-dialog p { line-height: 1.8; overflow-wrap: anywhere; }.see-dialog time { display: block; margin-bottom: 16px; color: #718095; }
+.see-dashboard .status-chip.revision-active { color: #ff4d4f; background: #fff1f0; }
+.revision-form { width: 470px; max-width: 100%; margin: 0 auto; display: grid; gap: 16px; }
+.revision-field { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 18px; align-items: start; }
+.revision-field label { padding-top: 5px; text-align: right; line-height: 22px; }
+.revision-field >>> .ant-select { width: 100%; font-size: 14px; }
+.revision-field >>> .ant-select-selection--single { height: 32px; }
+.revision-field >>> .ant-select-selection__rendered { line-height: 30px; }
+.revision-field >>> textarea.ant-input { padding: 4px 11px; font-size: 14px; line-height: 1.5; }
+.revision-field >>> textarea::placeholder, .revision-field >>> .ant-select-selection__placeholder { color: #5b8ff9; font-size: 14px; opacity: 1; }
+.revision-readonly { color: #27384e; font-weight: 500; line-height: 1.6; padding-top: 5px; }
 </style>
