@@ -4,7 +4,7 @@
     <div v-if="errors.length" class="form-errors" role="alert"><strong>请完善以下内容后再提交</strong><ul><li v-for="error in errors" :key="error">{{ error }}</li></ul></div>
     <section v-for="group in visibleGroups" :key="group.key" class="panel">
       <div class="detail-section-header"><span class="detail-section-icon green"><a-icon :type="group.icon" /></span><div><h2>{{ group.title }}</h2><p v-if="hasComments(group.fields)">请检查并修改标红的机构信息，点击信息小标题可查看具体审核意见</p></div></div>
-      <div :class="group.key === 'evaluation' ? 'editor-content' : 'organization-fields description-grid'">
+      <div :class="[group.key === 'evaluation' ? 'editor-content' : 'organization-fields description-grid', { 'overview-fields': group.key === 'overview' }]">
         <div v-for="field in group.fields" :key="field.key" class="organization-field" :class="[reviewClass(field.key), { full: ['textarea', 'rich', 'avatar'].includes(field.kind) }]">
           <label :for="'organization-' + field.key"><review-comment-label :comment="fieldComment(field)">{{ field.label }}</review-comment-label></label>
           <span v-if="field.kind === 'readonly' || inherited(field) || (!isEdit && draft.nameChecked && field.key === 'name')" class="basic-field-value">{{ draft.fields[field.key] || '—' }}</span>
@@ -24,35 +24,53 @@
           <a-input v-else :id="'organization-' + field.key" v-model="draft.fields[field.key]" :placeholder="field.key === 'secondLoginPhone' ? '非必填，可在第一手机号不可用时登录修改' : field.key === 'organizationName' ? '非必填，不填时贵机构其他组织注册时将只能作为二级组织账号' : '请填写' + field.label" />
         </div>
       </div>
-      <template v-if="group.key === 'overview'">
-        <div v-for="section in draft.members" :key="section.key" class="editor-content member-content">
+      <div v-if="group.key === 'overview'" class="editor-content member-sections">
+        <div v-for="section in draft.members" :key="section.key" class="member-content">
           <h3>{{ section.title }}</h3><p v-if="hasMemberComments(section)" class="review-note">请检查并修改标红的机构信息，点击行任意位置可查看具体审核意见</p>
           <div class="detail-table-wrap"><table class="detail-table members-table"><colgroup><col style="width:70px"><col style="width:140px"><col style="width:200px"><col><col style="width:130px"></colgroup><thead><tr><th>序号</th><th>姓名</th><th>身份证号</th><th>关联公司及对应的统一信用代码</th><th>操作</th></tr></thead><tbody>
             <tr v-for="(row, index) in section.rows" :key="row.id" :class="{ 'review-row-has-comment': rowComment(section.key, row) }" :role="rowComment(section.key, row) ? 'button' : undefined" :tabindex="rowComment(section.key, row) ? 0 : undefined" @click="showRowComment(section.key, row)" @keydown.enter.prevent="showRowComment(section.key, row)" @keydown.space.prevent="showRowComment(section.key, row)"><td>{{ index + 1 }}</td><td>{{ row.name }}</td><td>{{ row.identityNumber }}</td><td>{{ row.relatedCompanies }}</td><td class="row-actions" @click.stop @keydown.stop><a-button type="link" @click="openMember(section, row)">编辑</a-button><a-button type="link" class="danger-link" @click="removeMember(section, row)">删除</a-button></td></tr>
-            <tr><td>{{ section.rows.length + 1 }}</td><td colspan="3"></td><td class="row-actions"><a-button type="link" @click="openMember(section)">新增</a-button></td></tr>
+            <tr><td>{{ section.rows.length + 1 }}</td><td></td><td></td><td></td><td class="row-actions"><a-button type="link" @click="openMember(section)">新增</a-button></td></tr>
           </tbody></table></div>
-          <a-button type="dashed" icon="plus" class="wide-button" @click="openMember(section)">增加成员</a-button>
         </div>
-      </template>
+      </div>
     </section>
     <form v-if="!showFullForm" class="registration-query-bar" @submit.prevent="queryName"><a-input v-model="draft.fields.name" aria-label="要注册的机构名称" placeholder="请输入您要注册的机构名称，查询后如果机构已存在将预填机构注册信息" /><a-button type="primary" html-type="submit">查询</a-button></form>
-    <section v-for="section in visibleAttachments" :key="section.key" class="panel">
+    <section v-for="section in visibleAttachments" :key="section.key" class="panel attachment-section">
       <div class="detail-section-header"><span class="detail-section-icon blue"><a-icon type="paper-clip" /></span><div><h2>{{ section.title }}</h2></div></div>
-      <div class="editor-content"><div class="detail-table-wrap"><table class="detail-table attachment-table"><colgroup><col v-if="hasYear(section.key)" style="width:100px"><col><col v-if="section.key === 'civilReports'" style="width:110px"><col style="width:180px"><col style="width:130px"></colgroup><thead><tr><th v-if="hasYear(section.key)">年份</th><th>文件名</th><th v-if="section.key === 'civilReports'">上报民政</th><th>上传时间</th><th>操作</th></tr></thead><tbody><tr v-for="file in section.files" :key="file.id"><td v-if="hasYear(section.key)">{{ file.year }}</td><td>{{ file.name }}</td><td v-if="section.key === 'civilReports'">{{ file.civilStatus }}</td><td>{{ file.uploadedAt }}</td><td class="row-actions"><a-button type="link" class="danger-link" @click="removeFile(section, file)">删除</a-button></td></tr><tr><td v-if="hasYear(section.key)">—</td><td>—</td><td v-if="section.key === 'civilReports'">—</td><td>—</td><td class="row-actions"><a-button type="link" @click="openUpload(section)">上传</a-button></td></tr></tbody></table></div></div>
+      <div class="editor-content attachment-content">
+        <a-empty v-if="!section.files.length" class="attachment-empty-add" :description="section.key === 'otherAttachments' ? '点击添加附件' : '点击添加'" role="button" tabindex="0" @click="openUpload(section)" @keydown.enter.native.prevent="openUpload(section)" @keydown.space.native.prevent="openUpload(section)" />
+        <template v-else>
+          <div class="attachment-list form-attachment-list"><div v-for="file in section.files" :key="file.id">
+            <div><strong>{{ file.name }}</strong><span>{{ attachmentMeta(section, file) }}</span></div>
+            <a-button type="link" @click="previewAttachment(file)">预览</a-button><a-button type="link" @click="downloadAttachment(file)">下载</a-button><a-button type="link" class="danger-link" @click="removeFile(section, file)">删除</a-button>
+          </div></div>
+          <a-button class="add-more-attachment" type="dashed" icon="plus" @click="openUpload(section)">添加更多附件</a-button>
+        </template>
+      </div>
     </section>
     <section v-if="isEdit && draft.history.length" class="panel"><div class="detail-section-header"><span class="detail-section-icon gray"><a-icon type="history" /></span><div><h2>审核信息</h2></div></div><div class="editor-content organization-audit-content"><a-timeline class="audit-timeline"><a-timeline-item v-for="entry in draft.history" :key="entry.id" :color="entry.result === '通过' ? '#70B603' : '#FF4D4F'"><div class="audit-entry"><strong>审核结果：{{ entry.result }}</strong><div class="audit-result-row"><span class="audit-info-chip audit-time">{{ entry.auditedAt || entry.approvedAt || entry.submittedAt || '—' }} · {{ entry.reviewer || '—' }}</span></div><div class="audit-result-details"><p><b>审核备注：</b>{{ entry.remark || '—' }}</p></div></div></a-timeline-item></a-timeline></div></section>
     <footer v-if="showFullForm" class="form-footer"><span><a-icon type="info-circle" /> {{ dirty ? '填写内容尚未保存' : '可随时存为草稿' }}</span><div><a-button @click="goBack">取消</a-button><a-button icon="save" :disabled="busy" @click="save(false)">存为草稿</a-button><a-button type="primary" :disabled="busy" @click="save(true)">提交申请</a-button></div></footer>
     <avatar-crop-modal ref="avatarCrop" @busy="readingAvatar = $event" @confirm="draft.fields.avatar = $event" />
     <a-modal v-model="avatarPreview" title="机构头像" :width="650" :mask-closable="false" :footer="null"><img v-if="draft.fields.avatar" class="avatar-preview" :src="draft.fields.avatar" alt="机构头像" /></a-modal>
-    <a-modal v-model="memberVisible" :title="editingMemberId ? '编辑成员' : '添加成员'" :width="550" class="standard-form-modal" :mask-closable="false" :footer="null">
-      <div class="member-dialog"><div class="dialog-row"><label for="member-name">姓名</label><a-input id="member-name" v-model="memberDraft.name" placeholder="填写姓名" /></div><div class="dialog-row"><label for="member-identity">身份证号</label><a-input id="member-identity" v-model="memberDraft.identityNumber" placeholder="填写身份证号" /></div><div v-for="(company, index) in memberDraft.companies" :key="company.id" class="dialog-row"><label :for="'company-' + company.id">关联公司</label><div class="company-fields"><a-input :id="'company-' + company.id" v-model="company.name" placeholder="填写公司名称" /><a-input v-model="company.code" placeholder="填写该公司统一信用代码" :aria-label="'第' + (index + 1) + '家关联公司的统一信用代码'" /><a-button v-if="memberDraft.companies.length > 1" type="link" @click="memberDraft.companies.splice(index, 1)">删除关联公司</a-button></div></div><a-button type="dashed" @click="memberDraft.companies.push(newCompany())">增加关联公司</a-button><p v-if="dialogError" class="form-error" role="alert">{{ dialogError }}</p></div><div class="dialog-actions"><a-button @click="memberVisible = false">关闭</a-button><a-button type="primary" @click="saveMember">{{ editingMemberId ? '保存' : '添加' }}</a-button></div>
+    <a-modal v-model="memberVisible" :title="editingMemberId ? '编辑成员' : '添加成员'" :width="550" class="standard-form-modal" :mask-closable="false">
+      <div class="member-dialog"><div class="dialog-row"><label for="member-name">姓名</label><a-input id="member-name" v-model="memberDraft.name" placeholder="填写姓名" /></div><div class="dialog-row"><label for="member-identity">身份证号</label><a-input id="member-identity" v-model="memberDraft.identityNumber" placeholder="填写身份证号" /></div><div v-for="(company, index) in memberDraft.companies" :key="company.id" class="dialog-row"><label :for="'company-' + company.id">关联公司</label><div class="company-fields"><a-input :id="'company-' + company.id" v-model="company.name" placeholder="填写公司名称" /><a-input v-model="company.code" placeholder="填写该公司统一信用代码" :aria-label="'第' + (index + 1) + '家关联公司的统一信用代码'" /><a-button v-if="memberDraft.companies.length > 1" type="link" @click="memberDraft.companies.splice(index, 1)">删除关联公司</a-button></div></div><a-button type="dashed" @click="memberDraft.companies.push(newCompany())">增加关联公司</a-button><p v-if="dialogError" class="form-error" role="alert">{{ dialogError }}</p></div><template slot="footer"><div class="dialog-actions"><a-button @click="memberVisible = false">关闭</a-button><a-button type="primary" @click="saveMember">{{ editingMemberId ? '保存' : '添加' }}</a-button></div></template>
     </a-modal>
-    <a-modal v-model="uploadVisible" :title="'上传' + (uploadSection ? uploadSection.title : '附件')" :width="550" class="standard-form-modal" :mask-closable="false" :footer="null"><div class="member-dialog"><div v-if="uploadSection && hasYear(uploadSection.key)" class="dialog-row"><label for="upload-year">报告年份</label><a-select id="upload-year" v-model="uploadDraft.year" placeholder="请选择"><a-select-option v-for="year in reportYears" :key="year" :value="year">{{ year }}年</a-select-option></a-select></div><div v-if="uploadSection && uploadSection.key === 'civilReports'" class="dialog-row"><label for="upload-civil">上报民政</label><a-select id="upload-civil" v-model="uploadDraft.civilStatus" placeholder="请选择"><a-select-option value="已上报">已上报</a-select-option><a-select-option value="未上报">未上报</a-select-option></a-select></div><div class="dialog-row"><label>报告文件</label><a-upload :file-list="selectedFiles" :before-upload="selectFile" :remove="clearSelectedFile"><a-button icon="upload">点击上传</a-button></a-upload></div><p v-if="uploadError" class="form-error" role="alert">{{ uploadError }}</p></div><div class="dialog-actions"><a-button @click="uploadVisible = false">关闭</a-button><a-button type="primary" @click="saveUpload">添加</a-button></div></a-modal>
-    <a-modal :visible="!!rowReview" title="审核意见" :width="560" :mask-closable="false" :footer="null" @cancel="rowReview = ''"><p class="row-review-text">{{ rowReview }}</p><div class="dialog-actions"><a-button type="primary" @click="rowReview = ''">关闭</a-button></div></a-modal>
+    <a-modal v-model="uploadVisible" :title="'上传' + (uploadSection ? uploadSection.title : '附件')" :width="550" class="standard-form-modal" :mask-closable="false" :closable="!uploading" :keyboard="!uploading" @afterClose="resetUpload">
+      <div class="member-dialog">
+        <div v-if="uploadSection && hasYear(uploadSection.key)" class="dialog-row"><label for="upload-year">报告年份</label><a-select id="upload-year" v-model="uploadDraft.year" :disabled="uploading" placeholder="请选择"><a-select-option v-for="year in reportYears" :key="year" :value="year">{{ year }}年</a-select-option></a-select></div>
+        <div v-if="uploadSection && uploadSection.key === 'civilReports'" class="dialog-row"><label for="upload-civil">上报民政</label><a-select id="upload-civil" v-model="uploadDraft.civilStatus" :disabled="uploading" placeholder="请选择"><a-select-option value="已上报">已上报</a-select-option><a-select-option value="未上报">未上报</a-select-option></a-select></div>
+        <div class="dialog-row"><label>{{ uploadSection && uploadSection.key === 'certificates' ? '登记证书' : uploadSection && uploadSection.key === 'otherAttachments' ? '附件文件' : '报告文件' }}</label><a-upload :file-list="selectedFiles" :before-upload="selectFile" :remove="clearSelectedFile" :disabled="uploading" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"><a-button icon="upload" :disabled="uploading">点击上传</a-button></a-upload></div>
+        <p v-if="uploadError" class="form-error" role="alert">{{ uploadError }}</p>
+      </div>
+      <template slot="footer"><div class="dialog-actions"><a-button :disabled="uploading" @click="uploadVisible = false">关闭</a-button><a-button type="primary" :loading="uploading" @click="saveUpload">添加</a-button></div></template>
+    </a-modal>
+    <a-modal v-model="previewVisible" :title="previewName" :width="960" :mask-closable="false" :footer="null" @afterClose="clearPreview"><img v-if="previewType === 'image'" :src="previewUrl" :alt="previewName" class="attachment-preview-image" /><iframe v-else-if="previewType === 'pdf'" :src="previewUrl" :title="previewName" class="attachment-preview-pdf"></iframe><p v-else>此格式请下载后使用对应办公软件查看。</p></a-modal>
+    <a-modal :visible="!!rowReview" title="审核意见" :width="560" :mask-closable="false" @cancel="rowReview = ''"><p class="row-review-text">{{ rowReview }}</p><template slot="footer"><div class="dialog-actions"><a-button type="primary" @click="rowReview = ''">关闭</a-button></div></template></a-modal>
   </section>
 </template>
 
 <script>
+import { draftFile } from '../mock/project-drafts'
 import AvatarCropModal from '../components/AvatarCropModal.vue'
 import ReviewCommentLabel from '../components/ReviewCommentLabel.vue'
 import RichEditor from '../components/FundraisingRichEditor.vue'
@@ -65,7 +83,7 @@ export default {
   name: 'OrganizationForm',
   components: { ReviewCommentLabel, RichEditor, AvatarCropModal },
   props: { organizationId: { type: String, default: 'new' } },
-  data () { return { draft: loadOrganizationForm(this.organizationId), errors: [], readingAvatar: false, avatarPreview: false, editorBusy: {}, memberVisible: false, memberSection: null, editingMemberId: '', memberDraft: { name: '', identityNumber: '', companies: [] }, dialogError: '', uploadVisible: false, uploadSection: null, uploadDraft: { year: undefined, civilStatus: undefined }, selectedFiles: [], uploadError: '', rowReview: '', baseline: '' } },
+  data () { return { draft: loadOrganizationForm(this.organizationId), errors: [], readingAvatar: false, avatarPreview: false, editorBusy: {}, memberVisible: false, memberSection: null, editingMemberId: '', memberDraft: { name: '', identityNumber: '', companies: [] }, dialogError: '', uploadVisible: false, uploadSection: null, uploadDraft: { year: undefined, civilStatus: undefined }, selectedFiles: [], uploadError: '', uploading: false, previewVisible: false, previewName: '', previewType: '', previewUrl: '', rowReview: '', baseline: '' } },
   computed: {
     isEdit () { return this.organizationId !== 'new' },
     dirty () { return JSON.stringify(this.draft) !== this.baseline },
@@ -75,11 +93,12 @@ export default {
     restricted () { return restrictedTypes.includes(this.draft.fields.registrationType) },
     groups () { return [{ key: 'account', title: '账号信息', icon: 'user', fields: accountFields }, { key: 'registration', title: '机构注册信息', icon: 'bank', fields: registrationFields(this.draft.fields.registrationType, true) }, { key: 'overview', title: '机构概况', icon: 'read', fields: overviewFields }, { key: 'evaluation', title: '社会评价信息', icon: 'star', fields: evaluationFields }] },
     reportYears () { const year = new Date().getFullYear() - 1; return [0, 1, 2, 3, 4].map(offset => year - offset) },
-    busy () { return this.readingAvatar || Object.keys(this.editorBusy).some(key => this.editorBusy[key]) }
+    busy () { return this.uploading || this.readingAvatar || Object.keys(this.editorBusy).some(key => this.editorBusy[key]) }
   },
   created () { this.prepareDraft() },
-  watch: { organizationId () { if (this.$refs.avatarCrop) this.$refs.avatarCrop.cancel(); this.draft = loadOrganizationForm(this.organizationId); this.errors = []; this.memberVisible = false; this.uploadVisible = false; this.avatarPreview = false; this.rowReview = ''; this.prepareDraft() } },
-  beforeRouteLeave (to, from, next) { if (JSON.stringify(this.draft) === this.baseline) { next(); return } this.$confirm({ title: '离开机构编辑页？', content: '尚未保存的内容将丢失。', maskClosable: false, okText: '离开', cancelText: '继续编辑', onOk: () => next(), onCancel: () => next(false) }) },
+  watch: { organizationId () { if (this.$refs.avatarCrop) this.$refs.avatarCrop.cancel(); this.draft = loadOrganizationForm(this.organizationId); this.errors = []; this.memberVisible = false; this.uploadVisible = false; this.previewVisible = false; this.clearPreview(); this.avatarPreview = false; this.rowReview = ''; this.prepareDraft() } },
+  beforeDestroy () { this.clearPreview() },
+  beforeRouteLeave (to, from, next) { if (this.uploading) { this.$message.info('附件正在保存，请稍候。'); next(false); return } if (JSON.stringify(this.draft) === this.baseline) { next(); return } this.$confirm({ title: '离开机构编辑页？', content: '尚未保存的内容将丢失。', maskClosable: false, okText: '离开', cancelText: '继续编辑', onOk: () => next(), onCancel: () => next(false) }) },
   methods: {
     prepareDraft () {
       if (!this.draft) return
@@ -119,9 +138,36 @@ export default {
     removeMember (section, row) { this.$confirm({ title: '确认删除该成员？', content: '其审核意见将保留在原JSON键中，不会转移到其他成员。', maskClosable: false, onOk: () => { section.rows.splice(section.rows.indexOf(row), 1) } }) },
     hasYear (key) { return ['civilReports', 'annualReports', 'auditReports'].includes(key) },
     openUpload (section) { this.uploadSection = section; this.uploadDraft = { year: this.reportYears[0], civilStatus: undefined }; this.selectedFiles = []; this.uploadError = ''; this.uploadVisible = true },
-    selectFile (file) { if (file.size > 20 * 1024 * 1024) { this.$message.warning('请选择20 MB以内的附件'); return false } this.selectedFiles = [file]; return false },
-    clearSelectedFile () { this.selectedFiles = []; return true },
-    saveUpload () { if (!this.selectedFiles.length || (this.hasYear(this.uploadSection.key) && !this.uploadDraft.year) || (this.uploadSection.key === 'civilReports' && !this.uploadDraft.civilStatus)) { this.uploadError = '请选择文件并完善报告信息'; return } this.uploadSection.files.push({ id: uid('file'), name: this.selectedFiles[0].name, size: this.selectedFiles[0].size, year: this.uploadDraft.year, civilStatus: this.uploadDraft.civilStatus || '', uploadedAt: new Date().toLocaleString('zh-CN', { hour12: false }), url: '' }); this.uploadVisible = false; this.$message.info('已添加附件信息，文件尚未上传服务器') },
+    clearSelectedFile () { if (this.uploading) return false; this.selectedFiles = []; return true },
+    resetUpload () { this.selectedFiles = []; this.uploadError = '' },
+    selectFile (file) {
+      if (this.uploading) return false
+      if (!/\.(pdf|docx?|xlsx?|png|jpe?g)$/i.test(file.name) || file.size > 20 * 1024 * 1024) { this.uploadError = '请选择 20 MB 以内的 PDF、Word、Excel 或图片文件'; this.selectedFiles = []; return false }
+      this.selectedFiles = [file]; this.uploadError = ''; return false
+    },
+    async saveUpload () {
+      if (this.uploading || !this.uploadSection) return
+      if (!this.selectedFiles.length || (this.hasYear(this.uploadSection.key) && !this.uploadDraft.year) || (this.uploadSection.key === 'civilReports' && !this.uploadDraft.civilStatus)) { this.uploadError = '请选择文件并完善报告信息'; return }
+      const section = this.uploadSection
+      const file = this.selectedFiles[0]
+      const entry = { id: uid('organization-file'), name: file.name, size: file.size, type: file.type, localStored: true, year: this.uploadDraft.year, civilStatus: this.uploadDraft.civilStatus || '', uploadedAt: new Date().toLocaleString('zh-CN', { hour12: false }), url: '' }
+      this.uploading = true
+      try {
+        await draftFile('put', entry.id, file)
+        section.files.push(entry)
+        this.uploadVisible = false
+        this.$message.success('附件已加入，请存为草稿以保存附件列表')
+      } catch (error) { this.uploadError = '附件保存失败，请检查浏览器存储后重试' } finally { this.uploading = false }
+    },
+    formatSize (size) { return size >= 1024 * 1024 ? (size / 1024 / 1024).toFixed(1) + ' MB' : Math.max(1, Math.round(size / 1024)) + ' KB' },
+    attachmentMeta (section, file) { return [this.hasYear(section.key) && file.year ? file.year + '年' : '', section.key === 'civilReports' ? (file.civilStatus === '已上报' ? '已上报民政' : file.civilStatus === '未上报' ? '未上报民政' : '—') : '', typeof file.size === 'number' ? this.formatSize(file.size) : '示例文件', file.uploadedAt].filter(Boolean).join(' · ') },
+    async getAttachment (file) {
+      if (!file.localStored) { this.$message.info('该附件仅为文件信息，请上传实际文件后预览或下载'); return null }
+      try { const blob = await draftFile('get', file.id); if (!blob) throw new Error('missing'); return blob } catch (error) { this.$message.error('本地附件已不可用，请重新上传'); return null }
+    },
+    async previewAttachment (file) { const blob = await this.getAttachment(file); if (!blob || this._isDestroyed) return; this.clearPreview(); this.previewName = file.name; this.previewType = /\.(png|jpe?g)$/i.test(file.name) ? 'image' : /\.pdf$/i.test(file.name) ? 'pdf' : 'office'; this.previewUrl = URL.createObjectURL(blob); this.previewVisible = true },
+    async downloadAttachment (file) { const blob = await this.getAttachment(file); if (!blob) return; const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = file.name; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000) },
+    clearPreview () { if (this.previewUrl) URL.revokeObjectURL(this.previewUrl); this.previewUrl = ''; this.previewType = '' },
     removeFile (section, file) { this.$confirm({ title: '确认删除该附件信息？', maskClosable: false, onOk: () => { section.files.splice(section.files.indexOf(file), 1) } }) },
     save (submit) {
       if (this.busy) return
@@ -153,7 +199,7 @@ export default {
 .organization-field > .ant-select >>> .ant-select-selection__rendered { line-height: 38px; }
 .organization-field > .ant-input { padding: 8px 12px; }
 .organization-field >>> input.ant-input, .organization-field >>> textarea.ant-input, .organization-field >>> .ant-select, .organization-field input[type="date"] { font-size: 16px; }
-.member-dialog >>> input.ant-input, .member-dialog >>> textarea.ant-input, .member-dialog >>> .ant-select { font-size: 14px; }
+.member-dialog >>> input.ant-input, .member-dialog >>> .ant-select { font-size: 14px; }
 .legal-role-control { display: flex; align-items: center; gap: 16px; min-height: 40px; }
 .legal-role-control > .ant-checkbox-wrapper { flex: none; font-size: 16px; }
 .legal-role-control > input[type="date"] { flex: 1; width: 0; }
@@ -164,9 +210,9 @@ export default {
 .inline-controls > .ant-select { width: 100px; flex: none; }
 .inline-controls > .ant-select >>> .ant-select-selection--single { height: 40px; }
 .inline-controls > .ant-select >>> .ant-select-selection__rendered { line-height: 38px; }
-input[type="date"] { min-width: 0; width: 100%; height: 40px; border: 1px solid #d9d9d9; border-radius: 4px; padding: 8px 12px; color: #27384e; background: #fff; }
-input[type="date"]:disabled { color: #718095; background: #f5f5f5; }
+input[type="date"] { min-width: 0; width: 100%; height: 40px; border: 1px solid transparent; border-radius: 4px; padding: 8px 12px; color: #27384e; }
 .organization-field >>> .ant-input, .organization-field input[type="date"], .organization-field >>> .ant-select-selection { border-color: transparent; background: transparent; box-shadow: none; }
+.organization-field input[type="date"]:disabled { color: #718095; background: #f5f5f5; cursor: not-allowed; }
 .organization-field >>> .ant-input:hover, .organization-field input[type="date"]:not(:disabled):hover, .organization-field >>> .ant-select-selection:hover { border-color: #d9e1eb; }
 .organization-field >>> .ant-input:focus, .organization-field input[type="date"]:focus { outline: none; border-color: #1677ff; box-shadow: 0 0 0 2px rgba(22,119,255,.12); }
 .organization-field >>> .ant-select-focused .ant-select-selection, .organization-field >>> .ant-select-open .ant-select-selection { border-color: #1677ff; box-shadow: 0 0 0 2px rgba(22,119,255,.12); }
@@ -190,35 +236,52 @@ input[type="date"]:disabled { color: #718095; background: #f5f5f5; }
 .organization-audit-content .audit-result-details p { white-space: pre-wrap; overflow-wrap: anywhere; }
 .editor-content > .organization-field { min-height: 0; padding: 0; border: 0; }
 .editor-content > .organization-field + .organization-field { margin-top: 32px; }
+.editor-content > .organization-field > label { font-size: 10pt; font-weight: 500; }
 .editor-content h3 { margin: 0 0 8px; font-size: 10pt; font-weight: 500; line-height: 1.6; }
-.member-content + .member-content { padding-top: 8px; }
+.organization-fields.overview-fields { padding-bottom: 0; }
+.member-sections { padding-top: 32px; }
+.member-content + .member-content { margin-top: 32px; }
 .detail-table-wrap { margin: 0; }
-.members-table, .attachment-table { table-layout: fixed; }
+.members-table { table-layout: fixed; }
 .detail-table td { white-space: pre-wrap; overflow-wrap: anywhere; }
 .members-table th:first-child, .members-table td:first-child, .detail-table th:last-child, .detail-table td:last-child { text-align: center; }
 .row-actions { white-space: nowrap !important; }
 .row-actions .ant-btn { padding: 0 7px; }
 .danger-link { color: #ff4d4f; }
-.wide-button { width: 100%; margin-top: 16px; }
 .review-row-has-comment { cursor: pointer; }
-.review-row-has-comment > td { background: #fff1f0; }
-.review-row-has-comment:hover > td { background: #ffe7e5; }
 .review-row-has-comment:focus-visible { outline: 2px solid #ff7875; outline-offset: -2px; }
 .review-has-comment >>> .rich-editable { background: #fff1f0; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 12px; }
+.dialog-actions > .ant-btn + .ant-btn { margin-left: 0; }
 .form-footer { position: sticky; bottom: 0; z-index: 5; border: 1px solid #e6ebf2; border-radius: 12px; background: rgba(255,255,255,.98); box-shadow: 0 -4px 22px rgba(23,56,92,.07); padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
 .form-footer > span { color: #718095; }
 .form-footer > div { display: flex; gap: 12px; }
 .form-footer .ant-btn { min-width: 100px; height: 32px; }
-.member-dialog { width: 470px; max-width: 100%; margin: auto; padding: 8px 0; display: grid; gap: 16px; }
+.member-dialog { width: 470px; max-width: 100%; margin: auto; padding: 0; display: grid; gap: 16px; }
 .dialog-row { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 18px; align-items: start; }
 .dialog-row > label { padding-top: 5px; text-align: right; color: #27384e; line-height: 22px; }
 .company-fields { display: grid; gap: 8px; }
-.dialog-actions { border-top: 1px solid #e8e8e8; margin: 24px -24px -24px; padding: 11px 16px; min-height: 55px; }
 .form-error, .form-errors { color: #cf1322; }
 .form-errors { background: #fff1f0; border: 1px solid #ffccc7; border-radius: 8px; padding: 18px 24px; }
 .form-errors ul { margin: 8px 0 0; }
 .row-review-text { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
 .organization-field >>> input::placeholder, .organization-field >>> textarea::placeholder { color: #5b8ff9; font-size: 14px; opacity: 1; }
 .organization-field >>> .ant-select-selection__placeholder { color: #5b8ff9; font-size: 14px; }
+.attachment-section .detail-section-header { align-items: center; }
+.attachment-section .detail-section-header > div { display: flex; min-height: 40px; align-items: center; }
+.attachment-section .detail-section-header h2 { margin: 0; }
+.attachment-content .attachment-list, .attachment-content .attachment-empty-add { padding: 0; margin: 0; }
+.form-attachment-list > div { grid-template-columns: minmax(0, 1fr) auto auto auto; }
+.form-attachment-list > div:first-child { padding-top: 0; align-items: start; }
+.form-attachment-list strong { overflow-wrap: anywhere; }
+.form-attachment-list .ant-btn { padding: 0 6px; }
+.attachment-empty-add { cursor: pointer; border-radius: 8px; }
+.attachment-empty-add >>> .ant-empty-description { color: #5b8ff9; font-size: 14px; }
+.attachment-empty-add:focus-visible { outline: 2px solid #1677ff; outline-offset: 4px; }
+.add-more-attachment { width: 100%; margin: 16px 0 0; border-color: #91d5ff; border-style: dashed; color: #096dd9 !important; background: #e6f7ff; }
+.add-more-attachment:hover, .add-more-attachment:focus { border-color: #40a9ff; color: #096dd9 !important; background: #fff; }
+.attachment-preview-image { max-width: 100%; display: block; margin: auto; }
+.attachment-preview-pdf { width: 100%; height: 65vh; border: 0; }
 </style>
+
+<style scoped src="../styles/organization-review.css"></style>

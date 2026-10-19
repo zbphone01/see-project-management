@@ -76,7 +76,7 @@
     <a-modal v-if="isAudit" v-model="reviewVisible" title="编辑审核意见" :width="560" :mask-closable="false" @cancel="reviewVisible = false">
       <a-select v-if="reviewTargets.length" :value="reviewKey" class="qualification-review-target" aria-label="审核意见对应内容" @change="openReview"><a-select-option v-for="key in reviewTargets" :key="key" :value="key">{{ reviewTargetLabel(key) }}</a-select-option></a-select>
       <a-textarea v-model="reviewDraft" aria-label="审核意见" placeholder="请输入审核意见" :rows="5" />
-      <template slot="footer"><div class="review-dialog-actions"><a-button v-if="reviewComment(reviewKey)" type="danger" @click="deleteReview">删除</a-button><a-button type="primary" @click="saveReview">确定</a-button></div></template>
+      <template slot="footer"><div class="review-dialog-actions"><a-button v-if="reviewComment(reviewKey)" type="danger" @click="deleteReview">删除</a-button><div class="review-dialog-primary"><a-button v-if="!reviewComment(reviewKey)" @click="reviewVisible = false">取消</a-button><a-button type="primary" @click="saveReview">{{ reviewComment(reviewKey) ? '修改' : '确认' }}</a-button></div></div></template>
     </a-modal>
     <a-modal :visible="!!preview" title="附件预览" :width="650" :mask-closable="false" :footer="null" @cancel="preview = null"><template v-if="preview"><p>{{ preview.name }}</p><p>此附件为文件信息示例，未提供实际文件内容，无法预览或下载。</p></template></a-modal>
     <a-modal :visible="!!selectedHistory" title="审核记录" :width="650" :mask-closable="false" :footer="null" @cancel="selectedHistory = null"><div v-if="selectedHistory" class="history-content"><p>{{ selectedHistory.versionLabel }}</p><p>审核结果：{{ selectedHistory.result }}</p><p>审核账号：{{ selectedHistory.reviewer }}</p><p>审核备注：{{ selectedHistory.remark || '-' }}</p><p v-for="(comment, key) in selectedHistory.reviewComments" :key="key">{{ fieldLabel(key) }}：{{ comment }}</p></div></a-modal>
@@ -118,7 +118,8 @@ export default {
     reviewTargetLabel (key) { return { isCharity: '是否为慈善组织', charityRegisteredAt: '慈善组织认定登记时间', hasFundraisingQualification: '是否有公募资质', fundraisingQualifiedAt: '公开募捐资格证书取得时间' }[key] || key },
     fieldValue (key) { const dateKey = this.qualificationDateKey(key); const value = this.detail.fields[key]; if (!dateKey) return value || '-'; if (value !== '是') return value || '否'; const date = this.detail.fields[dateKey] || ''; const match = date.match(/^(\d{4})[年-](\d{1,2})[月-](\d{1,2})日?$/); return '是（' + (match ? match[1] + '年' + ('0' + match[2]).slice(-2) + '月' + ('0' + match[3]).slice(-2) + '日' : date || '—') + '）' },
     reviewClass (key) { return { 'review-has-comment': this.isAudit && !!this.combinedComment(key) } },
-    rowClass (section, id) { const prefix = section + '.' + id; return { 'review-row-trigger': this.isAudit, 'review-row-has-comment': this.isAudit && Object.keys(this.detail.reviewComments).some(key => (key === prefix || key.indexOf(prefix + '.') === 0) && this.reviewComment(key)) } },
+    rowHasComments (section, id) { const prefix = section + '.' + id; return Object.keys(this.detail.reviewComments).some(key => (key === prefix || key.indexOf(prefix + '.') === 0) && this.reviewComment(key)) },
+    rowClass (section, id) { return { 'review-row-trigger': this.isAudit, 'review-row-has-comment': this.isAudit && this.rowHasComments(section, id) } },
     openReview (key) { if (!this.isAudit) return; this.reviewKey = key; this.reviewDraft = this.reviewComment(key); this.reviewVisible = true },
     persist () { if (!saveOrganizationDetail(this.detail)) this.$message.warning('浏览器存储不可用，本次修改仅保留在当前页面') },
     saveReview () { if (!this.isAudit) return; const value = this.reviewDraft.trim(); if (value) this.$set(this.detail.reviewComments, this.reviewKey, value); else this.$delete(this.detail.reviewComments, this.reviewKey); this.persist(); this.reviewVisible = false },
@@ -149,7 +150,8 @@ export default {
 .organization-basic-content .description-item { gap: 8px; }
 .rich-text-field >>> img { display: block; max-width: 100%; height: auto; }
 .review-dialog-actions { display: flex; justify-content: space-between; align-items: center; }
-.review-dialog-actions > .ant-btn-primary { margin-left: auto; }
+.review-dialog-primary { display: flex; gap: 8px; margin-left: auto; }
+.review-dialog-primary > .ant-btn + .ant-btn { margin-left: 0; }
 .privacy-reminder-body { display: flex; align-items: center; }
 .privacy-reminder-body > p { margin: 0; line-height: 1.75; overflow-wrap: anywhere; }
 .organization-avatar { width: 80px; height: 80px; object-fit: cover; border-radius: 13px; }
@@ -164,8 +166,6 @@ export default {
 .description-item, .rich-text-field, .detail-table td, .history-content { overflow-wrap: anywhere; white-space: pre-wrap; }
 .description-item[role="button"], .review-row-trigger { cursor: pointer; }
 .description-item[role="button"]:hover, .detail-table .review-row-trigger:hover > td { background: #f8fbff; }
-.detail-table .review-row-has-comment > td { background: #fff1f0 !important; }
-.detail-table .review-row-has-comment:hover > td { background: #ffe7e5 !important; }
 [role="button"]:focus-visible { outline: 2px solid #ff7875; outline-offset: -2px; }
 .file-actions { width: 130px; white-space: nowrap !important; }
 .file-actions .ant-btn { padding: 0 7px; }
@@ -176,3 +176,5 @@ export default {
 .warning-actions { display: flex; justify-content: flex-end; }
 .warning-actions .ant-btn { height: 32px; }
 </style>
+
+<style scoped src="../styles/organization-review.css"></style>

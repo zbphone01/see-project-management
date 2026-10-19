@@ -1,10 +1,10 @@
 <template>
-<section class="project-detail-page">
-        <div class="detail-back-row">
+<section class="project-detail-page" :class="{ 'project-snapshot-content': snapshotEntry }">
+        <div v-if="!snapshotEntry" class="detail-back-row">
           <a-button class="detail-back" @click="goBack"><a-icon type="arrow-left" /> 返回</a-button>
         </div>
 
-        <section class="privacy-reminder" role="note" aria-label="信息安全提醒">
+        <section v-if="!snapshotEntry" class="privacy-reminder" role="note" aria-label="信息安全提醒">
           <div class="privacy-reminder-head">
             <span class="privacy-icon" :class="{ 'audit-notice-icon': mode === 'audit' }"><a-icon :type="mode === 'audit' ? 'info-circle' : 'warning'" theme="filled" /></span>
             <div>
@@ -29,7 +29,7 @@
         </section>
 
         <section id="detail-basic" class="panel detail-section">
-          <div class="detail-section-header"><span class="detail-section-icon"><a-icon type="profile" /></span><div><h2>项目基本信息</h2><p v-if="mode === 'audit'">点击字段内容可添加审核意见</p><div class="detail-basic-meta"><span class="project-code"><a-icon type="flag" /> {{ basicInfo.code }}</span><button class="project-recruitment" type="button" :title="basicInfo.recruitment" @click="notify(`打开招募详情：${basicInfo.recruitment}`)"><a-icon type="notification" /> {{ basicInfo.recruitment }}</button></div></div></div>
+          <div class="detail-section-header"><span class="detail-section-icon"><a-icon type="profile" /></span><div><h2>项目基本信息</h2><p v-if="mode === 'audit'">点击字段内容可添加审核意见</p><div v-if="!snapshotEntry" class="detail-basic-meta"><span class="project-code"><a-icon type="flag" /> {{ basicInfo.code }}</span><button class="project-recruitment" type="button" :title="basicInfo.recruitment" @click="notify(`打开招募详情：${basicInfo.recruitment}`)"><a-icon type="notification" /> {{ basicInfo.recruitment }}</button></div></div></div>
           <div class="description-grid">
             <div class="description-item wide project-name-item" :class="basicReviewClass('name')" v-bind="reviewAttributes('name')" v-on="reviewEvents('name')"><span>项目名称</span><strong>{{ basicInfo.name }}</strong></div>
             <div class="description-item"><span>项目类型</span><strong>{{ basicInfo.type }}</strong></div>
@@ -191,12 +191,12 @@
           <budget-prototype embedded :donation-project="isDonationProject" :project-name="detailProject.name" :budget="detailTableData.budget" />
         </div></section>
 
-        <section v-if="!isGreenHomeExample" id="detail-attachments" class="panel detail-section">
+        <section v-if="!snapshotEntry && !isGreenHomeExample" id="detail-attachments" class="panel detail-section">
           <div class="detail-section-header"><span class="detail-section-icon blue"><a-icon type="paper-clip" /></span><div><h2>附件</h2><p>项目相关附件，如有需要请下载留存</p></div></div><div class="detail-module-content">
           <div class="attachment-list"><div v-for="file in detailAttachments" :key="file.id"><div><strong>{{ file.name }}</strong><span>{{ file.type }} · {{ file.uploadedAt }}</span></div><a-button type="link" @click="notify('预览' + file.name + '（演示入口）')">预览</a-button><a-button type="link" @click="notify('下载' + file.name + '（演示入口）')">下载</a-button></div></div>
         </div></section>
 
-        <section v-if="detailTableData.auditHistory && detailTableData.auditHistory.length" id="detail-history" class="panel detail-section">
+        <section v-if="!snapshotEntry && detailTableData.auditHistory && detailTableData.auditHistory.length" id="detail-history" class="panel detail-section">
           <div class="detail-section-header"><span class="detail-section-icon gray"><a-icon type="history" /></span><div><h2>审核信息</h2></div></div><div class="detail-module-content">
           <a-timeline class="audit-timeline">
             <a-timeline-item v-for="entry in detailTableData.auditHistory" :key="entry.id" color="blue">
@@ -208,7 +208,7 @@
                   <span v-if="entry.paymentAmount" class="audit-info-chip audit-requested-amount">请款金额：{{ entry.paymentAmount }}</span>
                   <button v-if="entry.review" class="audit-resource-link audit-review-resource" type="button" @click="notify('查看评审资料')">评审资料</button>
                   <button v-if="entry.agreement" class="audit-resource-link audit-agreement-resource" type="button" @click="notify('查看协议扫描件')">协议扫描件</button>
-                  <button v-if="entry.snapshot" class="audit-resource-link audit-snapshot-resource" type="button" @click="notify('查看申请书快照')">申请书快照</button>
+                  <button v-if="entry.snapshot" class="audit-resource-link audit-snapshot-resource" type="button" @click="openSnapshot(entry)">申请书快照</button>
                 </div>
                 <div v-if="entry.remark" class="audit-result-details">
                   <p><b>审核备注：</b>{{ entry.remark }}</p>
@@ -271,6 +271,11 @@
           </div>
         </div></section>
 
+      <project-snapshot-window v-if="activeSnapshot" @close="activeSnapshot = null">
+        <div slot="title-meta" class="audit-result-row"><span class="audit-info-chip audit-time">{{ activeSnapshot.time }} · {{ activeSnapshot.reviewer }}</span></div>
+        <project-detail :project-id="projectId" :detail-type="detailType" :table-data="snapshotData" :snapshot-entry="activeSnapshot" mode="view" />
+      </project-snapshot-window>
+
       <a-modal v-if="mode === 'audit'" v-model="targetReviewVisible" title="编辑审核意见" :width="560" :mask-closable="false" @cancel="targetReviewVisible = false">
       <a-textarea v-model="targetReviewDraft" aria-label="审核意见" placeholder="请输入审核意见" :rows="5" />
       <template slot="footer">
@@ -289,6 +294,7 @@ import greenHomeTableData from '../mock/project-green-home-detail.json'
 import grassTableData from '../mock/project-grass-detail.json'
 import monthlyDonationTableData from '../mock/project-monthly-donation-detail.json'
 import oneTimeDonationTableData from '../mock/project-one-time-donation-detail.json'
+import ProjectSnapshotWindow from '../components/ProjectSnapshotWindow.vue'
 import BudgetPrototype from '../components/BudgetPrototype.vue'
 import ReviewCommentLabel from '../components/ReviewCommentLabel.vue'
 
@@ -390,6 +396,7 @@ export default {
   name: 'ProjectDetail',
   props: {
     projectId: { type: Number, required: true },
+    snapshotEntry: { type: Object, default: null },
     mode: { type: String, default: 'view' },
     auditType: { type: String, default: 'default' },
     detailType: { type: String, default: 'default' },
@@ -408,6 +415,8 @@ export default {
     } catch (error) { /* Invalid local data does not prevent opening the page. */ }
     return {
     detailTableData: { ...JSON.parse(JSON.stringify(sourceTableData)), reviewComments: comments },
+    activeSnapshot: null,
+    snapshotData: null,
     targetReviewVisible: false,
     targetReviewDraft: '',
     reviewField: 'targets',
@@ -604,9 +613,13 @@ export default {
       const resultLabel = this.auditForm.result === 'approved' ? '审核通过' : '审核驳回'
       this.$message.info(`本地审核校验通过：${resultLabel}；尚未提交至服务器`)
     },
+    openSnapshot (entry) {
+      this.snapshotData = JSON.parse(JSON.stringify(this.detailTableData))
+      this.activeSnapshot = { id: entry.id, time: entry.time, reviewer: entry.reviewer }
+    },
     notify (label) { this.$message.info(label) }
   },
-  components: { BudgetPrototype, ProjectRichContent, ReviewRowComments },
+  components: { ProjectSnapshotWindow, BudgetPrototype, ProjectRichContent, ReviewRowComments },
   watch: {
     auditType () {
       // 同一详情页切换审核角色时，恢复演示带入值，避免上一个角色的输入污染只读金额。
@@ -617,11 +630,12 @@ export default {
       this.auditFiles = []
     }
   },
-  deactivated () { this.targetReviewVisible = false },
+  deactivated () { this.targetReviewVisible = false; this.activeSnapshot = null },
 }
 </script>
 
 <style scoped>
+.project-snapshot-content { min-width: 0; }
 #detail-audit ::v-deep #audit-amount.ant-input-disabled,
 #detail-audit ::v-deep #audit-expected-amount.ant-input-disabled { background-color: #f5f5f5; color: #718095; }
 .audit-upload-item { border-radius: 6px; }
