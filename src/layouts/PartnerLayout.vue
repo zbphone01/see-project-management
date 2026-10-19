@@ -113,7 +113,7 @@ export default {
         { key: 'dashboard', label: '工作台', icon: 'desktop' },
         { key: 'dashboard-see', label: '工作台-SEE', icon: 'dashboard' },
         { key: 'organization', label: '机构管理', icon: 'bank', children: [{ key: 'organization-list', label: '机构列表' }] },
-        { key: 'projects', label: '项目管理', icon: 'project', children: [{ key: 'recruitment-summary', label: '招募汇总' }, { key: 'fundraising-plans', label: '筹款规划' }, { key: 'framework-agreements', label: '框架协议' }, { key: 'available-projects', label: '可申请项目' }, { key: 'applied-projects', label: '已申请项目' }, { key: 'project-reports', label: '进展/结项' }] },
+        { key: 'projects', label: '项目管理', icon: 'project', children: [{ key: 'recruitment-summary', label: '招募汇总' }, { key: 'fundraising-plans', label: '筹款规划' }, { key: 'framework-agreements', label: '框架协议' }, { key: 'available-projects', label: '可申请项目' }, { key: 'applied-projects', label: '已申请项目' }, { key: 'project-reports', label: '进展/结项' }, { key: 'payment-applications', label: '请款申请' }] },
         { key: 'donation', label: '透明捐', icon: 'safety-certificate' },
         { key: 'download', label: '数据下载', icon: 'download' },
         { key: 'benefit', label: '受益数据', icon: 'database' },
@@ -130,7 +130,7 @@ export default {
     activeNav () { return ['fundraising-plan-detail', 'fundraising-plan-form'].includes(this.$route.name) ? 'fundraising-plans' : ['fundraising-application-detail', 'fundraising-application-form'].includes(this.$route.name) ? 'framework-agreements' : this.$route.name },
     breadcrumbRoot () {
       if (['organization-list', 'organization-detail', 'organization-form'].includes(this.activeNav)) return '机构管理'
-      return ['recruitment-summary', 'available-projects', 'recruitment-detail', 'recruitment-form', 'applied-projects', 'fundraising-plans', 'framework-agreements', 'project-detail', 'project-form', 'project-reports', 'report-detail'].includes(this.activeNav) ? '项目管理' : '工作台'
+      return ['recruitment-summary', 'available-projects', 'recruitment-detail', 'recruitment-form', 'applied-projects', 'fundraising-plans', 'framework-agreements', 'project-detail', 'project-form', 'project-reports', 'payment-applications', 'report-detail'].includes(this.activeNav) ? '项目管理' : '工作台'
     },
     breadcrumbLeaf () {
       if (this.$route.name === 'fundraising-plan-form') return this.$route.params.id === 'new' ? '申请筹款规划' : '编辑筹款规划申请'
@@ -139,6 +139,7 @@ export default {
       if (this.$route.name === 'fundraising-application-form') return '编辑募捐申请书'
       if (this.activeNav === 'organization-list') return '机构列表'
       if (this.activeNav === 'fundraising-plans') return '筹款规划'
+      if (this.activeNav === 'payment-applications') return '请款申请'
       if (this.activeNav === 'framework-agreements') return '框架协议'
       return this.activeNav === 'recruitment-summary' ? '招募汇总' : this.activeNav === 'project-reports' ? '进展/结项' : this.activeNav === 'dashboard-see' ? 'SEE首页' : this.activeNav === 'available-projects' ? '可申请项目' : this.activeNav === 'applied-projects' ? '已申请项目' : '伙伴首页'
     }
@@ -148,7 +149,7 @@ export default {
       immediate: true,
       handler () {
       if (['organization-list', 'organization-detail', 'organization-form'].includes(this.activeNav)) this.$set(this.expandedNav, 'organization', true)
-      if (['recruitment-summary', 'available-projects', 'recruitment-detail', 'recruitment-form', 'applied-projects', 'fundraising-plans', 'framework-agreements', 'project-detail', 'project-form', 'project-reports', 'report-detail'].includes(this.activeNav)) {
+      if (['recruitment-summary', 'available-projects', 'recruitment-detail', 'recruitment-form', 'applied-projects', 'fundraising-plans', 'framework-agreements', 'project-detail', 'project-form', 'project-reports', 'payment-applications', 'report-detail'].includes(this.activeNav)) {
         this.$set(this.expandedNav, 'projects', true)
       }
       }
@@ -166,7 +167,7 @@ export default {
       if (item.key === 'organization-list') { this.navigate(item.key); return }
       if (item.children) {
         this.$set(this.expandedNav, item.key, !this.expandedNav[item.key])
-      } else if (['dashboard', 'dashboard-see', 'recruitment-summary', 'available-projects', 'applied-projects', 'fundraising-plans', 'framework-agreements', 'project-reports'].includes(item.key)) this.navigate(item.key)
+      } else if (['dashboard', 'dashboard-see', 'recruitment-summary', 'available-projects', 'applied-projects', 'fundraising-plans', 'framework-agreements', 'project-reports', 'payment-applications'].includes(item.key)) this.navigate(item.key)
       else this.notify(item.label)
     },
     notify (label) { this.$message.info(label) }

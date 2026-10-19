@@ -35,6 +35,7 @@ const router = new VueRouter({
       props: route => ({ mode: route.query.mode === 'audit' ? 'audit' : 'view' })
     },
     { path: '/projects/fundraising-applications/:id/edit', name: 'fundraising-application-form', component: () => import('../views/FundraisingApplicationForm.vue') },
+    { path: '/projects/payment-applications', name: 'payment-applications', component: () => import('../views/PaymentApplications.vue') },
     { path: '/projects/reports', name: 'project-reports', component: () => import('../views/ProjectReports.vue') },
     { path: '/projects/reports/:id', name: 'report-detail', component: () => import('../views/ReportDetail.vue'),
       props: route => ({ reportId: route.params.id, mode: route.query.mode === 'audit' ? 'audit' : 'view' })
