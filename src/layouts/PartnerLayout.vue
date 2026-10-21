@@ -50,7 +50,9 @@
         <button v-else-if="activeNav === 'project-detail'" class="breadcrumb-link" type="button" @click="backToAppliedProjects">已申请项目</button>
         <button v-else-if="activeNav === 'report-detail'" class="breadcrumb-link" type="button" @click="navigate('project-reports')">进展/结项</button>
         <button v-else-if="['recruitment-detail', 'recruitment-form'].includes(activeNav)" class="breadcrumb-link" type="button" @click="navigate('available-projects')">可申请项目</button>
+        <button v-else-if="['benefit-species-detail', 'benefit-list-detail', 'benefit-document-detail'].includes($route.name)" class="breadcrumb-link" type="button" @click="navigate('benefit-summary')">数据汇总</button>
         <span v-else>{{ breadcrumbLeaf }}</span>
+        <template v-if="['benefit-species-detail', 'benefit-list-detail', 'benefit-document-detail'].includes($route.name)"><span>/</span><span>{{ $route.name === 'benefit-document-detail' ? '文件材料详情' : $route.name === 'benefit-list-detail' ? '名单详情' : '物种详情' }}</span></template>
         <template v-if="activeNav === 'project-detail'">
           <span>/</span>
           <span>项目详情</span>
@@ -116,7 +118,12 @@ export default {
         { key: 'projects', label: '项目管理', icon: 'project', children: [{ key: 'recruitment-summary', label: '招募汇总' }, { key: 'fundraising-plans', label: '筹款规划' }, { key: 'framework-agreements', label: '框架协议' }, { key: 'available-projects', label: '可申请项目' }, { key: 'applied-projects', label: '已申请项目' }, { key: 'project-reports', label: '进展/结项' }, { key: 'payment-applications', label: '请款申请' }] },
         { key: 'donation', label: '透明捐', icon: 'safety-certificate' },
         { key: 'download', label: '数据下载', icon: 'download' },
-        { key: 'benefit', label: '受益数据', icon: 'database' },
+        { key: 'benefit', label: '收益数据', icon: 'database', children: [
+          { key: 'benefit-summary', label: '数据汇总' },
+          { key: 'benefit-projects', label: '项目收益' },
+          { key: 'benefit-departments', label: '部门填报' },
+          { key: 'benefit-regions', label: '地区数据' }
+        ] },
         { key: 'admin', label: '管理员功能', icon: 'idcard' },
         { key: 'ngo-database', label: '环保NGO调研数据库', icon: 'global', children: [
           { key: 'ngo-organizations', label: '组织信息列表' },
@@ -127,12 +134,15 @@ export default {
   } },
   computed: {
     pagedNotices () { return this.historyNotices.slice((this.noticePage - 1) * 5, this.noticePage * 5) },
-    activeNav () { return ['fundraising-plan-detail', 'fundraising-plan-form'].includes(this.$route.name) ? 'fundraising-plans' : ['fundraising-application-detail', 'fundraising-application-form'].includes(this.$route.name) ? 'framework-agreements' : this.$route.name },
+    activeNav () { if (['benefit-species-detail', 'benefit-list-detail', 'benefit-document-detail'].includes(this.$route.name)) return 'benefit-summary'; return ['fundraising-plan-detail', 'fundraising-plan-form'].includes(this.$route.name) ? 'fundraising-plans' : ['fundraising-application-detail', 'fundraising-application-form'].includes(this.$route.name) ? 'framework-agreements' : this.$route.name },
     breadcrumbRoot () {
+      if (this.activeNav === 'benefit-summary') return '收益数据'
       if (['organization-list', 'organization-detail', 'organization-form'].includes(this.activeNav)) return '机构管理'
       return ['recruitment-summary', 'available-projects', 'recruitment-detail', 'recruitment-form', 'applied-projects', 'fundraising-plans', 'framework-agreements', 'project-detail', 'project-form', 'project-reports', 'payment-applications', 'report-detail'].includes(this.activeNav) ? '项目管理' : '工作台'
     },
     breadcrumbLeaf () {
+      if (this.activeNav === 'benefit-summary') return '数据汇总'
+      if (this.activeNav === 'download') return '数据下载'
       if (this.$route.name === 'fundraising-plan-form') return this.$route.params.id === 'new' ? '申请筹款规划' : '编辑筹款规划申请'
       if (this.$route.name === 'fundraising-plan-detail') return this.$route.query.mode === 'audit' ? '审核筹款规划' : '查看筹款规划'
       if (this.$route.name === 'fundraising-application-detail') return this.$route.query.mode === 'audit' ? '审核募捐申请书' : '查看募捐申请书'
@@ -148,6 +158,7 @@ export default {
     '$route.name': {
       immediate: true,
       handler () {
+      if (this.activeNav === 'benefit-summary') this.$set(this.expandedNav, 'benefit', true)
       if (['organization-list', 'organization-detail', 'organization-form'].includes(this.activeNav)) this.$set(this.expandedNav, 'organization', true)
       if (['recruitment-summary', 'available-projects', 'recruitment-detail', 'recruitment-form', 'applied-projects', 'fundraising-plans', 'framework-agreements', 'project-detail', 'project-form', 'project-reports', 'payment-applications', 'report-detail'].includes(this.activeNav)) {
         this.$set(this.expandedNav, 'projects', true)
@@ -164,6 +175,8 @@ export default {
     navigate (name) { if (this.$route.name !== name) this.$router.push({ name }) },
     backToAppliedProjects () { this.navigate('applied-projects') },
     selectNav (item) {
+      if (item.key === 'benefit-summary') { this.navigate(item.key); return }
+      if (item.key === 'download') { this.navigate(item.key); return }
       if (item.key === 'organization-list') { this.navigate(item.key); return }
       if (item.children) {
         this.$set(this.expandedNav, item.key, !this.expandedNav[item.key])

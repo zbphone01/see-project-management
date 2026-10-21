@@ -1,0 +1,12 @@
+// 本地名单详情示例；附件仅提供文件名，未连接真实文件服务。
+export function createBenefitListDetails () {
+  return [
+    { id: 'list-detail-1', category: '行业', name: '新能源重卡补能设施', file: '新能源重卡补能设施名单.xlsx', projectName: '2025年净滩公益行动—蓝湾生态青岛站' },
+    { id: 'list-detail-2', category: '行业', name: '重卡司机', file: '重卡司机参与名单.xlsx', projectName: '2025年净滩公益行动—蓝湾生态青岛站' },
+    { id: 'list-detail-3', category: '社区', name: '沿海社区海洋保护志愿服务参与社区', file: '沿海社区参与名单.xlsx', projectName: '沿海社区海洋生态保护与公众参与行动' },
+    { id: 'list-detail-4', category: '企业', name: '绿色供应链联合行动参与企业', file: '绿色供应链参与企业名单.xlsx', projectName: '推动企业绿色采购与可持续供应链示范项目' },
+    { id: 'list-detail-5', category: '商家', name: '社区减塑行动参与商家', file: '减塑行动商家名单.xlsx', projectName: '社区减塑与生活垃圾源头减量行动' },
+    { id: 'list-detail-6', category: '伙伴', name: '生物多样性保护合作伙伴', file: '生物多样性保护合作伙伴名单.xlsx', projectName: '区域生物多样性保护与协作网络建设' },
+    { id: 'list-detail-7', category: '其他 - 自定义类型', name: '自然教育活动协作单位', file: '自然教育协作单位名单.xlsx', projectName: '面向城乡青少年的自然教育与生态体验活动' }
+  ]
+}
