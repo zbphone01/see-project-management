@@ -37,14 +37,10 @@ export function createPlanDraft (record, plan, storage = window.localStorage) {
     })
     application.otherContent = planRichFields.slice(4).map(field => {
       const section = application.otherContent.find(item => item.key === field.key)
-      return record && record.id !== 'plan-application-1' && section ? section : { key: field.key, title: field.title, paragraphs: [] }
+      return record && section ? section : { key: field.key, title: field.title, paragraphs: [] }
     })
     if (!record) application.budget = Object.assign(clonePlan(example.budget), { rows: [], status: '待编辑', updatedAt: '', organization: '', period: '', partners: '' })
-    if (record && record.id === 'plan-application-1') {
-      application.outputs = application.outputs.slice(0, 1)
-      application.outputs[0].activities = application.outputs[0].activities.slice(0, 1)
-      application.attachments = []
-    }
+
   }
   application.planId = application.planId || plan.id
   const years = dateParts(application.planningPeriod, true), dates = dateParts(application.executionPeriod, false)

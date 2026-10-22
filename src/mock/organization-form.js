@@ -5,7 +5,7 @@ import { createOrganizations } from './organizations'
 export const organizationTypes = ['基金会', '政府部门 / 事业单位', '科研院所', '民办非企业', '社会团体', '工商注册的公益组织', '企业', '未注册']
 const certificates = { '基金会': '基金会法人登记证书', '科研院所': '事业单位法人证书', '民办非企业': '民办非企业单位（法人）登记证书', '社会团体': '社会团体法人登记证书', '工商注册的公益组织': '营业执照', '企业': '营业执照' }
 export const restrictedTypes = ['基金会', '政府部门 / 事业单位', '科研院所', '企业', '未注册']
-const storageKey = 'see-organization-form-v1'
+const storageKey = 'see-organization-form-v2'
 const clone = value => JSON.parse(JSON.stringify(value))
 const field = (key, label, kind, required, options) => ({ key, label, kind: kind || 'text', required: !!required, options: options || [] })
 
@@ -44,7 +44,7 @@ export function setOrganizationType (draft, type) {
   }
 }
 
-export function loadOrganizationForm (id) {
+export function loadOrganizationForm (id, reviewMode) {
   let draft
   if (id === 'new') {
     const fields = {}
@@ -57,10 +57,6 @@ export function loadOrganizationForm (id) {
     if (!draft) return null
     ;['secondLoginPhone', 'organizationName', 'specialRemarks', 'mission', 'projectAreas'].forEach(key => { if (draft.fields[key] === '-') draft.fields[key] = '' })
     if (!['是', '否'].includes(draft.fields.otherLegalRoles)) draft.fields.otherLegalRoles = ''
-    if (!Object.keys(draft.reviewComments).length && draft.status === '驳回待修改') {
-      const rejection = draft.history.find(entry => entry.result === '驳回')
-      draft.reviewComments = clone((rejection || {}).reviewComments || {})
-    }
   }
   Object.assign(draft.fields, { postalCode: draft.fields.postalCode || '', creditRegion: draft.fields.creditRegion || '国内', otherLegalOrganizations: draft.fields.otherLegalOrganizations || '', validStart: draft.fields.validStart || '', validEnd: draft.fields.validEnd || '', establishedAt: draft.fields.establishedAt || '', organizer: draft.fields.organizer || '' })
   ;['issuedAt', 'charityRegisteredAt', 'fundraisingQualifiedAt'].forEach(key => { draft.fields[key] = (draft.fields[key] || '').replace(/[年月]/g, '-').replace(/日/g, '') })
@@ -71,10 +67,14 @@ export function loadOrganizationForm (id) {
   draft.nameChecked = false; draft.parentOrganizationId = ''; draft.richTextFields = draft.richTextFields || []
   try {
     const saved = JSON.parse(localStorage.getItem(storageKey) || '{}')[id]
-    if (saved) draft = Object.assign({}, draft, saved, { fields: Object.assign({}, draft.fields, saved.fields), reviewComments: Object.assign({}, draft.reviewComments, saved.reviewComments) })
+    if (saved) draft = Object.assign({}, draft, saved, { fields: Object.assign({}, draft.fields, saved.fields), reviewComments: Object.assign({}, saved.reviewComments || {}) })
   } catch (error) { /* 存储不可用时使用当前机构资料。 */ }
   ;['isCharity', 'hasFundraisingQualification'].forEach(key => { if (!['是', '否'].includes(draft.fields[key])) draft.fields[key] = '否' })
   draft.fields.certificateType = certificates[draft.fields.registrationType] || ''
+  if (draft.isPrimaryAccount) draft.fields.organizationName = ''
+  if (id !== 'new') {
+    if (reviewMode === 'none') draft.reviewComments = {}
+  }
   return draft
 }
 

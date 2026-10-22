@@ -107,7 +107,7 @@ export default {
       this.page = 1
     },
     handleTableChange (pagination) { this.page = pagination.current },
-    startRecruitment () { this.$router.push({ name: 'recruitment-form' }) },
+    startRecruitment () { this.$router.push({ name: 'recruitment-form', query: { recruitmentType: 'general' } }) },
     handleAction (key, project) {
       if (key === 'detail' && [506306, 896257, 896258].includes(project.id)) {
         this.$router.push({ name: 'recruitment-detail', params: { id: String(project.id) } })

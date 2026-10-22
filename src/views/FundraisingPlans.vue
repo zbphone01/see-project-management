@@ -83,10 +83,10 @@ export default {
   },
   activated () {
     this.applications = createPlanApplications()
-    if (this.$route.query.tab === 'applications') this.activeTab = 'applications'
+    if (['plans', 'applications'].includes(this.$route.query.tab)) this.activeTab = this.$route.query.tab
   },
   watch: {
-    '$route.query.tab' (tab) { if (this.$route.name === 'fundraising-plans' && tab === 'applications') this.activeTab = 'applications' }
+    '$route.query.tab' (tab) { if (this.$route.name === 'fundraising-plans' && ['plans', 'applications'].includes(tab)) this.activeTab = tab }
   },
   computed: {
     filteredPlans () { return filterPlans(this.plans, { name: this.appliedPlanName }) },
@@ -106,7 +106,8 @@ export default {
     changeApplicationPage (pagination) { this.applicationPage = pagination.pageSize === this.applicationPageSize ? pagination.current : 1; this.applicationPageSize = pagination.pageSize },
     handlePlanAction (action, record) { if (action === 'edit') this.openPlan(record); else this.$router.push({ name: 'fundraising-plan-form', params: { id: 'new' }, query: { planId: record.id } }) },
     handleApplicationAction (action, record) {
-      if (action === '编辑') { this.$router.push({ name: 'fundraising-plan-form', params: { id: record.id } }); return }
+      if (action === '发起招募') { this.$router.push({ name: 'recruitment-form', query: { recruitmentType: 'planning', from: 'fundraising-plans', applicationId: record.id } }); return }
+      if (['编辑', '修改', '修改申请'].includes(action)) { this.$router.push({ name: 'fundraising-plan-form', params: { id: record.id } }); return }
       if (action === '查看' || action === '审核') {
         this.$router.push({ name: 'fundraising-plan-detail', params: { id: record.id }, query: { mode: action === '审核' ? 'audit' : 'view' } }); return
       }

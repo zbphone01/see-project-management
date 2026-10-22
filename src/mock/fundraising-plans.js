@@ -1,7 +1,8 @@
+import { projectExampleName, departmentExampleName, functionalDepartment, isDepartmentExample } from './fundraising-plan-examples'
 import { readPlanSnapshot } from './fundraising-plan-detail'
 
 // 规划列表使用会话数据；申请审核结果按申请 ID 保存到本机，不关联真实权限或后台。
-export const planDepartments = ['项目综合运营与拓展项目组', '生态保护项目中心', '联合公益项目组']
+export const planDepartments = ['项目综合运营与拓展项目组', '生态保护项目中心', '联合公益项目组', functionalDepartment]
 let sessionPlans
 let nextPlanId = 1
 
@@ -27,7 +28,10 @@ export function createPlanApplications () {
     { id: 'plan-application-4', planId: 'plan-local', name: '在地环保项目筹款规划', actualAmount: 0, targetAmount: 4000000, department: planDepartments[0], status: '规划通过', updatedAt: '2025-12-08 16:45:00', hasRecruitment: false },
     { id: 'plan-application-5', planId: 'plan-local', name: '在地环保项目筹款规划', actualAmount: 3400000, targetAmount: 4000000, department: planDepartments[1], status: '规划通过', updatedAt: '2025-12-07 11:00:00', hasRecruitment: true }
   ].map(record => {
-    record.name += '申请'
+    const departmentExample = isDepartmentExample(record.id)
+    record.name = departmentExample ? departmentExampleName : projectExampleName
+    record.planId = departmentExample ? 'plan-local' : 'plan-yangtze'
+    record.department = departmentExample ? functionalDepartment : planDepartments[0]
     try {
       const saved = readPlanSnapshot(record.id)
       return saved ? Object.assign({}, record, { status: saved.application.status, updatedAt: saved.application.updatedAt }, saved.application.formVersion ? { name: saved.application.name || '未命名筹款规划申请', targetAmount: saved.application.plannedAmount || 0, department: saved.application.department } : {}) : record
@@ -55,7 +59,7 @@ export function filterPlans (records, filters) {
 export function applicationActions (record) {
   if (record.status === '草稿') return ['编辑']
   if (record.status === '规划待审') return ['审核']
-  if (record.status === '规划驳回') return ['查看', '编辑']
+  if (record.status === '规划驳回') return ['查看', '修改']
   if (record.status === '规划通过') return record.hasRecruitment ? ['查看', '调整预算'] : ['查看', '编辑', '发起招募']
   return ['查看']
 }

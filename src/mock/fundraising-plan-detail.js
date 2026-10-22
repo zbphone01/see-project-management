@@ -1,11 +1,11 @@
-import example from './fundraising-plan-detail.json'
+import { createApplicationExample } from './fundraising-plan-examples'
 
 export const clonePlan = value => JSON.parse(JSON.stringify(value))
 export const planDetailStorageKey = id => 'see-fundraising-plan-detail-v1-' + id
 const isObject = value => value && typeof value === 'object' && !Array.isArray(value)
 
 export function createPlanDetail (record) {
-  const application = Object.assign(clonePlan(example), { id: record.id, department: record.department, status: record.status, updatedAt: record.updatedAt })
+  const application = Object.assign(createApplicationExample(record.id), { id: record.id, department: record.department, status: record.status, updatedAt: record.updatedAt })
   if (record.status === '规划通过' || record.status === '规划驳回') {
     application.auditHistory = [{ id: 'history-' + record.id, time: record.updatedAt, result: record.status === '规划通过' ? '通过' : '驳回', account: 'zhangbin', remark: record.status === '规划通过' ? '规划目标及资金安排已完成评审。' : '请补充项目产出与保护目标之间的对应关系。', attachments: [{ id: 'review-example-' + record.id, name: '筹款规划评审资料.xlsx', uploadedAt: record.updatedAt }] }]
   }

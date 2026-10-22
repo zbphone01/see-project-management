@@ -1,7 +1,15 @@
 // 本地机构详情演示，不连接真实账号、审批接口或文件服务器。
 import { createOrganizations } from './organizations'
 
-const storageKey = 'see-organization-detail-v1'
+const storageKey = 'see-organization-detail-v2'
+export const organizationReviewExample = {
+  secondLoginPhone: '请核对备用登录手机号是否由机构指定人员管理。',
+  creditCode: '请核对统一社会信用代码与登记证书是否一致。',
+  officeAddress: '请补充办公地址的楼栋、楼层及房间号。',
+  honors: '请补充社会评价材料的来源及对应年度。',
+  'supervisors.supervisor-1': '请核对该监事的姓名与任职材料。',
+  'directors.director-1': '请核对该理事的关联机构信息。'
+}
 const file = (id, name, year, civilStatus) => ({ id, name, year, civilStatus, uploadedAt: '2023-12-28 23:59', url: '' })
 // 前端接入说明：以下社会评价文案及配图仅用于原型演示，不代表真实荣誉、评级或党建情况。
 // 接入机构详情接口后，请使用实际 honors、ratingAndParty 和 evaluationImage 数据替换；无图片时不显示配图区域。
@@ -21,29 +29,29 @@ export function createOrganizationDetail (id) {
   const item = createOrganizations().find(row => row.id === id)
   if (!item) return null
   return {
-    id, status: item.status, reviewComments: {},
+    id, status: item.status, isSubAccount: item.isSubAccount, isPrimaryAccount: item.isPrimaryAccount, reviewComments: ['驳回待修改', '变更驳回'].includes(item.status) ? Object.assign({}, organizationReviewExample) : {},
     fields: {
-      name: '新疆红石慈善基金会', organizationName: '-', registrationType: '基金会',
-      loginPhone: item.contactPhone, secondLoginPhone: '-', email: 'demo@example.org', inviterDepartment: '-', avatar: item.image,
-      certificateType: '基金会法人证书', creditCode: '53650102689594565E（境内）', issuer: '新疆维吾尔自治区民政厅', issuedAt: '2022年12月29日', validPeriod: '2022年12月17日 至 2027年12月17日', supervisor: '新疆维吾尔自治区民政厅',
-      legalRepresentative: '余立军', otherLegalRoles: '否 / 是（其他机构名称）', registeredAddress: '新疆乌鲁木齐市沙依巴克区克拉玛依西街1100号北晟商业广场409室', businessScope: '支持社会福利事业发展，为可行性项目提供资金，技术援助，支持公益事业，参与社会工作，人才培训，咨询服务。', isCharity: '是', charityRegisteredAt: '2009年06月29日',
-      hasFundraisingQualification: '是', fundraisingQualifiedAt: '2009年06月29日', introduction: '本地示例机构，开展环保公益服务。', mission: '-',
-      leader: item.contactName, phone: item.contactPhone, projectAreas: '-', officeAddress: '新疆乌鲁木齐市沙依巴克区克拉玛依西街1100号北晟商业广场409室', postalCode: '100000', specialRemarks: '-', honors: evaluationExample.honors, ratingAndParty: evaluationExample.ratingAndParty
+      name: item.name, organizationName: item.organizationName, registrationType: item.registrationType,
+      loginPhone: item.contactPhone, secondLoginPhone: '13800000001', email: 'demo@example.org', inviterDepartment: '项目中心', avatar: item.image,
+      certificateType: '民办非企业单位（法人）登记证书', creditCode: '52370211MJD000001X', creditRegion: '国内', issuer: '青岛市西海岸新区行政审批服务局', issuedAt: '2022年12月29日', validPeriod: '2022年12月17日 至 2027年12月17日', supervisor: '青岛市西海岸新区民政局',
+      legalRepresentative: '陈海霞', otherLegalRoles: '否', otherLegalOrganizations: '', registeredAddress: '山东省青岛市西海岸新区海滨大道100号公益服务中心301室', businessScope: '开展社区环保宣传、生态保护调研、自然教育及公益志愿服务，组织公众参与海岸带生态保护和绿色生活实践。', isCharity: '否', charityRegisteredAt: '',
+      hasFundraisingQualification: '否', fundraisingQualifiedAt: '', introduction: '机构立足青岛西海岸社区，围绕海洋生态保护、垃圾减量和公众自然教育开展公益服务，与学校、社区及志愿者团队共同推动可持续生活方式。', mission: '连接社区力量，守护海岸生态，让绿色生活成为日常。',
+      leader: item.contactName, phone: item.contactPhone, projectAreas: '山东省青岛市西海岸新区及周边沿海社区', officeAddress: '山东省青岛市西海岸新区海滨大道100号公益服务中心301室', postalCode: '266500', specialRemarks: '机构在社区设置志愿服务联络点，项目活动根据季节和社区需求安排。', honors: evaluationExample.honors, ratingAndParty: evaluationExample.ratingAndParty
     },
     evaluationImage: Object.assign({}, evaluationExample.evaluationImage),
     members: [
       { key: 'supervisors', title: '监事成员名单', rows: [
-        { id: 'supervisor-1', name: '张三', identityNumber: '123456789012345', relatedCompanies: '北京市企业家环保基金会 / 53110000682855355J' },
-        { id: 'supervisor-2', name: '李四', identityNumber: '123456789012345', relatedCompanies: '北京市企业家环保基金会 / 53110000682855355J\n阿拉善SEE生态协会 / 5115290050283219XJ' }
+        { id: 'supervisor-1', name: '张晓林', identityNumber: '370211198601010016', relatedCompanies: '北京市企业家环保基金会 / 53110000682855355J' },
+        { id: 'supervisor-2', name: '李海燕', identityNumber: '370211198803080028', relatedCompanies: '北京市企业家环保基金会 / 53110000682855355J\n阿拉善SEE生态协会 / 5115290050283219XJ' }
       ] },
-      { key: 'directors', title: '理事/董事成员名单', rows: [{ id: 'director-1', name: '李四', identityNumber: '-', relatedCompanies: '-' }] }
+      { key: 'directors', title: '理事/董事成员名单', rows: [{ id: 'director-1', name: '王晓青', identityNumber: '370211199001010024', relatedCompanies: '青岛社区志愿服务中心 / 52370211MJD000002R' }] }
     ],
     attachments: [
       { key: 'certificates', title: '登记证书', files: [file('certificate-1', '登记证书.pdf')] },
       { key: 'civilReports', title: '年检年报', files: [file('civil-2023', '2023年年检报告.pdf', 2023, '已上报'), file('civil-2022', '2022年年检报告.pdf', 2022, '已上报')] },
       { key: 'annualReports', title: '机构年报', files: [file('annual-2023', '2023年机构年报.pdf', 2023), file('annual-2022', '2022年机构年报.pdf', 2022)] },
       { key: 'auditReports', title: '审计报告', files: [file('audit-2023', '2023年审计报告.pdf', 2023), file('audit-2022', '2022年审计报告.pdf', 2022)] },
-      { key: 'otherAttachments', title: '其他附件', files: [] }
+      { key: 'otherAttachments', title: '其他附件', files: [file('other-1', '机构财务管理制度.pdf'), file('other-2', '志愿服务管理办法.pdf')] }
     ],
     // 前端接入说明：审核时间、结果、意见及审核账号均为演示数据，接入后使用接口返回的历史记录替换。
     history: [
@@ -60,9 +68,10 @@ export function loadOrganizationDetail (id) {
     const saved = JSON.parse(localStorage.getItem(storageKey) || '{}')[id]
     if (saved && saved.id === id) {
       const fields = Object.assign({}, defaults.fields, saved.fields || {})
+      if (defaults.isPrimaryAccount) fields.organizationName = ''
       const members = saved.members || defaults.members
       const history = (saved.history || []).filter(entry => !['history-1', 'history-example-approved', 'history-example-rejected'].includes(entry.id)).concat(defaults.history)
-      return Object.assign({}, defaults, saved, { fields, members, history, reviewComments: Object.assign({}, defaults.reviewComments, saved.reviewComments || {}) })
+      return Object.assign({}, defaults, saved, { isSubAccount: defaults.isSubAccount, isPrimaryAccount: defaults.isPrimaryAccount, fields, members, history, reviewComments: Object.assign({}, saved.reviewComments || {}) })
     }
   } catch (error) { /* 存储不可用时继续展示默认示例。 */ }
   return defaults

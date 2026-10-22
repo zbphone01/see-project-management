@@ -11,7 +11,7 @@
           <section class="panel project-panel">
             <div class="panel-header">
               <h2><i></i>进行中的项目</h2>
-              <button class="text-link" @click="notify('我的全部项目申请')">我的全部项目申请 <a-icon type="right-circle" /></button>
+              <button class="text-link" @click="$router.push({ name: 'applied-projects' })">我的全部项目申请 <a-icon type="right-circle" /></button>
             </div>
 
             <article
@@ -113,9 +113,9 @@
         <aside ref="secondaryColumn" class="secondary-column">
           <section class="panel side-panel notice-panel">
             <div class="panel-header"><h2><a-icon class="side-title-icon notice-title-icon" type="sound" theme="filled" />系统通知</h2></div>
-            <button v-for="notice in notices" :key="notice.id" class="notice-item" @click="notify(notice.title)">
-              <span><strong>{{ notice.title }}</strong><time>{{ notice.date }}</time></span>
-            </button>
+            <div v-for="notice in notices" :key="notice.id" class="notice-item">
+              <span><p class="notice-content">{{ notice.content }}</p><time :datetime="notice.date">{{ notice.date }}</time></span>
+            </div>
           </section>
 
           <button class="ai-assistant-banner" type="button" aria-label="打开 AI 项目助手" @click="$emit('open-ai')">
@@ -157,6 +157,7 @@
 
 <script>
 import dashboardContent from '../mock/dashboard-content.json'
+import systemNotices from '../mock/system-notices.json'
 
 export default {
   name: 'Dashboard',
@@ -173,11 +174,7 @@ export default {
         { title: '最新一个指定该机构的招募名称', icon: 'notification', theme: 'featured' }
       ],
     recruitments: dashboardContent.recruitments,
-    notices: [
-        { id: 1, title: '这里是通知内容这里是通知内容这里是通知内容', date: '2026-03-03' },
-        { id: 2, title: '这里是通知内容这里是通知内容这里是通知内容', date: '2026-03-03' },
-        { id: 3, title: '这里是通知内容这里是通知内容这里是通知内容', date: '2026-03-03' }
-      ],
+    notices: systemNotices.slice(0, 3),
     questions: ['如何注册成为伙伴机构？', '什么是项目招募？', '项目申请的流程是什么？'],
     files: ['北京市企业环保基金会资助项目财务管理制度', '北京市企业环保基金会反性骚扰机制', '北京市企业环保基金会品牌管理规范']
   } },
@@ -203,6 +200,15 @@ export default {
       this.$router.push({ name: 'recruitment-detail', params: { id: String(item.id) }, query: { from: 'dashboard' } })
     },
     handleProjectAction (project, action) {
+      if (action.label === '请求修订') {
+        this.$confirm({
+          title: '请求修订',
+          content: '提交请求后需要SEE审批，如有必要请先联系您的项目联系人，审批通过后项目会变更为修订中状态',
+          maskClosable: false,
+          okText: '提交请求',
+          cancelText: '取消'
+        }); return
+      }
       if (project.status === '修订中' && action.label === '项目修订') {
         this.$router.push({ name: 'project-form', params: { id: '5' }, query: { example: 'filled', from: 'dashboard', revisionMode: 'with-progress' } }); return
       }

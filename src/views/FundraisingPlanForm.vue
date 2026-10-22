@@ -114,7 +114,7 @@ export default {
       this.clearPreview(); this.editor.visible = false; this.budgetVisible = false; this.budgetPreview = false; this.rowReviewKey = ''; this.errors = []; this.loadError = ''; this.leaving = false; this.busyEditors = {}
       try {
         const id = this.$route.params.id, records = createPlanApplications(), record = records.find(item => item.id === id)
-        if (id !== 'new' && (!record || !applicationActions(record).includes('编辑'))) { this.draft = null; this.loadError = record ? '该申请当前状态不支持编辑，请返回列表查看' : ''; return }
+        if (id !== 'new' && (!record || !applicationActions(record).some(action => ['编辑', '修改', '修改申请'].includes(action)))) { this.draft = null; this.loadError = record ? '该申请当前状态不支持编辑，请返回列表查看' : ''; return }
         const saved = record && readPlanSnapshot(record.id)
         const planId = record ? record.planId : this.$route.query.planId
         const plan = createFundraisingPlans().find(item => item.id === planId) || (saved && { id: saved.application.planId, name: saved.application.planName })

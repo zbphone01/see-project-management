@@ -5,9 +5,9 @@
     <section v-for="group in visibleGroups" :key="group.key" class="panel">
       <div class="detail-section-header"><span class="detail-section-icon green"><a-icon :type="group.icon" /></span><div><h2>{{ group.title }}</h2><p v-if="hasComments(group.fields)">请检查并修改标红的机构信息，点击信息小标题可查看具体审核意见</p></div></div>
       <div :class="[group.key === 'evaluation' ? 'editor-content' : 'organization-fields description-grid', { 'overview-fields': group.key === 'overview' }]">
-        <div v-for="field in group.fields" :key="field.key" class="organization-field" :class="[reviewClass(field.key), { full: ['textarea', 'rich', 'avatar'].includes(field.kind) }]">
+        <div v-for="field in group.fields" :key="field.key" class="organization-field" :class="[field.kind === 'rich' ? {} : reviewClass(field.key), { full: ['textarea', 'rich', 'avatar'].includes(field.kind) }]">
           <label :for="'organization-' + field.key"><review-comment-label :comment="fieldComment(field)">{{ field.label }}</review-comment-label></label>
-          <span v-if="field.kind === 'readonly' || inherited(field) || (!isEdit && draft.nameChecked && field.key === 'name')" class="basic-field-value">{{ draft.fields[field.key] || '—' }}</span>
+          <span v-if="field.kind === 'readonly' || (isChangeMode && field.key === 'inviterDepartment') || inherited(field) || (!isEdit && draft.nameChecked && field.key === 'name')" class="basic-field-value">{{ draft.fields[field.key] || '—' }}</span>
           <template v-else-if="field.kind === 'name'"><div class="inline-controls"><a-input :id="'organization-' + field.key" v-model="draft.fields.name" placeholder="请填写机构名称" @change="draft.nameChecked = false" /><a-button @click="queryName">查询</a-button></div><small v-if="draft.nameChecked">{{ draft.parentOrganizationId ? '已沿用注册机构信息，请填写二级组织名称' : '机构名称已确认（本地演示查询）' }}</small></template>
           <a-select v-else-if="field.kind === 'select'" :id="'organization-' + field.key" :value="draft.fields[field.key] || undefined" placeholder="请选择" @change="changeSelect(field, $event)"><a-select-option v-for="option in field.options" :key="option" :value="option">{{ option }}</a-select-option></a-select>
           <div v-else-if="field.kind === 'credit'" class="inline-controls"><a-input :id="'organization-' + field.key" v-model="draft.fields.creditCode" placeholder="请填写统一社会信用代码" /><a-select v-model="draft.fields.creditRegion" aria-label="统一社会信用代码所属地区"><a-select-option value="国内">国内</a-select-option><a-select-option value="国外">国外</a-select-option></a-select></div>
@@ -20,15 +20,15 @@
           <a-textarea v-else-if="field.kind === 'textarea'" :id="'organization-' + field.key" v-model="draft.fields[field.key]" :rows="2" :placeholder="field.key === 'registeredAddress' ? '请填写登记证书的“住所”地址' : field.key === 'businessScope' ? '请填写登记证书的内容' : '请填写' + field.label" />
           <template v-else-if="field.kind === 'address'"><a-textarea :id="'organization-' + field.key" v-model="draft.fields.officeAddress" :rows="2" placeholder="请填写现办公地址" /><a-input v-model="draft.fields.postalCode" placeholder="请填写邮政编码" aria-label="邮政编码" /></template>
           <div v-else-if="field.kind === 'avatar'" class="avatar-editor"><div v-if="draft.fields.avatar" class="avatar-item"><button type="button" class="avatar-image-button" aria-label="预览机构头像" @click="avatarPreview = true"><img :src="draft.fields.avatar" alt="机构头像" /></button><div class="avatar-mask"><button type="button" class="avatar-delete" aria-label="删除机构头像" @click.stop="draft.fields.avatar = ''; avatarPreview = false"><a-icon type="delete" /> 删除</button></div></div><a-upload v-else accept="image/png,image/jpeg,image/webp" :multiple="false" :disabled="readingAvatar" :show-upload-list="false" :before-upload="selectAvatar"><button type="button" class="avatar-upload" :disabled="readingAvatar" aria-label="上传机构头像"><a-icon :type="readingAvatar ? 'loading' : 'plus'" /><span>{{ readingAvatar ? '上传中' : '上传' }}</span></button></a-upload><a-upload v-if="draft.fields.avatar" accept="image/png,image/jpeg,image/webp" :multiple="false" :disabled="readingAvatar" :show-upload-list="false" :before-upload="selectAvatar"><a-button type="link" :disabled="readingAvatar">更换头像</a-button></a-upload></div>
-          <rich-editor v-else-if="field.kind === 'rich'" v-model="draft.fields[field.key]" :label="field.label" @input="markRich(field.key)" @busy="setEditorBusy(field.key, $event)" />
+          <rich-editor v-else-if="field.kind === 'rich'" v-model="draft.fields[field.key]" :label="field.label" :class="{ 'rich-review-has-comment': !!comment(field.key) }" @input="markRich(field.key)" @busy="setEditorBusy(field.key, $event)" />
           <a-input v-else :id="'organization-' + field.key" v-model="draft.fields[field.key]" :placeholder="field.key === 'secondLoginPhone' ? '非必填，可在第一手机号不可用时登录修改' : field.key === 'organizationName' ? '非必填，不填时贵机构其他组织注册时将只能作为二级组织账号' : '请填写' + field.label" />
         </div>
       </div>
       <div v-if="group.key === 'overview'" class="editor-content member-sections">
         <div v-for="section in draft.members" :key="section.key" class="member-content">
-          <h3>{{ section.title }}</h3><p v-if="hasMemberComments(section)" class="review-note">请检查并修改标红的机构信息，点击行任意位置可查看具体审核意见</p>
+          <h3>{{ section.title }}</h3>
           <div class="detail-table-wrap"><table class="detail-table members-table"><colgroup><col style="width:70px"><col style="width:140px"><col style="width:200px"><col><col style="width:130px"></colgroup><thead><tr><th>序号</th><th>姓名</th><th>身份证号</th><th>关联公司及对应的统一信用代码</th><th>操作</th></tr></thead><tbody>
-            <tr v-for="(row, index) in section.rows" :key="row.id" :class="{ 'review-row-has-comment': rowComment(section.key, row) }" :role="rowComment(section.key, row) ? 'button' : undefined" :tabindex="rowComment(section.key, row) ? 0 : undefined" @click="showRowComment(section.key, row)" @keydown.enter.prevent="showRowComment(section.key, row)" @keydown.space.prevent="showRowComment(section.key, row)"><td>{{ index + 1 }}</td><td>{{ row.name }}</td><td>{{ row.identityNumber }}</td><td>{{ row.relatedCompanies }}</td><td class="row-actions" @click.stop @keydown.stop><a-button type="link" @click="openMember(section, row)">编辑</a-button><a-button type="link" class="danger-link" @click="removeMember(section, row)">删除</a-button></td></tr>
+            <tr v-for="(row, index) in section.rows" :key="row.id" :class="{ 'review-row-has-comment': rowComment(section.key, row) }" :role="rowComment(section.key, row) ? 'button' : undefined" :tabindex="rowComment(section.key, row) ? 0 : undefined" @click="showRowComment(section.key, row)" @keydown.enter.prevent="showRowComment(section.key, row)" @keydown.space.prevent="showRowComment(section.key, row)"><td><a-popover v-if="rowComment(section.key, row)" :visible="rowReview === section.key + '.' + row.id" trigger="click" placement="topLeft" @visibleChange="visible => changeRowReviewVisibility(section.key, row, visible)"><template slot="content"><div class="row-review-content"><div><a-icon type="exclamation-circle" theme="filled" /><p>{{ rowComment(section.key, row) }}</p></div><a-button size="small" type="primary" @click.stop="rowReview = ''">关闭</a-button></div></template><span class="row-review-anchor">{{ index + 1 }}</span></a-popover><template v-else>{{ index + 1 }}</template></td><td>{{ row.name }}</td><td>{{ row.identityNumber }}</td><td>{{ row.relatedCompanies }}</td><td class="row-actions" @click.stop @keydown.stop><a-button type="link" @click="openMember(section, row)">编辑</a-button><a-button type="link" class="danger-link" @click="removeMember(section, row)">删除</a-button></td></tr>
             <tr><td>{{ section.rows.length + 1 }}</td><td></td><td></td><td></td><td class="row-actions"><a-button type="link" @click="openMember(section)">新增</a-button></td></tr>
           </tbody></table></div>
         </div>
@@ -42,9 +42,9 @@
         <template v-else>
           <div class="attachment-list form-attachment-list"><div v-for="file in section.files" :key="file.id">
             <div><strong>{{ file.name }}</strong><span>{{ attachmentMeta(section, file) }}</span></div>
-            <a-button type="link" @click="previewAttachment(file)">预览</a-button><a-button type="link" @click="downloadAttachment(file)">下载</a-button><a-button type="link" class="danger-link" @click="removeFile(section, file)">删除</a-button>
+            <a-button type="link" @click.stop="previewAttachment(file)" @keydown.stop>预览</a-button><a-button type="link" @click.stop="downloadAttachment(file)" @keydown.stop>下载</a-button><a-button v-if="canRemoveFile(section, file)" type="link" class="danger-link" @click.stop="removeFile(section, file)" @keydown.stop>删除</a-button>
           </div></div>
-          <a-button class="add-more-attachment" type="dashed" icon="plus" @click="openUpload(section)">添加更多附件</a-button>
+          <a-button class="add-more-attachment" type="dashed" icon="plus" @click="openUpload(section)">添加更多{{ section.title }}</a-button>
         </template>
       </div>
     </section>
@@ -65,7 +65,6 @@
       <template slot="footer"><div class="dialog-actions"><a-button :disabled="uploading" @click="uploadVisible = false">关闭</a-button><a-button type="primary" :loading="uploading" @click="saveUpload">添加</a-button></div></template>
     </a-modal>
     <a-modal v-model="previewVisible" :title="previewName" :width="960" :mask-closable="false" :footer="null" @afterClose="clearPreview"><img v-if="previewType === 'image'" :src="previewUrl" :alt="previewName" class="attachment-preview-image" /><iframe v-else-if="previewType === 'pdf'" :src="previewUrl" :title="previewName" class="attachment-preview-pdf"></iframe><p v-else>此格式请下载后使用对应办公软件查看。</p></a-modal>
-    <a-modal :visible="!!rowReview" title="审核意见" :width="560" :mask-closable="false" @cancel="rowReview = ''"><p class="row-review-text">{{ rowReview }}</p><template slot="footer"><div class="dialog-actions"><a-button type="primary" @click="rowReview = ''">关闭</a-button></div></template></a-modal>
   </section>
 </template>
 
@@ -83,25 +82,27 @@ export default {
   name: 'OrganizationForm',
   components: { ReviewCommentLabel, RichEditor, AvatarCropModal },
   props: { organizationId: { type: String, default: 'new' } },
-  data () { return { draft: loadOrganizationForm(this.organizationId), errors: [], readingAvatar: false, avatarPreview: false, editorBusy: {}, memberVisible: false, memberSection: null, editingMemberId: '', memberDraft: { name: '', identityNumber: '', companies: [] }, dialogError: '', uploadVisible: false, uploadSection: null, uploadDraft: { year: undefined, civilStatus: undefined }, selectedFiles: [], uploadError: '', uploading: false, previewVisible: false, previewName: '', previewType: '', previewUrl: '', rowReview: '', baseline: '' } },
+  data () { return { draft: loadOrganizationForm(this.organizationId, this.$route.query.review), errors: [], readingAvatar: false, avatarPreview: false, editorBusy: {}, memberVisible: false, memberSection: null, editingMemberId: '', memberDraft: { name: '', identityNumber: '', companies: [] }, dialogError: '', uploadVisible: false, uploadSection: null, uploadDraft: { year: undefined, civilStatus: undefined }, selectedFiles: [], uploadError: '', uploading: false, previewVisible: false, previewName: '', previewType: '', previewUrl: '', rowReview: '', existingAttachmentKeys: [], baseline: '' } },
   computed: {
     isEdit () { return this.organizationId !== 'new' },
+    isChangeMode () { return this.isEdit && this.$route.query.change === '1' },
     dirty () { return JSON.stringify(this.draft) !== this.baseline },
     showFullForm () { return this.isEdit || !!this.draft.nameChecked },
     visibleGroups () { return this.showFullForm ? this.groups : this.groups.filter(group => group.key === 'account') },
     visibleAttachments () { return this.showFullForm ? this.draft.attachments : [] },
     restricted () { return restrictedTypes.includes(this.draft.fields.registrationType) },
-    groups () { return [{ key: 'account', title: '账号信息', icon: 'user', fields: accountFields }, { key: 'registration', title: '机构注册信息', icon: 'bank', fields: registrationFields(this.draft.fields.registrationType, true) }, { key: 'overview', title: '机构概况', icon: 'read', fields: overviewFields }, { key: 'evaluation', title: '社会评价信息', icon: 'star', fields: evaluationFields }] },
+    groups () { return [{ key: 'account', title: '账号信息', icon: 'user', fields: accountFields }, { key: 'registration', title: '机构注册信息', icon: 'bank', fields: registrationFields(this.draft.fields.registrationType, true).filter(field => !this.draft.isPrimaryAccount || field.key !== 'organizationName') }, { key: 'overview', title: '机构概况', icon: 'read', fields: overviewFields }, { key: 'evaluation', title: '社会评价信息', icon: 'star', fields: evaluationFields }] },
     reportYears () { const year = new Date().getFullYear() - 1; return [0, 1, 2, 3, 4].map(offset => year - offset) },
     busy () { return this.uploading || this.readingAvatar || Object.keys(this.editorBusy).some(key => this.editorBusy[key]) }
   },
   created () { this.prepareDraft() },
-  watch: { organizationId () { if (this.$refs.avatarCrop) this.$refs.avatarCrop.cancel(); this.draft = loadOrganizationForm(this.organizationId); this.errors = []; this.memberVisible = false; this.uploadVisible = false; this.previewVisible = false; this.clearPreview(); this.avatarPreview = false; this.rowReview = ''; this.prepareDraft() } },
+  watch: { '$route.query.review' () { this.draft = loadOrganizationForm(this.organizationId, this.$route.query.review); this.rowReview = ''; this.prepareDraft() }, organizationId () { if (this.$refs.avatarCrop) this.$refs.avatarCrop.cancel(); this.draft = loadOrganizationForm(this.organizationId, this.$route.query.review); this.errors = []; this.memberVisible = false; this.uploadVisible = false; this.previewVisible = false; this.clearPreview(); this.avatarPreview = false; this.rowReview = ''; this.prepareDraft() } },
   beforeDestroy () { this.clearPreview() },
   beforeRouteLeave (to, from, next) { if (this.uploading) { this.$message.info('附件正在保存，请稍候。'); next(false); return } if (JSON.stringify(this.draft) === this.baseline) { next(); return } this.$confirm({ title: '离开机构编辑页？', content: '尚未保存的内容将丢失。', maskClosable: false, okText: '离开', cancelText: '继续编辑', onOk: () => next(), onCancel: () => next(false) }) },
   methods: {
     prepareDraft () {
       if (!this.draft) return
+      this.existingAttachmentKeys = this.draft.attachments.reduce((keys, section) => keys.concat(section.files.map(file => section.key + '.' + file.id)), [])
       evaluationFields.forEach(field => { if (!this.draft.richTextFields.includes(field.key)) this.draft.fields[field.key] = paragraphsToRichText((this.draft.fields[field.key] || '').split('\n\n')) })
       if (this.restricted) { this.draft.fields.isCharity = '否'; this.draft.fields.hasFundraisingQualification = '否' }
       this.baseline = JSON.stringify(this.draft)
@@ -113,7 +114,8 @@ export default {
     hasComments (fields) { return fields.some(field => this.fieldComment(field)) },
     rowComment (key, row) { const prefix = key + '.' + row.id; const fields = ['name', 'identityNumber', 'relatedCompanies'].map(field => prefix + '.' + field); const extra = Object.keys(this.draft.reviewComments).filter(key => key.indexOf(prefix + '.') === 0 && !fields.includes(key)).sort(); return [prefix].concat(fields, extra).map(key => this.comment(key)).filter(Boolean).join('\n\n') },
     hasMemberComments (section) { return section.rows.some(row => this.rowComment(section.key, row)) },
-    showRowComment (key, row) { this.rowReview = this.rowComment(key, row) },
+    showRowComment (key, row) { if (this.rowComment(key, row)) this.rowReview = key + '.' + row.id },
+    changeRowReviewVisibility (key, row, visible) { if (visible) this.showRowComment(key, row); else if (this.rowReview === key + '.' + row.id) this.rowReview = '' },
     inherited (field) { return !!this.draft.parentOrganizationId && registrationFields(this.draft.fields.registrationType).some(item => item.key === field.key) && field.key !== 'organizationName' },
     qualificationDateDisabled (key) { return (key === 'charityRegisteredAt' && this.draft.fields.isCharity !== '是') || (key === 'fundraisingQualifiedAt' && this.draft.fields.hasFundraisingQualification !== '是') },
     changeSelect (field, value) { if (field.key === 'registrationType') setOrganizationType(this.draft, value); else this.$set(this.draft.fields, field.key, value) },
@@ -165,10 +167,11 @@ export default {
       if (!file.localStored) { this.$message.info('该附件仅为文件信息，请上传实际文件后预览或下载'); return null }
       try { const blob = await draftFile('get', file.id); if (!blob) throw new Error('missing'); return blob } catch (error) { this.$message.error('本地附件已不可用，请重新上传'); return null }
     },
-    async previewAttachment (file) { const blob = await this.getAttachment(file); if (!blob || this._isDestroyed) return; this.clearPreview(); this.previewName = file.name; this.previewType = /\.(png|jpe?g)$/i.test(file.name) ? 'image' : /\.pdf$/i.test(file.name) ? 'pdf' : 'office'; this.previewUrl = URL.createObjectURL(blob); this.previewVisible = true },
-    async downloadAttachment (file) { const blob = await this.getAttachment(file); if (!blob) return; const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = file.name; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000) },
+    async previewAttachment (file) { if (!file.localStored) { this.$message.info('待技术开发'); return }; const blob = await this.getAttachment(file); if (!blob || this._isDestroyed) return; this.clearPreview(); this.previewName = file.name; this.previewType = /\.(png|jpe?g)$/i.test(file.name) ? 'image' : /\.pdf$/i.test(file.name) ? 'pdf' : 'office'; this.previewUrl = URL.createObjectURL(blob); this.previewVisible = true },
+    downloadAttachment () { this.$message.info('待技术开发') },
     clearPreview () { if (this.previewUrl) URL.revokeObjectURL(this.previewUrl); this.previewUrl = ''; this.previewType = '' },
-    removeFile (section, file) { this.$confirm({ title: '确认删除该附件信息？', maskClosable: false, onOk: () => { section.files.splice(section.files.indexOf(file), 1) } }) },
+    canRemoveFile (section, file) { return !this.isChangeMode || !this.existingAttachmentKeys.includes(section.key + '.' + file.id) },
+    removeFile (section, file) { if (!this.canRemoveFile(section, file)) return; this.$confirm({ title: '确认删除该附件信息？', maskClosable: false, onOk: () => { const index = section.files.findIndex(item => item.id === file.id); if (index !== -1 && this.canRemoveFile(section, file)) section.files.splice(index, 1) } }) },
     save (submit) {
       if (this.busy) return
       this.errors = submit ? validateOrganizationForm(this.draft) : []
@@ -216,7 +219,7 @@ input[type="date"] { min-width: 0; width: 100%; height: 40px; border: 1px solid 
 .organization-field >>> .ant-input:hover, .organization-field input[type="date"]:not(:disabled):hover, .organization-field >>> .ant-select-selection:hover { border-color: #d9e1eb; }
 .organization-field >>> .ant-input:focus, .organization-field input[type="date"]:focus { outline: none; border-color: #1677ff; box-shadow: 0 0 0 2px rgba(22,119,255,.12); }
 .organization-field >>> .ant-select-focused .ant-select-selection, .organization-field >>> .ant-select-open .ant-select-selection { border-color: #1677ff; box-shadow: 0 0 0 2px rgba(22,119,255,.12); }
-.organization-field small, .review-note { color: #718095; }
+.organization-field small { color: #718095; }
 .avatar-editor { display: flex; align-items: flex-start; }
 .avatar-item { position: relative; width: 80px; height: 80px; border-radius: 13px; overflow: hidden; flex: none; }
 .avatar-image-button { display: block; width: 100%; height: 100%; padding: 0; border: 0; background: transparent; cursor: zoom-in; }
@@ -243,6 +246,13 @@ input[type="date"] { min-width: 0; width: 100%; height: 40px; border: 1px solid 
 .member-content + .member-content { margin-top: 32px; }
 .detail-table-wrap { margin: 0; }
 .members-table { table-layout: fixed; }
+.members-table th, .members-table td { vertical-align: middle; }
+.row-review-anchor { display: block; width: 100%; }
+.row-review-content { width: 300px; max-width: 60vw; }
+.row-review-content > div { display: flex; align-items: flex-start; gap: 10px; }
+.row-review-content .anticon { flex: none; margin-top: 3px; color: #faad14; }
+.row-review-content p { flex: 1; min-width: 0; margin: 0 0 14px; line-height: 1.6; overflow-wrap: anywhere; white-space: pre-wrap; }
+.row-review-content .ant-btn { display: block; margin-left: auto; }
 .detail-table td { white-space: pre-wrap; overflow-wrap: anywhere; }
 .members-table th:first-child, .members-table td:first-child, .detail-table th:last-child, .detail-table td:last-child { text-align: center; }
 .row-actions { white-space: nowrap !important; }
@@ -250,7 +260,7 @@ input[type="date"] { min-width: 0; width: 100%; height: 40px; border: 1px solid 
 .danger-link { color: #ff4d4f; }
 .review-row-has-comment { cursor: pointer; }
 .review-row-has-comment:focus-visible { outline: 2px solid #ff7875; outline-offset: -2px; }
-.review-has-comment >>> .rich-editable { background: #fff1f0; }
+.rich-review-has-comment >>> .rich-editable { background: #fff1f0; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 12px; }
 .dialog-actions > .ant-btn + .ant-btn { margin-left: 0; }
 .form-footer { position: sticky; bottom: 0; z-index: 5; border: 1px solid #e6ebf2; border-radius: 12px; background: rgba(255,255,255,.98); box-shadow: 0 -4px 22px rgba(23,56,92,.07); padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
@@ -264,12 +274,9 @@ input[type="date"] { min-width: 0; width: 100%; height: 40px; border: 1px solid 
 .form-error, .form-errors { color: #cf1322; }
 .form-errors { background: #fff1f0; border: 1px solid #ffccc7; border-radius: 8px; padding: 18px 24px; }
 .form-errors ul { margin: 8px 0 0; }
-.row-review-text { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
 .organization-field >>> input::placeholder, .organization-field >>> textarea::placeholder { color: #5b8ff9; font-size: 14px; opacity: 1; }
 .organization-field >>> .ant-select-selection__placeholder { color: #5b8ff9; font-size: 14px; }
-.attachment-section .detail-section-header { align-items: center; }
 .attachment-section .detail-section-header > div { display: flex; min-height: 40px; align-items: center; }
-.attachment-section .detail-section-header h2 { margin: 0; }
 .attachment-content .attachment-list, .attachment-content .attachment-empty-add { padding: 0; margin: 0; }
 .form-attachment-list > div { grid-template-columns: minmax(0, 1fr) auto auto auto; }
 .form-attachment-list > div:first-child { padding-top: 0; align-items: start; }

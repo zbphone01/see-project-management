@@ -586,11 +586,10 @@ export default {
           if (!this.draft[section.key].length) errors.push('请至少添加一条' + section.title)
           else if (this.draft[section.key].some(row => section.fields.some(field => !String(row[field.key] || '').trim()))) errors.push('请完整填写' + section.title)
         }
-        if (!this.isOrganizationProject && !this.draft.attachments.length) errors.push('请至少上传一个附件')
       }
       this.errors = errors
       if (errors.length) { this.$nextTick(() => this.$el.querySelector('.validation-summary').scrollIntoView({ behavior: 'smooth', block: 'center' })); return }
-      this.$confirm({ title: '确认' + this.submitLabel, content: this.revisionMode ? '本次为前端演示，将保存本地修订草稿并展示校验结果，不会发送修订或进展、改变真实项目状态。' : '本次为前端演示，将保存本地草稿并展示提交结果，不会发送申请或改变真实项目状态。', maskClosable: false, okText: '确认提交', cancelText: '继续编辑', onOk: () => { if (this.save()) this.$success({ title: this.revisionMode ? '修订校验通过' : '申请校验通过', content: '演示提交已完成，资料已存为本地草稿，尚未发送到服务器。', maskClosable: false, okText: '返回填写页' }) } })
+      this.$confirm({ title: '确认' + this.submitLabel, content: this.revisionMode ? '本次为前端演示，将保存本地修订草稿并展示校验结果，不会发送修订或进展、改变真实项目状态。' : '提交申请后，项目状态将变更为申请待审。申请通过后，协议签署阶段项目状态将自动变更为审核流程中。', maskClosable: false, okText: '确认提交', cancelText: '继续编辑', onOk: this.revisionMode ? () => { if (this.save()) this.$success({ title: '修订校验通过', content: '演示提交已完成，资料已存为本地草稿，尚未发送到服务器。', maskClosable: false, okText: '返回填写页' }) } : undefined })
     },
     openAttachmentPicker () { this.resetAttachmentPicker(); this.attachmentVisible = true },
     resetAttachmentPicker () { this.attachmentDraft = { category: undefined, file: null, error: '' } },

@@ -21,7 +21,7 @@
           <template slot="operation" slot-scope="text, item">
             <a-dropdown :trigger="['hover']" placement="bottomRight">
               <a-button class="operation-button" :aria-label="`${item.name}（${item.status}）的操作`">操作<a-icon type="down" /></a-button>
-              <a-menu slot="overlay" @click="handleAction($event.key, item)"><a-menu-item v-for="action in item.id === 'org-1' ? ['查看详情', '审核', '上传年报'] : states[item.status].actions" :key="action">{{ action }}</a-menu-item></a-menu>
+              <a-menu slot="overlay" @click="handleAction($event.key, item)"><a-menu-item v-for="action in states[item.status].actions" :key="action">{{ action }}</a-menu-item></a-menu>
             </a-dropdown>
           </template>
         </a-table>
@@ -84,17 +84,17 @@ export default {
     changePage (pagination) { this.page = this.pageSize === pagination.pageSize ? pagination.current : 1; this.pageSize = pagination.pageSize },
     openExternalPage (action) { this.$message.info(`${action}为独立机构页面，当前尚未接入`) },
     handleAction (action, item) {
-      if (action === '查看详情' || (action === '审核' && item.id === 'org-1')) {
+      if (['查看详情', '查看变更前', '审核'].includes(action)) {
         this.$router.push({ name: 'organization-detail', params: { id: item.id }, query: action === '审核' ? { mode: 'audit' } : {} })
-      } else if (action === '修改') {
-        this.$router.push({ name: 'organization-form', params: { id: item.id } })
+      } else if (action === '修改' || action === '提交变更') {
+        this.$router.push({ name: 'organization-form', params: { id: item.id }, query: { review: action === '修改' && ['变更驳回', '驳回待修改'].includes(item.status) ? 'comments' : 'none', change: action === '提交变更' ? '1' : undefined } })
       } else if (action === '上传年报') {
         this.clearReport()
         this.selectedOrganization = item
         this.report.year = this.reportYears[0]
         this.reportVisible = true
       } else if (action === '放弃变更') {
-        this.$confirm({ title: '确认放弃本次变更？', content: '本地演示将恢复为通过状态，不会向后台提交。', maskClosable: false, okText: '确认放弃', cancelText: '取消', onOk: () => { item.status = '通过'; this.page = 1; this.$message.info('已在本次演示中放弃变更') } })
+        this.$confirm({ title: '确认放弃本次变更？', content: '放弃会丢弃所有变更内容', maskClosable: false, okText: '确认放弃', cancelText: '取消', onOk: () => { item.status = '通过'; this.page = 1; this.$message.info('已在本次演示中放弃变更') } })
       } else this.openExternalPage(action)
     },
     clearReport () { this.report = { year: undefined, type: undefined, civilStatus: undefined, fileName: '' }; this.reportError = ''; this.fileList = []; this.selectedOrganization = null },

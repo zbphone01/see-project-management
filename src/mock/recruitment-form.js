@@ -4,7 +4,7 @@ import { availableProjects, appliedProjects } from './projects'
 export const recruitmentAccount = { department: '捐赠人服务中心', functionalDepartment: true }
 export const projectRecruitmentStrategies = ['海洋保护', '环保公益行业发展', '荒漠化防治', '气候变化与商业可持续', '生态保护与自然教育', '探索项目', '专项基金']
 export const jointRecruitmentStrategy = '联合公益'
-export const jointRecruitmentTopics = ['月捐（需要募捐申请）', '次捐（原则上不新增，如需请联系赠款管理部门）']
+export const jointRecruitmentTopics = ['月捐（伙伴申请项目需要先提交募捐申请）', '次捐（原则上不新增，如需请联系赠款管理部门）']
 export const unspecifiedOrganizationId = 'not-specified'
 export const unspecifiedSecondaryOrganizationId = 'not-specified-secondary'
 export const recruitmentDirections = availableProjects.reduce((result, project) => {

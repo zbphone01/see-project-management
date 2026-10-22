@@ -2,12 +2,12 @@
 export const approvalOptions = ['审批中', '审批通过', '打回修改', '申请再次修改', '同意再次修改', '已注销']
 
 export const organizationStates = {
-  '通过': { tone: 'active-approved', approval: '审批通过', actions: ['查看详情', '上传年报', '提交变更'] },
-  '待上传年报': { tone: 'action-rejected', approval: '审批通过', actions: ['查看详情', '上传年报', '提交变更'] },
-  '待审': { tone: 'pending-review', approval: '审批中', actions: ['查看详情'] },
-  '驳回待修改': { tone: 'action-rejected', approval: '打回修改', actions: ['查看详情', '修改'] },
-  '变更待审': { tone: 'pending-review', approval: '申请再次修改', actions: ['查看详情'] },
-  '变更驳回': { tone: 'action-rejected', approval: '打回修改', actions: ['查看详情', '提交变更', '放弃变更'] },
+  '通过': { tone: 'active-approved', approval: '审批通过', actions: ['上传年报', '提交变更', '查看详情'] },
+  '待上传年报': { tone: 'action-rejected', approval: '审批通过', actions: ['上传年报', '提交变更', '查看详情'] },
+  '待审': { tone: 'pending-review', approval: '审批中', actions: ['审核', '查看详情'] },
+  '驳回待修改': { tone: 'action-rejected', approval: '打回修改', actions: ['修改', '查看详情'] },
+  '变更待审': { tone: 'pending-review', approval: '申请再次修改', actions: ['审核', '查看详情'] },
+  '变更驳回': { tone: 'action-rejected', approval: '打回修改', actions: ['修改', '放弃变更', '查看变更前'] },
   '同意再次修改': { tone: 'active-approved', approval: '同意再次修改', actions: ['查看详情', '修改'] },
   '已注销': { tone: 'neutral', approval: '已注销', actions: ['查看详情'] }
 }
@@ -22,7 +22,7 @@ export function createOrganizations () {
     isPrimaryAccount: index !== 1,
     registrationType: '民办非企业',
     charityQualification: '否 / 否',
-    projectCount: index === 1 ? 1 : 2,
+    projectCount: 2,
     contactName: '陈海霞',
     contactPhone: '15866880977',
     status,

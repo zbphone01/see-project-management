@@ -39,7 +39,7 @@
     <aside class="secondary-column see-information">
       <section class="panel side-panel notice-panel">
         <div class="panel-header"><h2><a-icon class="side-title-icon notice-title-icon" type="sound" theme="filled" />系统通知</h2></div>
-        <button v-for="notice in notices" :key="notice.title" class="notice-item" @click="openInformation(notice.title, notice.content, notice.date)"><span><strong :title="notice.title">{{ notice.title }}</strong><time>{{ notice.date }}</time></span></button>
+        <div v-for="notice in notices" :key="notice.id" class="notice-item"><span><p class="notice-content">{{ notice.content }}</p><time :datetime="notice.date">{{ notice.date }}</time></span></div>
       </section>
       <button class="ai-assistant-banner" type="button" aria-label="打开 AI 项目助手" @click="$emit('open-ai')">
         <img class="ai-banner-avatar" src="/assets/ai-agent.png" alt="AI 项目助手头像" />
@@ -52,6 +52,11 @@
     </aside>
 
     <FundraisingPlanModal ref="planModal" />
+    <a-modal v-model="agreementScan.visible" title="上传协议扫描件" wrap-class-name="standard-form-modal" :width="550" :mask-closable="false" ok-text="确认" cancel-text="取消" @ok="agreementScan.visible = false">
+      <div class="revision-form">
+        <div class="revision-field"><label>选择文件</label><a-upload :before-upload="selectAgreementScan" :file-list="agreementScan.files" @remove="agreementScan.files = []"><a-button icon="upload">选择文件</a-button></a-upload></div>
+      </div>
+    </a-modal>
     <a-modal v-model="revision.visible" title="请求修订" wrap-class-name="standard-form-modal" :width="550" :mask-closable="false" ok-text="确定" cancel-text="取消" @ok="confirmRevision">
       <div class="revision-form">
         <div class="revision-field"><label for="revision-result">审核结果</label><a-select id="revision-result" v-model="revision.result" placeholder="请选择" @change="revision.operation = '正常修订'"><a-select-option value="同意">同意</a-select-option><a-select-option value="驳回">驳回</a-select-option></a-select></div>
@@ -72,6 +77,7 @@
 
 <script>
 import seeDashboardContent from '../mock/see-dashboard-content.json'
+import systemNotices from '../mock/system-notices.json'
 import FundraisingPlanModal from '../components/FundraisingPlanModal.vue'
 
 export default {
@@ -81,18 +87,15 @@ export default {
     statistics: seeDashboardContent.statistics,
     shortcuts: [{ label: '发起招募', icon: 'notification', tone: 'see-blue' }, { label: '发起筹款规划', icon: 'file-add', tone: 'see-green' }, { label: '申请筹款规划', icon: 'form', tone: 'see-orange' }, { label: '募捐申请待审', icon: 'audit', tone: 'see-pending' }],
     projects: seeDashboardContent.projects.map(project => ({ ...project })),
-    notices: [
-      { title: '关于做好项目进展材料审核工作的通知', date: '2026-03-03', content: '请各项目负责人及时关注待办事项，核对项目进展材料的完整性，并与伙伴机构保持沟通。具体审核要求以正式发布的通知为准。' },
-      { title: '项目协议归档及扫描件上传提醒', date: '2026-03-03', content: '请核对协议金额与签署信息，并检查协议扫描件是否清晰、完整。具体归档安排以正式通知为准。' },
-      { title: '年度项目数据核对工作安排', date: '2026-03-03', content: '请核对所属项目的执行状态、进展及结项信息。如发现数据差异，请联系系统管理员确认。' }
-    ],
+    notices: systemNotices.slice(0, 3),
     questions: [
       { title: '为什么要发布招募？', content: '招募用于集中说明项目方向、申请条件和材料要求，为伙伴机构提供统一的申请入口。具体发布流程以机构管理制度为准。' },
       { title: '所属部门资助的项目需要申请筹款怎么办？', content: '可从“申请筹款规划”入口了解办理事项，并联系项目负责人确认筹款安排和所需材料。当前页面为前端演示，尚未接入申请业务。' },
       { title: '项目列表为什么看不到驳回的进展或结项？', content: '项目状态与单次进展、结项报告的审核状态可能不同。请进入对应项目详情，查看进展或结项记录及审核意见；具体显示规则以业务系统为准。' }
     ],
     dialog: { visible: false, title: '', content: '', date: '', project: '' },
-    revision: { visible: false, project: null, result: '同意', remark: '', operation: '正常修订' }
+    revision: { visible: false, project: null, result: '同意', remark: '', operation: '正常修订' },
+    agreementScan: { visible: false, files: [] }
   } },
   computed: {
     canSelectRevisionOperation () {
@@ -100,6 +103,7 @@ export default {
     }
   },
   methods: {
+    selectAgreementScan (file) { this.agreementScan.files = [file]; return false },
     confirmRevision () {
       const { project, result, remark, operation } = this.revision
       if (!project || project.status !== '请求修订') return
@@ -115,6 +119,18 @@ export default {
     },
     openInformation (title, content, date = '') { this.dialog = { visible: true, title, content, date, project: '' } },
     previewAction (action, project) {
+      if (action === '下载项目资料') {
+        this.$message.info('待开发，下载审核通过的申请书word、pdf和预算表excel的打包文件')
+        return
+      }
+      if (action === '上传协议扫描件') {
+        this.agreementScan = { visible: true, files: [] }
+        return
+      }
+      if (action === '申请筹款规划' || action === '募捐申请待审') {
+        this.$router.push({ name: 'fundraising-plans', query: { tab: action === '申请筹款规划' ? 'plans' : 'applications' } })
+        return
+      }
       if (project && project.status === '请求修订' && (action === '同意' || action === '驳回')) {
         this.revision = { visible: true, project, result: action, remark: '', operation: '正常修订' }
         return
@@ -124,7 +140,7 @@ export default {
         return
       }
       if (action === '发起招募') {
-        this.$router.push({ name: 'recruitment-form', query: { from: 'dashboard-see' } })
+        this.$router.push({ name: 'recruitment-form', query: { recruitmentType: 'general', from: 'dashboard-see' } })
         return
       }
       if (action === '审核' && project && project.status === '申请待审' && project.auditProjectId) {

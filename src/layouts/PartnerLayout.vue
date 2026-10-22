@@ -76,14 +76,11 @@
 <ChangePasswordModal ref="password" />
 <a-modal v-model="noticeHistoryVisible" title="历史系统通知" :width="720" :mask-closable="false" :footer="null">
   <div ref="noticeHistoryList" class="notice-history-list">
-    <article v-for="notice in pagedNotices" :key="notice.id" class="notice-history-item">
+    <article v-for="notice in historyNotices" :key="notice.id" class="notice-history-item">
       <p>{{ notice.content }}</p>
       <time :datetime="notice.date">{{ notice.date }}</time>
     </article>
     <a-empty v-if="!historyNotices.length" description="暂无系统通知" />
-  </div>
-  <div class="notice-history-pagination">
-    <a-pagination :current="noticePage" :total="historyNotices.length" :page-size="5" :show-total="total => `共 ${total} 条`" @change="changeNoticePage" />
   </div>
 </a-modal>
 </div>
@@ -91,25 +88,13 @@
 
 <script>
 import ChangePasswordModal from '../components/ChangePasswordModal.vue'
+import systemNotices from '../mock/system-notices.json'
 export default {
   name: 'PartnerLayout',
   data () { return {
     noticeHistoryVisible: false,
-    noticePage: 1,
     // 本地演示通知；接入接口后由服务端提供历史记录。
-    historyNotices: [
-      { id: 1, title: '关于做好项目进展材料审核工作的通知', date: '2026-03-03', content: '请各项目负责人及时关注待办事项，核对项目进展材料的完整性，并与伙伴机构保持沟通。具体审核要求以正式发布的通知为准。' },
-      { id: 2, title: '项目协议归档及扫描件上传提醒', date: '2026-03-03', content: '请核对协议金额与签署信息，并检查协议扫描件是否清晰、完整。具体归档安排以正式通知为准。' },
-      { id: 3, title: '年度项目数据核对工作安排', date: '2026-03-03', content: '请核对所属项目的执行状态、进展及结项信息。如发现数据差异，请联系系统管理员确认。' },
-      { id: 4, title: '项目进展报告填报提醒', date: '2026-02-25', content: '请按照项目协议约定的时间提交进展报告，并附上对应的活动记录和成果材料。' },
-      { id: 5, title: '伙伴机构联系信息核对提醒', date: '2026-02-18', content: '请检查机构联系人、联系电话和电子邮箱，确保项目沟通信息准确。信息发生变化时，请及时更新。' },
-      { id: 6, title: '项目预算材料整理提示', date: '2026-02-10', content: '请按预算科目整理项目支出材料，并核对预算表与相关附件中的金额，便于后续审核。' },
-      { id: 7, title: '项目结项材料准备提醒', date: '2026-02-03', content: '临近执行期限的项目，请提前整理结项报告、财务材料及成果附件，并与项目负责人确认提交安排。' },
-      { id: 8, title: '项目资料上传注意事项', date: '2026-01-26', content: '上传前请检查文件是否可正常打开，扫描内容是否清晰完整，文件名称是否能准确说明材料内容。' },
-      { id: 9, title: '项目受益数据填报提醒', date: '2026-01-19', content: '请结合实际执行情况填报受益数据，并保留相关记录，以便项目负责人核对。' },
-      { id: 10, title: '招募申请材料准备提示', date: '2026-01-12', content: '申请前请阅读招募要求，核对机构资质、项目方案及预算材料，并在规定时间内提交。' },
-      { id: 11, title: '年度项目资料归档提醒', date: '2026-01-05', content: '请按项目整理本年度协议、报告和审核记录，确保归档材料与系统记录一致。' }
-    ],
+    historyNotices: systemNotices,
     expandedNav: { projects: true },
     navigation: [
         { key: 'dashboard', label: '工作台', icon: 'desktop' },
@@ -133,15 +118,15 @@ export default {
       ]
   } },
   computed: {
-    pagedNotices () { return this.historyNotices.slice((this.noticePage - 1) * 5, this.noticePage * 5) },
     activeNav () { if (['benefit-species-detail', 'benefit-list-detail', 'benefit-document-detail'].includes(this.$route.name)) return 'benefit-summary'; return ['fundraising-plan-detail', 'fundraising-plan-form'].includes(this.$route.name) ? 'fundraising-plans' : ['fundraising-application-detail', 'fundraising-application-form'].includes(this.$route.name) ? 'framework-agreements' : this.$route.name },
     breadcrumbRoot () {
-      if (this.activeNav === 'benefit-summary') return '收益数据'
+      if (['benefit-summary', 'benefit-regions'].includes(this.activeNav)) return '收益数据'
       if (['organization-list', 'organization-detail', 'organization-form'].includes(this.activeNav)) return '机构管理'
       return ['recruitment-summary', 'available-projects', 'recruitment-detail', 'recruitment-form', 'applied-projects', 'fundraising-plans', 'framework-agreements', 'project-detail', 'project-form', 'project-reports', 'payment-applications', 'report-detail'].includes(this.activeNav) ? '项目管理' : '工作台'
     },
     breadcrumbLeaf () {
       if (this.activeNav === 'benefit-summary') return '数据汇总'
+      if (this.activeNav === 'benefit-regions') return '地区数据'
       if (this.activeNav === 'download') return '数据下载'
       if (this.$route.name === 'fundraising-plan-form') return this.$route.params.id === 'new' ? '申请筹款规划' : '编辑筹款规划申请'
       if (this.$route.name === 'fundraising-plan-detail') return this.$route.query.mode === 'audit' ? '审核筹款规划' : '查看筹款规划'
@@ -158,7 +143,7 @@ export default {
     '$route.name': {
       immediate: true,
       handler () {
-      if (this.activeNav === 'benefit-summary') this.$set(this.expandedNav, 'benefit', true)
+      if (['benefit-summary', 'benefit-regions'].includes(this.activeNav)) this.$set(this.expandedNav, 'benefit', true)
       if (['organization-list', 'organization-detail', 'organization-form'].includes(this.activeNav)) this.$set(this.expandedNav, 'organization', true)
       if (['recruitment-summary', 'available-projects', 'recruitment-detail', 'recruitment-form', 'applied-projects', 'fundraising-plans', 'framework-agreements', 'project-detail', 'project-form', 'project-reports', 'payment-applications', 'report-detail'].includes(this.activeNav)) {
         this.$set(this.expandedNav, 'projects', true)
@@ -167,15 +152,14 @@ export default {
     }
   },
   methods: {
-    openNoticeHistory () { this.noticeHistoryVisible = true; this.changeNoticePage(1) },
-    changeNoticePage (page) {
-      this.noticePage = page
+    openNoticeHistory () {
+      this.noticeHistoryVisible = true
       this.$nextTick(() => { if (this.$refs.noticeHistoryList) this.$refs.noticeHistoryList.scrollTop = 0 })
     },
     navigate (name) { if (this.$route.name !== name) this.$router.push({ name }) },
     backToAppliedProjects () { this.navigate('applied-projects') },
     selectNav (item) {
-      if (item.key === 'benefit-summary') { this.navigate(item.key); return }
+      if (['benefit-summary', 'benefit-regions'].includes(item.key)) { this.navigate(item.key); return }
       if (item.key === 'download') { this.navigate(item.key); return }
       if (item.key === 'organization-list') { this.navigate(item.key); return }
       if (item.children) {
@@ -195,5 +179,4 @@ export default {
 .notice-history-item:first-child { padding-top: 0; }.notice-history-item:last-child { border-bottom: 0; }
 .notice-history-item time { display: block; margin-top: 8px; color: #718095; }
 .notice-history-item p { margin: 0; color: #536277; line-height: 1.7; white-space: pre-line; overflow-wrap: anywhere; }
-.notice-history-pagination { display: flex; justify-content: flex-end; padding-top: 20px; border-top: 1px solid #e6ebf2; }
 </style>

@@ -10,14 +10,14 @@
             <div class="field full"><label for="recruitment-name"><em>*</em> 招募名称</label><a-input id="recruitment-name" v-model="form.name" placeholder="请填写招募名称" :max-length="200" /></div>
             <div class="field"><span class="field-label">筹款规划申请名称</span><span class="readonly-value">{{ form.planningName }}</span></div>
             <div class="field"><span class="field-label">所属部门</span><span class="readonly-value">{{ form.department }}</span></div>
-            <div class="field"><label for="recruitment-type"><em>*</em> 项目类型</label><a-select id="recruitment-type" v-model="form.type" placeholder="请选择项目类型" @change="changeType"><a-select-option value="项目">项目</a-select-option><a-select-option value="联合公益" :disabled="!account.functionalDepartment">联合公益</a-select-option></a-select></div>
-            <div class="field"><label for="recruitment-strategy"><em>*</em> 项目策略</label><a-select id="recruitment-strategy" v-model="form.strategy" :disabled="!form.type" placeholder="请选择项目策略" @change="changeStrategy"><a-select-option v-for="option in strategies" :key="option">{{ option }}</a-select-option></a-select></div>
+            <div class="field"><label for="recruitment-type"><em>*</em> 项目类型</label><span v-if="isPlanRecruitment" class="readonly-value">项目</span><a-select v-else id="recruitment-type" v-model="form.type" placeholder="请选择项目类型" @change="changeType"><a-select-option value="项目">项目</a-select-option><a-select-option value="联合公益" :disabled="!account.functionalDepartment">联合公益</a-select-option></a-select></div>
+            <div class="field"><label for="recruitment-strategy"><em>*</em> 项目策略</label><span v-if="isJoint" class="readonly-value">联合公益</span><a-select v-else id="recruitment-strategy" v-model="form.strategy" :disabled="!form.type" placeholder="请选择项目策略" @change="changeStrategy"><a-select-option v-for="option in strategies" :key="option">{{ option }}</a-select-option></a-select></div>
             <div class="field"><label for="recruitment-topic"><em>*</em> 项目议题</label><a-select id="recruitment-topic" v-model="form.topic" :disabled="!form.strategy" placeholder="请选择项目议题" @change="changeTopic"><a-select-option v-for="option in topics" :key="option">{{ option }}</a-select-option></a-select></div>
-            <div class="field"><label for="recruitment-funding"><em>*</em> 资金来源</label><a-select v-if="!isJoint" id="recruitment-funding" v-model="form.fundingSource" :disabled="form.type !== '项目'" placeholder="请选择资金来源" @change="changeFundingSource"><a-select-option value="项目">项目</a-select-option><a-select-option value="项目+筹款">项目+筹款</a-select-option></a-select><span v-else class="readonly-value">筹款</span></div>
-            <div class="field"><span class="field-label">筹款方式</span><span :class="['readonly-value', { 'empty-hint': !form.fundraisingMethod }]">{{ form.fundraisingMethod || '选择项目类型后自动带入' }}</span></div>
+            <div class="field"><label for="recruitment-funding"><em>*</em> 资金来源</label><span v-if="isPlanRecruitment" class="readonly-value">项目+筹款</span><span v-else-if="form.type === '项目'" class="readonly-value">项目</span><span v-else-if="!isJoint" class="readonly-value empty-hint">选择项目类型后自动带入</span><span v-else class="readonly-value">筹款</span></div>
+            <div class="field"><span class="field-label">筹款方式</span><a-select v-if="isPlanRecruitment" v-model="form.fundraisingMethod" placeholder="请选择筹款方式" aria-label="筹款方式"><a-select-option value="月捐">月捐</a-select-option><a-select-option value="次捐">次捐</a-select-option></a-select><span v-else :class="['readonly-value', { 'empty-hint': !form.fundraisingMethod }]">{{ form.fundraisingMethod || '选择项目类型后自动带入' }}</span></div>
             <div class="field"><label for="recruitment-fee">公募机构管理费比例</label><span v-if="projectFundingOnly" class="readonly-value">不适用</span><a-select v-else id="recruitment-fee" v-model="form.managementFee"><a-select-option v-for="value in [5, 6, 7, 8, 9, 10]" :key="value" :value="value">{{ value }}%</a-select-option></a-select></div>
-            <div class="field"><label for="recruitment-grant"><em v-if="!isJoint">*</em> 资助金额</label><div class="amount-input"><a-input-number id="recruitment-grant" v-model="form.grantAmount" :disabled="!canEditGrant" :min="0" :max="999999999.99" :precision="2" :placeholder="canEditGrant ? '请填写预计支出的总金额' : '当前资金来源不可填写'" /><span>元</span></div><small>大写：{{ uppercaseMoney(form.grantAmount) }}</small></div>
-            <div class="field"><label for="recruitment-fundraising">筹款金额</label><span v-if="projectFundingOnly" class="readonly-value">不适用</span><template v-else><div class="amount-input"><a-input-number id="recruitment-fundraising" v-model="form.fundraisingAmount" :disabled="!canEditFundraising" :min="0" :max="999999999.99" :precision="2" :placeholder="canEditFundraising ? '请填写筹款金额' : '当前资金来源不可填写'" /><span>元</span></div><small>大写：{{ uppercaseMoney(form.fundraisingAmount) }}</small></template></div>
+            <div class="field"><label for="recruitment-grant"><em v-if="!isJoint">*</em> 资助金额</label><span v-if="isJoint" class="readonly-value">不适用</span><template v-else><div class="amount-input"><a-input-number id="recruitment-grant" v-model="form.grantAmount" :disabled="!canEditGrant" :min="0" :max="999999999.99" :precision="2" :placeholder="isPlanRecruitment ? '请填写直接资助的金额' : canEditGrant ? '请填写预计支出的总金额' : '当前资金来源不可填写'" /><span>元</span></div><small>大写：{{ uppercaseMoney(form.grantAmount) }}</small></template></div>
+            <div class="field"><label for="recruitment-fundraising">筹款金额</label><span v-if="projectFundingOnly" class="readonly-value">不适用</span><template v-else><div class="amount-input"><a-input-number id="recruitment-fundraising" v-model="form.fundraisingAmount" :disabled="!canEditFundraising" :min="0" :max="999999999.99" :precision="2" :placeholder="isPlanRecruitment ? '请填写希望的筹款金额' : canEditFundraising ? '请填写筹款金额' : '当前资金来源不可填写'" /><span>元</span></div><small>大写：{{ uppercaseMoney(form.fundraisingAmount) }}</small></template></div>
             <div class="field full"><label for="recruitment-summary">招募简述</label><a-textarea id="recruitment-summary" v-model="form.summary" :auto-size="{ minRows: 4, maxRows: 12 }" placeholder="请填写招募简述" /></div>
             <div class="field full"><div class="organization-selects"><div class="organization-select-control"><label for="recruitment-organization">指定机构</label><a-dropdown :visible="organizationDropdownVisible" :trigger="['click']" placement="bottomLeft" :overlay-style="{ width: organizationDropdownWidth + 'px' }" @visibleChange="changeOrganizationDropdown"><button id="recruitment-organization" ref="organizationTrigger" type="button" class="organization-trigger"><span>{{ selectedOrganizationName }}</span><a-icon type="down" /></button><div slot="overlay" class="organization-dropdown-panel" @mousedown.stop @click.stop><a-input ref="organizationSearchInput" v-model="organizationSearch" allow-clear placeholder="请输入机构名称搜索" aria-label="搜索指定机构" @keydown.native.stop /><div class="organization-options"><button type="button" :class="['organization-option', { selected: form.organizationId === unspecifiedOrganizationId }]" @click="selectOrganization(unspecifiedOrganizationId)">不指定</button><button v-for="organization in visibleOrganizations" :key="organization.id" type="button" :class="['organization-option', { selected: form.organizationId === organization.id }]" @click="selectOrganization(organization.id)">{{ organization.name }}</button><p v-if="organizationSearch.trim() && !visibleOrganizations.length">未找到匹配的机构</p></div></div></a-dropdown></div><div class="organization-select-control"><span class="field-label">指定机构的二级组织</span><a-select v-if="secondaryOrganizations.length" v-model="form.secondaryOrganizationId" aria-label="二级组织"><a-select-option :value="unspecifiedSecondaryOrganizationId">不指定</a-select-option><a-select-option v-for="organization in secondaryOrganizations" :key="organization.id" :value="organization.id">{{ organization.name }}</a-select-option></a-select><span v-else class="source-not-applicable">无可指定的二级组织</span></div></div></div>
             <div class="field"><label for="recruitment-start"><em>*</em> 招募开始日期</label><a-date-picker id="recruitment-start" v-model="form.startDate" value-format="YYYY-MM-DD" format="YYYY-MM-DD" placeholder="请选择开始日期" /></div>
@@ -27,7 +27,7 @@
         </section>
         <section class="panel form-section">
           <div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="contacts" /></span><div><h2>联系信息</h2></div></div>
-          <div class="form-fields">
+          <div class="form-fields contact-fields">
             <div class="field"><label for="recruitment-contact"><em>*</em> 联系人姓名</label><a-input id="recruitment-contact" v-model="form.contactName" placeholder="请填写联系人姓名" :max-length="80" /></div>
             <div class="field"><label for="recruitment-phone"><em>*</em> 联系手机号</label><div class="phone-input"><a-select v-model="form.phonePrefix" aria-label="手机国际区号"><a-select-option v-for="prefix in ['+86', '+1', '+852', '+853', '+886']" :key="prefix">{{ prefix }}</a-select-option></a-select><a-input id="recruitment-phone" v-model="form.phone" placeholder="请填写手机号码" :max-length="15" /></div></div>
             <div class="field"><label for="recruitment-landline">办公室座机</label><a-input id="recruitment-landline" v-model="form.landline" placeholder="请填写座机号码" :max-length="40" /></div>
@@ -54,6 +54,7 @@
 
 <script>
 import AvatarCropModal from '../components/AvatarCropModal.vue'
+import { createPlanApplications } from '../mock/fundraising-plans'
 import { uppercaseMoney } from '../mock/project-drafts'
 import { recruitmentAccount, projectRecruitmentStrategies, jointRecruitmentStrategy, jointRecruitmentTopics, unspecifiedOrganizationId, unspecifiedSecondaryOrganizationId, recruitmentDirections, recruitmentOrganizations, createRecruitmentForm, validateRecruitmentForm, recruitmentLocalRecord } from '../mock/recruitment-form'
 
@@ -64,6 +65,7 @@ export default {
     return { form: createRecruitmentForm(), account: recruitmentAccount, organizations: recruitmentOrganizations, unspecifiedOrganizationId, unspecifiedSecondaryOrganizationId, organizationSearch: '', organizationDropdownVisible: false, organizationDropdownWidth: 0, errors: [], dirty: false, loading: true, saving: false, submittedVisible: false, savedAt: '', coverUrl: '', coverCropping: false, pendingCoverName: '', attachmentSequence: 0, previewVisible: false, previewName: '', previewUrl: '', previewType: '' }
   },
   computed: {
+    isPlanRecruitment () { return this.$route.query.recruitmentType === 'planning' },
     isJoint () { return this.form.type === '联合公益' },
     projectFundingOnly () { return this.form.type === '项目' && this.form.fundingSource === '项目' },
     canEditGrant () { return this.form.type === '项目' && ['项目', '项目+筹款'].includes(this.form.fundingSource) },
@@ -78,7 +80,12 @@ export default {
   async mounted () {
     window.addEventListener('beforeunload', this.beforeUnload)
     try {
-      const saved = await recruitmentLocalRecord()
+      const stored = this.isPlanRecruitment ? null : await recruitmentLocalRecord()
+      const saved = stored && !stored.form.planningApplicationId ? stored : null
+      if (this.isPlanRecruitment) {
+        const application = createPlanApplications().find(item => item.id === this.$route.query.applicationId)
+        if (application) Object.assign(this.form, { name: application.name, planningName: application.name, planningApplicationId: application.id, type: '项目', fundingSource: '项目+筹款', fundraisingMethod: undefined })
+      }
       if (saved) {
         this.form = Object.assign(createRecruitmentForm(), saved.form)
         if (!this.form.organizationId) this.form.organizationId = unspecifiedOrganizationId
@@ -86,12 +93,14 @@ export default {
         if (this.form.type === '联合公益') {
           this.form.fundingSource = '筹款'; this.form.grantAmount = null
           this.form.strategy = jointRecruitmentStrategy
+          if (['月捐（需要募捐申请）', '月捐（伙伴需要先提交募捐申请，机构内筹款规划直接可用）'].includes(this.form.topic)) this.form.topic = jointRecruitmentTopics[0]
           if (!jointRecruitmentTopics.includes(this.form.topic)) this.form.topic = undefined
           this.syncFundraisingMethod()
         } else if (this.form.type === '项目') {
-          if (!['项目', '项目+筹款'].includes(this.form.fundingSource)) this.form.fundingSource = '项目'
+          this.form.fundingSource = '项目'; this.form.fundraisingMethod = '不适用'
           if (this.form.fundingSource === '项目') this.form.fundraisingAmount = null
         }
+        this.form.planningName = '无'; delete this.form.planningApplicationId
         this.savedAt = saved.savedAt
         if (this.form.cover) this.coverUrl = URL.createObjectURL(this.form.cover.file)
       }
@@ -108,8 +117,8 @@ export default {
   methods: {
     uppercaseMoney,
     changeType () {
-      this.form.strategy = undefined; this.form.topic = undefined
-      this.form.fundingSource = this.isJoint ? '筹款' : undefined
+      this.form.strategy = this.isJoint ? jointRecruitmentStrategy : undefined; this.form.topic = undefined
+      this.form.fundingSource = this.isJoint ? '筹款' : this.form.type === '项目' ? '项目' : undefined
       this.form.fundraisingMethod = this.isJoint ? '' : '不适用'
       this.form.grantAmount = null; this.form.fundraisingAmount = null; this.form.managementFee = 5
     },
@@ -117,6 +126,7 @@ export default {
     changeStrategy () { this.form.topic = undefined; if (this.isJoint) this.form.fundraisingMethod = '' },
     changeTopic () { this.syncFundraisingMethod() },
     syncFundraisingMethod () {
+      if (this.isPlanRecruitment) return
       if (!this.isJoint) { this.form.fundraisingMethod = '不适用'; return }
       this.form.fundraisingMethod = this.form.topic === jointRecruitmentTopics[0] ? '月捐' : this.form.topic === jointRecruitmentTopics[1] ? '次捐' : ''
     },
@@ -175,7 +185,7 @@ export default {
       finally { this.saving = false }
     },
     beforeUnload (event) { if (this.dirty || this.saving) { event.preventDefault(); event.returnValue = '' } },
-    goBack () { this.$router.push({ name: this.$route.query.from === 'dashboard-see' ? 'dashboard-see' : 'available-projects' }) }
+    goBack () { this.$router.push({ name: this.isPlanRecruitment ? 'fundraising-plans' : this.$route.query.from === 'dashboard-see' ? 'dashboard-see' : 'available-projects', query: this.isPlanRecruitment ? { tab: 'applications' } : {} }) }
   }
 }
 </script>
@@ -187,22 +197,27 @@ export default {
 .field { display: grid; align-content: center; gap: 8px; min-width: 0; min-height: 76px; padding: 17px 18px; border-bottom: 1px solid #edf1f5; }.full { grid-column: 1 / -1; }
 .field label, .field-label { color: #7b899b; font-weight: 400; line-height: 1.6; }em { color: #ff4d4f; font-style: normal; margin-right: 3px; }
 .readonly-value, .source-not-applicable { color: #27384e; font-weight: 500; line-height: 1.6; overflow-wrap: anywhere; }
-.field > .ant-select, .field > .ant-calendar-picker { width: 100%; }.field small { color: #718095; font-size: 14px; line-height: 1.6; }
+.field > .ant-select { width: 100%; }.field small { color: #718095; font-size: 14px; line-height: 1.6; }
 .field >>> .ant-input, .field >>> .ant-input-number, .field >>> .ant-select-selection { border-color: transparent; background: transparent; box-shadow: none; }
 .field >>> .ant-input:hover, .field >>> .ant-input-number:hover, .field >>> .ant-select-selection:hover { border-color: #d9e1eb; }
 .field >>> .ant-input:focus, .field >>> .ant-input-number-focused, .field >>> .ant-select-focused .ant-select-selection { border-color: #1677ff; box-shadow: 0 0 0 2px rgba(22,119,255,.12); }
-.field >>> input.ant-input, .field >>> .ant-input-number-input { height: 40px; padding: 0 12px; font-size: 16px; font-weight: 500; color: #27384e; }.field >>> .ant-input-number { height: 40px; }
+.field >>> input.ant-input, .field >>> .ant-input-number-input { padding: 0 12px; font-size: 16px; font-weight: 500; color: #27384e; }
+.field >>> input.ant-input, .field >>> .ant-input-number { height: 40px; }
 .field >>> textarea.ant-input { padding: 7px 12px; color: #27384e; font-size: 16px; line-height: 1.7; }
 .field >>> .ant-select-selection--single { height: 40px; }.field >>> .ant-select-selection__rendered { margin: 0 12px; line-height: 38px; font-size: 16px; color: #27384e; font-weight: 500; }
 .field >>> input::placeholder, .field >>> textarea::placeholder { font-size: 14px; color: #5b8ff9; opacity: 1; }.field >>> .ant-select-selection__placeholder, .empty-hint { color: #5b8ff9; font-size: 14px; font-weight: 400; }
 .field >>> .ant-select-disabled .ant-select-selection, .field >>> .ant-input-number-disabled { background: #f8fafc; }
 .amount-input { display: flex; align-items: center; gap: 8px; }.amount-input .ant-input-number { width: 260px; max-width: calc(100% - 28px); }
+.amount-input >>> .ant-input-number-input-wrap { height: 38px; }
+.amount-input >>> .ant-input-number-input { height: 38px; line-height: 38px; }
+.contact-fields >>> input.ant-input { line-height: 38px; }
+.contact-fields >>> input.ant-input::placeholder { line-height: 38px; }
 .organization-selects { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; }.organization-select-control { display: grid; align-content: start; gap: 8px; min-width: 0; }.organization-select-control > .ant-select { width: 100%; }.organization-trigger { display: flex; align-items: center; justify-content: space-between; width: 100%; height: 40px; padding: 0 12px; border: 1px solid transparent; border-radius: 4px; color: #27384e; background: transparent; font-size: 16px; font-weight: 500; text-align: left; cursor: pointer; }.organization-trigger:hover { border-color: #d9e1eb; }.organization-trigger:focus { border-color: #1677ff; outline: 0; box-shadow: 0 0 0 2px rgba(22,119,255,.12); }.organization-trigger .anticon { color: rgba(0,0,0,.25); font-size: 12px; }.organization-dropdown-panel { width: 100%; box-sizing: border-box; padding: 8px; border-radius: 4px; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.15); }.organization-options { max-height: 240px; margin-top: 8px; overflow-y: auto; }.organization-option { display: block; width: 100%; min-height: 36px; padding: 7px 12px; border: 0; color: rgba(0,0,0,.65); background: transparent; text-align: left; cursor: pointer; }.organization-option:hover, .organization-option:focus { background: #e6f7ff; outline: 0; }.organization-option.selected { color: #1890ff; font-weight: 500; background: #fafafa; }.organization-options p { margin: 0; padding: 10px 12px; color: #9aa7b7; }.phone-input { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 8px; }
 .label-note { margin-left: 8px; font-size: 14px; color: #718095; }.cover-picker { display: flex; align-items: center; gap: 20px; padding: 8px 12px; }.cover-preview, .cover-placeholder { width: 112px; height: 112px; flex: none; border-radius: 10px; }.cover-preview { position: relative; overflow: hidden; cursor: pointer; }.cover-preview img { display: block; width: 100%; height: 100%; object-fit: cover; }.cover-preview-mask { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(15, 35, 58, .62); opacity: 0; transition: opacity .18s ease; }.cover-preview:hover .cover-preview-mask, .cover-preview:focus .cover-preview-mask, .cover-preview:focus-within .cover-preview-mask { opacity: 1; }.cover-delete-button { height: 32px; padding: 0 12px; border: 1px solid rgba(255,255,255,.78); border-radius: 4px; color: #fff; background: rgba(255,77,79,.88); cursor: pointer; }.cover-delete-button:hover, .cover-delete-button:focus { background: #ff4d4f; }.cover-picker > div { min-width: 0; }.cover-picker p { margin: 8px 0; overflow-wrap: anywhere; }.cover-picker small { display: block; }.cover-placeholder { display: grid; place-content: center; gap: 10px; border: 1px dashed #b9c9dd; background: #f8fbff; color: #5b8ff9; cursor: pointer; }.cover-placeholder .anticon { font-size: 24px; }.cover-placeholder:hover { border-color: #1677ff; }
 .file-input { display: none; }.danger-link { color: #ff4d4f; }.attachment-empty { margin: 0; padding: 0; cursor: pointer; border-radius: 8px; }.attachment-empty >>> .ant-empty-description { color: #5b8ff9; font-size: 14px; }.attachment-empty:focus-visible, .cover-placeholder:focus-visible, .cover-preview:focus-visible { outline: 2px solid #1677ff; outline-offset: 3px; }
 .recruitment-module-content { padding: 24px; --detail-inner-padding: 0; }
 .form-attachment-list > div:first-child { padding-top: 0; align-items: start; }
 .form-attachment-list > div { grid-template-columns: minmax(0, 1fr) auto auto auto; }.form-attachment-list strong { overflow-wrap: anywhere; }.form-attachment-list .attachment-action { height: auto; padding: 0 6px; border: 0; border-radius: 0; color: #1890ff; background: transparent; box-shadow: none; font-weight: 400; }.form-attachment-list .attachment-action:hover, .form-attachment-list .attachment-action:focus { color: #40a9ff; background: transparent; }.form-attachment-list .attachment-action.danger-link, .form-attachment-list .attachment-action.danger-link:hover, .form-attachment-list .attachment-action.danger-link:focus { color: #ff4d4f; }.add-more-attachment { width: 100%; margin: 16px 0 0; border-color: #91d5ff; border-style: dashed; color: #096dd9 !important; background: #e6f7ff; }.add-more-attachment:hover, .add-more-attachment:focus { border-color: #40a9ff; color: #096dd9 !important; background: #fff; }.attachment-note { margin: 16px 0 0; color: #718095; }.attachment-preview-image { display: block; max-width: 100%; margin: auto; }.attachment-preview-pdf { width: 100%; height: 65vh; border: 0; }
-.form-footer { position: sticky; bottom: 0; z-index: 5; border: 1px solid #e6ebf2; border-radius: 12px; background: rgba(255,255,255,.98); box-shadow: 0 -4px 22px rgba(23,56,92,.07); padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }.form-footer > span { color: #718095; }.form-footer > div, .result-actions { display: flex; gap: 12px; }.result-actions { justify-content: flex-end; margin-top: 24px; }.form-footer .ant-btn { min-width: 100px; }.ant-btn { height: 32px; box-shadow: 0 2px 0 rgba(0,0,0,.043); }.recruitment-form-page .detail-back { height: 38px; padding: 0 16px; box-shadow: 0 3px 10px rgba(23,56,92,.05); }
+.form-footer { position: sticky; bottom: 0; z-index: 5; border: 1px solid #e6ebf2; border-radius: 12px; background: rgba(255,255,255,.98); box-shadow: 0 -4px 22px rgba(23,56,92,.07); padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }.form-footer > span { color: #718095; }.form-footer > div, .result-actions { display: flex; gap: 12px; }.result-actions { justify-content: flex-end; margin-top: 24px; }.form-footer .ant-btn { min-width: 100px; }.ant-btn { height: 32px; box-shadow: 0 2px 0 rgba(0,0,0,.043); }.recruitment-form-page .detail-back { height: 38px; box-shadow: 0 3px 10px rgba(23,56,92,.05); }
 .validation-summary { background: #fff6f5; color: #cf1322; border: 1px solid #ffd3d0; border-radius: 12px; padding: 20px 24px; display: flex; gap: 12px; }.validation-summary .anticon { margin-top: 4px; }.validation-summary ul { padding-left: 18px; margin: 8px 0 0; line-height: 1.8; }
 </style>

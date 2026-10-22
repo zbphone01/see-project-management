@@ -15,6 +15,7 @@ const router = new VueRouter({
     { path: '/dashboard-see', name: 'dashboard-see', component: () => import('../views/SeeDashboard.vue') },
     { path: '/downloads', name: 'download', component: () => import('../views/DataDownloads.vue') },
     { path: '/benefits/summary', name: 'benefit-summary', component: () => import('../views/BenefitSummary.vue') },
+    { path: '/benefits/regions', name: 'benefit-regions', component: () => import('../views/BenefitRegions.vue') },
     { path: '/benefits/species', name: 'benefit-species-detail', component: () => import('../views/BenefitSpeciesDetail.vue') },
     { path: '/benefits/lists', name: 'benefit-list-detail', component: () => import('../views/BenefitListDetail.vue') },
     { path: '/benefits/documents', name: 'benefit-document-detail', component: () => import('../views/BenefitDocumentDetail.vue') },

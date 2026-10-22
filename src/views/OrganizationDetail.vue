@@ -38,17 +38,13 @@
     </template>
     <section v-for="section in visibleAttachments" :key="section.key" class="panel detail-section">
       <div class="detail-section-header"><span class="detail-section-icon blue"><a-icon type="paper-clip" /></span><div><h2>{{ section.title }}</h2></div></div>
-      <div class="detail-module-content"><div v-if="section.key !== 'otherAttachments'" class="attachment-list">
+      <div class="detail-module-content"><div class="attachment-list">
         <div v-for="file in section.files" :key="file.id">
           <div><strong>{{ file.name }}</strong><span><template v-if="hasYear(section)">{{ file.year }}年 · </template><template v-if="section.key === 'civilReports'">{{ file.civilStatus === '已上报' ? '已上报民政' : file.civilStatus === '未上报' ? '未上报民政' : '-' }} · </template>{{ file.uploadedAt }}</span></div>
           <a-button type="link" @click.stop="previewFile(file)" @keydown.stop>预览</a-button><a-button type="link" @click.stop="downloadFile(file)" @keydown.stop>下载</a-button>
         </div>
         <p v-if="!section.files.length" class="attachment-empty">暂无内容</p>
-      </div>
-      <div v-else class="detail-table-wrap"><table class="detail-table"><thead><tr><th v-if="hasYear(section)">年份</th><th>文件名</th><th v-if="section.key === 'civilReports'">上报民政</th><th>上传时间</th><th>操作</th></tr></thead><tbody>
-        <tr v-for="file in section.files" :key="file.id"><td v-if="hasYear(section)">{{ file.year }}</td><td>{{ file.name }}</td><td v-if="section.key === 'civilReports'">{{ file.civilStatus }}</td><td>{{ file.uploadedAt }}</td><td class="file-actions"><a-button type="link" @click.stop="previewFile(file)" @keydown.stop>预览</a-button><a-button type="link" @click.stop="downloadFile(file)" @keydown.stop>下载</a-button></td></tr>
-        <tr v-if="!section.files.length"><td :colspan="hasYear(section) ? (section.key === 'civilReports' ? 5 : 4) : 3">暂无内容</td></tr>
-      </tbody></table></div></div>
+      </div></div>
     </section>
     <section class="panel detail-section">
       <div class="detail-section-header"><span class="detail-section-icon gray"><a-icon type="history" /></span><div><h2>审核信息</h2></div></div>
@@ -125,8 +121,8 @@ export default {
     saveReview () { if (!this.isAudit) return; const value = this.reviewDraft.trim(); if (value) this.$set(this.detail.reviewComments, this.reviewKey, value); else this.$delete(this.detail.reviewComments, this.reviewKey); this.persist(); this.reviewVisible = false },
     deleteReview () { if (!this.isAudit) return; this.$delete(this.detail.reviewComments, this.reviewKey); this.persist(); this.reviewVisible = false },
     hasYear (section) { return ['civilReports', 'annualReports', 'auditReports'].includes(section.key) },
-    previewFile (file) { this.preview = file },
-    downloadFile (file) { this.$message.info('此附件未提供实际文件，无法下载') },
+    previewFile (file) { this.$message.info('待技术开发') },
+    downloadFile (file) { this.$message.info('待技术开发') },
     previewLatestReport () { const reports = this.detail.attachments.find(section => section.key === 'civilReports').files.slice().sort((a, b) => Number(b.year) - Number(a.year) || b.uploadedAt.localeCompare(a.uploadedAt)); if (reports.length) this.previewFile(reports[0]); else this.$message.warning('暂无年检年报') },
     fieldLabel (key) { const field = this.groups.reduce((fields, group) => fields.concat(group.fields), []).find(item => item[0] === key); return field ? field[1] : key },
     submitAudit () {
@@ -167,8 +163,6 @@ export default {
 .description-item[role="button"], .review-row-trigger { cursor: pointer; }
 .description-item[role="button"]:hover, .detail-table .review-row-trigger:hover > td { background: #f8fbff; }
 [role="button"]:focus-visible { outline: 2px solid #ff7875; outline-offset: -2px; }
-.file-actions { width: 130px; white-space: nowrap !important; }
-.file-actions .ant-btn { padding: 0 7px; }
 .organization-audit-warning >>> .ant-modal-body { padding: 36px 28px 28px; }
 .warning-heading { display: flex; gap: 12px; align-items: center; font-size: 16px; }
 .warning-heading .anticon { color: #ff4d4f; font-size: 22px; }
