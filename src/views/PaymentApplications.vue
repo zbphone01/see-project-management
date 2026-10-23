@@ -10,7 +10,7 @@
       </div>
     </section>
     <section class="panel applied-table-panel">
-      <a-table class="applied-table" :columns="columns" :data-source="filteredRecords" :pagination="pagination" :scroll="{ x: true }" row-key="id" @change="changePage">
+      <a-table class="applied-table shared-list-table shared-list-fixed shared-list-inset-8 shared-list-first-inset" :columns="columns" :data-source="filteredRecords" :pagination="pagination" :scroll="{ x: true }" row-key="id" @change="changePage">
         <template slot="project" slot-scope="text, record">
           <div class="payment-project">
             <div><router-link class="payment-project-name" :to="{ name: 'project-detail', params: { id: String(record.projectId) } }">{{ record.name }}</router-link><div class="project-primary-meta"><span class="project-code"><a-icon type="flag" /> {{ record.code }}</span></div></div>
@@ -110,9 +110,7 @@ export default {
 .payment-filters { grid-template-columns: minmax(180px, 1.5fr) repeat(3, minmax(130px, 1fr)) 193px; }
 .payment-filters .filter-actions { grid-column: auto; }
 .payment-filters .filter-actions .ant-btn { flex: none; width: 92px; }
-.payments-page ::v-deep .ant-table-scroll table { width: 100% !important; min-width: 1140px !important; table-layout: fixed; }
-.payments-page ::v-deep .ant-table-thead > tr > th, .payments-page ::v-deep .ant-table-tbody > tr > td { padding-left: 8px; padding-right: 8px; }
-.payments-page ::v-deep .ant-table-thead > tr > th:first-child, .payments-page ::v-deep .ant-table-tbody > tr > td:first-child { padding-left: 20px; }
+
 .payments-page ::v-deep .applied-table th.payment-centered-column,
 .payments-page ::v-deep .applied-table td.payment-centered-column { text-align: center !important; }
 .payment-project { min-width: 0; }

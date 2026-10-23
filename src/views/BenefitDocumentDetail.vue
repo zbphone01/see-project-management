@@ -1,14 +1,14 @@
 <template>
-  <section class="document-detail-page">
+  <section class="document-detail-page shared-list-detail">
     <div class="detail-back-row"><a-button class="detail-back" @click="goBack"><a-icon type="arrow-left" /> 返回</a-button></div>
     <section class="panel applied-table-panel">
-      <div class="document-title"><h2>文件材料详情</h2></div>
-      <form class="filter-grid document-filters" @submit.prevent="applyFilters">
+      <div class="document-title shared-list-title"><h2>文件材料详情</h2></div>
+      <form class="filter-grid document-filters shared-list-detail-filters" @submit.prevent="applyFilters">
         <a-select v-model="filters.year" aria-label="年份"><a-select-option value="all">全部年份</a-select-option><a-select-option v-for="year in years" :key="year" :value="year">{{ year }}年</a-select-option></a-select>
         <a-select v-model="filters.department" aria-label="部门"><a-select-option value="all">全部部门</a-select-option><a-select-option v-for="department in departments" :key="department" :value="department">{{ department }}</a-select-option></a-select>
         <div class="filter-actions"><a-button type="primary" html-type="submit" icon="filter">筛选</a-button></div>
       </form>
-      <a-table class="applied-table document-table" :columns="columns" :data-source="filteredRecords" row-key="id" :pagination="pagination" :scroll="{ x: true }" :locale="{ emptyText: '暂无符合条件的文件材料数据' }" @change="changePage">
+      <a-table class="applied-table document-table shared-list-table shared-list-fixed shared-list-inset-8 shared-list-wrap shared-list-first-inset" :columns="columns" :data-source="filteredRecords" row-key="id" :pagination="pagination" :scroll="{ x: true }" :locale="{ emptyText: '暂无符合条件的文件材料数据' }" @change="changePage">
         <template slot="file" slot-scope="value"><span v-if="!value">—</span><a v-else class="document-file-link" href="#" @click.prevent="showComingSoon">{{ value }}</a></template>
         <template slot="projectName" slot-scope="value"><a class="document-file-link" href="#" @click.prevent="showComingSoon">{{ value }}</a></template>
       </a-table>
@@ -53,14 +53,7 @@ export default {
 </script>
 
 <style scoped>
-.document-detail-page { min-width: 0; display: grid; gap: 20px; }
-.document-title { padding: 20px; border-bottom: 1px solid #edf1f5; }
-.document-title h2 { margin: 0; font-size: 16px; font-weight: 700; color: #18253c; }
-.document-filters { padding: 20px; grid-template-columns: 200px 200px 88px; }
-.document-filters .filter-actions { grid-template-columns: 1fr; }
-.document-table >>> .ant-table-scroll table { width: 100% !important; min-width: 1140px !important; table-layout: fixed; }
-.document-table >>> .ant-table-thead > tr > th, .document-table >>> .ant-table-tbody > tr > td { padding-left: 8px; padding-right: 8px; white-space: normal; overflow-wrap: anywhere; }
-.document-table >>> .ant-table-thead > tr > th:first-child, .document-table >>> .ant-table-tbody > tr > td:first-child { padding-left: 20px; }
+
 .document-file-link { padding: 0; border: 0; color: inherit; background: transparent; text-align: left; white-space: normal; overflow-wrap: anywhere; line-height: 1.6; cursor: pointer; }
 .document-file-link:hover, .document-file-link:focus { color: inherit; text-decoration: underline; }
 </style>

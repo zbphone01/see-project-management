@@ -67,6 +67,27 @@ button { cursor: pointer; }
 .filter-actions .ant-btn { padding: 0 12px; display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
 .filter-actions .ant-btn .anticon { top: 0; }
 .applied-table-panel { overflow: hidden; }
+/* 列表页按需使用；不覆盖固定列副本、展开明细或数据下载的专项布局。 */
+.shared-list-table .ant-table-scroll table { width: 100% !important; min-width: 1140px !important; }
+.shared-list-table.shared-list-fixed .ant-table-scroll table { table-layout: fixed; }
+.shared-list-inset-8 .ant-table-thead > tr > th,
+.shared-list-inset-8 .ant-table-tbody > tr > td { padding-left: 8px; padding-right: 8px; }
+.shared-list-inset-12 .ant-table-thead > tr > th,
+.shared-list-inset-12 .ant-table-tbody > tr > td { padding-left: 12px; padding-right: 12px; }
+.shared-list-wrap .ant-table-thead > tr > th,
+.shared-list-wrap .ant-table-tbody > tr > td { white-space: normal; overflow-wrap: anywhere; }
+.shared-list-first-inset .ant-table-thead > tr > th:first-child,
+.shared-list-first-inset .ant-table-tbody > tr > td:first-child { padding-left: 20px; }
+.shared-list-operation-spacing .operation-button { gap: 2px; }
+.shared-list-operation-spacing .operation-button > span + .anticon { margin-left: 0; }
+.shared-list-tabs .ant-tabs-bar { min-height: 76px; margin: 0; padding: 0 20px; border-bottom-color: #edf1f5; }
+.shared-list-tabs .ant-tabs-nav .ant-tabs-tab { height: 76px; margin-right: 28px; padding: 0; display: inline-flex; align-items: center; box-sizing: border-box; }
+.shared-list-tabs .ant-tabs-tab-active { color: #1677ff; font-weight: 600; }
+.shared-list-detail { min-width: 0; display: grid; gap: 20px; }
+.shared-list-title { padding: 20px; border-bottom: 1px solid #edf1f5; }
+.shared-list-title h2 { margin: 0; font-size: 16px; font-weight: 700; color: #18253c; }
+.shared-list-detail-filters { padding: 20px; grid-template-columns: 200px 200px 88px; }
+.shared-list-detail-filters .filter-actions { grid-template-columns: 1fr; }
 .table-toolbar { min-height: 72px; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border-bottom: 1px solid #edf1f5; }
 .export-actions { display: flex; align-items: center; gap: 9px; }
 .export-actions > span { margin-right: 3px; color: #718095; }
@@ -330,15 +351,16 @@ button { cursor: pointer; }
 @media (max-width: 1366px) { .sidebar { width: 72px; padding: 24px 12px; }.app-shell { padding-left: 72px; }.topbar { left: 72px; }.brand { justify-content: center; padding: 0; }.brand > span:last-child, .side-caption, .nav-item span, .nav-arrow, .logout span, .nav-children { display: none; }.side-nav { margin-top: 28px; }.nav-item { width: 48px; padding: 0; justify-content: center; margin: 0 auto; }.logout { width: 48px; padding: 12px 0 0; justify-content: center; } }
 /* 折叠侧栏在交互时展开，一级菜单仍只切换二级菜单。 */
 @media (max-width: 1366px) {
-  .sidebar:hover, .sidebar:focus-within { width: 220px; }
-  .sidebar:hover .brand, .sidebar:focus-within .brand { justify-content: flex-start; }
+  .sidebar:hover, .sidebar:focus-within { width: 220px; padding: 24px 16px; }
+  .sidebar:hover .brand, .sidebar:focus-within .brand { justify-content: flex-start; padding: 0 10px; }
+  .sidebar:hover .side-nav, .sidebar:focus-within .side-nav { margin-top: 20px; }
   .sidebar:hover .brand > span:last-child, .sidebar:focus-within .brand > span:last-child,
   .sidebar:hover .nav-item span, .sidebar:focus-within .nav-item span,
   .sidebar:hover .nav-arrow, .sidebar:focus-within .nav-arrow,
   .sidebar:hover .logout span, .sidebar:focus-within .logout span { display: inline; }
   .sidebar:hover .nav-children, .sidebar:focus-within .nav-children { display: grid; }
-  .sidebar:hover .nav-item, .sidebar:focus-within .nav-item { width: 100%; padding: 0 14px; justify-content: flex-start; }
-  .sidebar:hover .logout, .sidebar:focus-within .logout { width: 100%; }
+  .sidebar:hover .nav-item, .sidebar:focus-within .nav-item { width: 100%; padding: 0 13px; margin: 0; justify-content: flex-start; }
+  .sidebar:hover .logout, .sidebar:focus-within .logout { width: 100%; padding: 12px 13px 0; justify-content: flex-start; }
 }
 
 /* 标准录入弹窗：标题区与操作区均为 55px，包含分割线。 */

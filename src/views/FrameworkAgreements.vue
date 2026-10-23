@@ -1,14 +1,14 @@
 <template>
   <section class="applied-page framework-agreements-page">
     <section class="panel applied-table-panel">
-      <a-tabs v-model="activeTab" class="agreement-tabs">
+      <a-tabs v-model="activeTab" class="agreement-tabs shared-list-tabs">
         <a-tab-pane key="agreements" tab="框架协议">
           <form class="filter-grid agreement-filters" @submit.prevent="queryAgreements">
             <label for="agreement-organization"><a-input id="agreement-organization" v-model="filters.organization" aria-label="机构名称" placeholder="请输入机构名称" allow-clear /></label>
             <label for="agreement-code"><a-input id="agreement-code" v-model="filters.code" aria-label="协议编号" placeholder="请输入协议编号" allow-clear /></label>
             <div class="filter-actions agreement-query"><a-button type="primary" html-type="submit" icon="search">查询</a-button></div>
           </form>
-          <a-table class="applied-table agreement-table" :columns="columns" :data-source="filteredAgreements" :pagination="pagination" :scroll="{ x: true }" row-key="id" :locale="{ emptyText: '暂无符合条件的框架协议' }" @change="changePage">
+          <a-table class="applied-table agreement-table shared-list-table shared-list-inset-8 shared-list-operation-spacing" :columns="columns" :data-source="filteredAgreements" :pagination="pagination" :scroll="{ x: true }" row-key="id" :locale="{ emptyText: '暂无符合条件的框架协议' }" @change="changePage">
             <template slot="organization" slot-scope="text"><button class="agreement-link" type="button" @click="$message.info('链接机构详情页')">{{ text }}</button></template>
             <template slot="recruitment" slot-scope="text"><span class="agreement-name">{{ text }}</span></template>
             <template slot="status" slot-scope="status"><span :class="['status-chip', status === '正常' ? 'active-approved' : 'neutral']">{{ status }}</span></template>
@@ -86,21 +86,15 @@ export default {
 </script>
 
 <style scoped>
-.agreement-tabs >>> .ant-tabs-bar { min-height: 76px; margin: 0; padding: 0 20px; border-bottom-color: #edf1f5; }
-.agreement-tabs >>> .ant-tabs-nav .ant-tabs-tab { height: 76px; margin-right: 28px; padding: 0; display: inline-flex; align-items: center; box-sizing: border-box; }
-.agreement-tabs >>> .ant-tabs-tab-active { color: #1677ff; font-weight: 600; }
 .agreement-filters { padding: 20px; grid-template-columns: repeat(2, minmax(200px, 300px)) 88px; border-bottom: 1px solid #edf1f5; }
 .agreement-query { grid-template-columns: 1fr; }
 .agreement-query .ant-btn { width: 88px; }
 .agreement-query .ant-btn >>> .anticon + span { margin-left: 8px; }
-.agreement-table >>> .ant-table-scroll table { width: 100% !important; min-width: 1140px !important; }
-.agreement-table >>> .ant-table-thead > tr > th,
-.agreement-table >>> .ant-table-tbody > tr > td { padding-right: 8px; padding-left: 8px; }
+
 .agreement-link { padding: 0; border: 0; color: #1677ff; background: transparent; text-align: left; cursor: pointer; }
 .agreement-link:hover, .agreement-link:focus { color: #0958d9; }
 .agreement-name, .agreement-link { min-width: 0; white-space: normal; overflow-wrap: anywhere; line-height: 1.6; }
-.operation-button { gap: 2px; }
-.operation-button >>> span + .anticon { margin-left: 0; }
+
 .agreement-details { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 16px; }
 .agreement-details dt { color: #718095; }.agreement-details dd { margin: 0; overflow-wrap: anywhere; }
 .agreement-note { margin: 20px 0 0; color: #718095; }

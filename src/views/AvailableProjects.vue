@@ -1,7 +1,7 @@
 <template>
   <section class="applied-page available-projects-page">
     <section class="panel applied-table-panel">
-      <a-tabs class="strategy-tabs" :active-key="activeStrategy" @change="switchStrategy">
+      <a-tabs class="strategy-tabs shared-list-tabs" :active-key="activeStrategy" @change="switchStrategy">
         <a-tab-pane v-for="strategy in strategies" :key="strategy" :tab="strategy" />
       </a-tabs>
       <div class="recruitment-search">
@@ -13,7 +13,7 @@
       </div>
 
       <a-table
-        class="applied-table available-table"
+        class="applied-table available-table shared-list-table shared-list-fixed shared-list-inset-8"
         :columns="columns"
         :data-source="filteredProjects"
         :pagination="pagination"
@@ -73,7 +73,7 @@ export default {
         { title: '项目类型', dataIndex: 'type', key: 'type', width: 110, align: 'center', scopedSlots: { customRender: 'type' } },
         { title: '发起部门', dataIndex: 'department', key: 'department', width: 150, align: 'center' },
         { title: '起止时间', key: 'period', width: 120, align: 'center', scopedSlots: { customRender: 'period' } },
-        { title: '操作', key: 'operation', fixed: 'right', width: 90, align: 'center', scopedSlots: { customRender: 'operation' } }
+        { title: '操作', key: 'operation', fixed: 'right', width: 120, align: 'center', scopedSlots: { customRender: 'operation' } }
       ]
     }
   },
@@ -121,9 +121,6 @@ export default {
 </script>
 
 <style scoped>
-.strategy-tabs ::v-deep .ant-tabs-bar { min-height: 76px; margin: 0; padding: 0 20px; border-bottom-color: #edf1f5; }
-.strategy-tabs ::v-deep .ant-tabs-nav .ant-tabs-tab { height: 76px; margin-right: 28px; padding: 0; display: inline-flex; align-items: center; box-sizing: border-box; }
-.strategy-tabs ::v-deep .ant-tabs-tab-active { color: #1677ff; font-weight: 600; }
 .recruitment-search { min-height: 72px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border-bottom: 1px solid #edf1f5; }
 .search-controls { display: grid; grid-template-columns: 300px 88px; align-items: center; gap: 10px; }
 .search-controls ::v-deep .search-input { width: 100%; margin-left: 0; }
@@ -142,10 +139,7 @@ export default {
 .attribute-tag { max-width: 100%; padding: 3px 8px; border-radius: 4px; white-space: normal; overflow-wrap: anywhere; }
 .strategy-tag { color: #08979c; background: #e6fffb; }
 .topic-tag { color: #d48806; background: #fffbe6; }
-.available-table ::v-deep .table-project > div:last-child { row-gap: 5px; }
-.available-table ::v-deep .ant-table-thead > tr > th,
-.available-table ::v-deep .ant-table-tbody > tr > td { padding-right: 8px; padding-left: 8px; }
-.available-table ::v-deep .ant-table-scroll table { width: 100% !important; min-width: 1140px !important; table-layout: fixed; }
+
 .available-row-actions { display: grid; justify-items: center; gap: 0; }
 .available-row-actions button { min-height: 24px; padding: 0 2px; border: 0; border-radius: 5px; color: #1677ff; background: transparent; cursor: pointer; }
 .available-row-actions button:hover, .available-row-actions button:focus { color: #0958d9; background: #f0f7ff; }

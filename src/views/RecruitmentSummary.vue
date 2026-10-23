@@ -1,7 +1,7 @@
 <template>
   <section class="applied-page recruitment-summary-page">
     <section class="panel applied-table-panel">
-      <a-tabs class="strategy-tabs" :active-key="activeStrategy" @change="switchStrategy">
+      <a-tabs class="strategy-tabs shared-list-tabs" :active-key="activeStrategy" @change="switchStrategy">
         <a-tab-pane v-for="strategy in strategies" :key="strategy" :tab="strategy" />
       </a-tabs>
 
@@ -15,9 +15,9 @@
         <a-button type="primary" @click="queryRecruitments"><a-icon type="search" /> 查询</a-button>
       </div>
 
-      <div class="summary-table-scroll">
+      <div ref="summaryScroll" class="summary-table-scroll" :class="{ 'has-operation-shadow': operationShadow }" @scroll="updateOperationShadow">
         <a-table
-          class="applied-table summary-table"
+          class="applied-table summary-table shared-list-operation-spacing"
           :columns="recruitmentColumns"
           :data-source="filteredRecruitments"
           :pagination="pagination"
@@ -107,15 +107,16 @@ export default {
       page: 1,
       pageSize: 10,
       expandedRecruitmentKeys: [],
+      operationShadow: false,
       recruitmentColumns: [
         { title: '招募ID', dataIndex: 'code', width: 110, align: 'center', className: 'business-id-column' },
         { title: '招募名称', dataIndex: 'name', key: 'recruitment', scopedSlots: { customRender: 'recruitment' } },
         { title: '项目类型', dataIndex: 'type', width: 110, align: 'center', scopedSlots: { customRender: 'type' } },
-        { title: '起止时间', key: 'period', width: 120, align: 'center', scopedSlots: { customRender: 'period' } },
-        { title: '指定机构', dataIndex: 'designatedOrganizations', width: 200, align: 'center', scopedSlots: { customRender: 'organizations' } },
+        { title: '起止时间', key: 'period', width: 110, align: 'center', scopedSlots: { customRender: 'period' } },
+        { title: '指定机构', dataIndex: 'designatedOrganizations', width: 110, align: 'center', scopedSlots: { customRender: 'organizations' } },
         { title: '待审申请', dataIndex: 'pendingCount', width: 90, align: 'center', scopedSlots: { customRender: 'pending' } },
         { title: '执行中项目', dataIndex: 'activeCount', width: 90, align: 'center', scopedSlots: { customRender: 'active' } },
-        { title: '操作', key: 'operation', width: 90, align: 'center', className: 'summary-operation-cell', scopedSlots: { customRender: 'operation' } }
+        { title: '操作', key: 'operation', width: 120, align: 'center', className: 'summary-operation-cell', scopedSlots: { customRender: 'operation' } }
       ],
       applicationColumns: [
         { title: '项目名称', dataIndex: 'name', key: 'project', scopedSlots: { customRender: 'project' } },
@@ -148,7 +149,17 @@ export default {
       return { current: this.page, pageSize: this.pageSize, pageSizeOptions: ['10', '50', '100'], showSizeChanger: true, showTotal: total => `共有 ${total} 条数据` }
     }
   },
+  mounted () {
+    this.updateOperationShadow()
+    window.addEventListener('resize', this.updateOperationShadow)
+  },
+  updated () { this.updateOperationShadow() },
+  beforeDestroy () { window.removeEventListener('resize', this.updateOperationShadow) },
   methods: {
+    updateOperationShadow () {
+      const container = this.$refs.summaryScroll
+      if (container) this.operationShadow = container.scrollWidth - container.clientWidth - container.scrollLeft > 1
+    },
     resetTableState () {
       this.page = 1
       this.expandedRecruitmentKeys = []
@@ -181,9 +192,6 @@ export default {
 </script>
 
 <style scoped>
-.strategy-tabs ::v-deep .ant-tabs-bar { min-height: 76px; margin: 0; padding: 0 20px; border-bottom-color: #edf1f5; }
-.strategy-tabs ::v-deep .ant-tabs-nav .ant-tabs-tab { height: 76px; margin-right: 28px; padding: 0; display: inline-flex; align-items: center; box-sizing: border-box; }
-.strategy-tabs ::v-deep .ant-tabs-tab-active { color: #1677ff; font-weight: 600; }
 .recruitment-search { min-height: 72px; padding: 12px 20px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #e6ebf2; }
 .search-input { width: 300px; flex: none; height: 38px; border-radius: 8px; }
 .search-input ::v-deep .ant-input { height: 38px; border-radius: 8px; }
@@ -207,17 +215,17 @@ export default {
 .summary-table ::v-deep .ant-table-tbody > tr > td { padding-right: 8px; padding-left: 8px; overflow-wrap: anywhere; }
 .summary-table ::v-deep .business-id-column { box-sizing: border-box; width: 110px !important; min-width: 110px !important; max-width: 110px !important; }
 .summary-table ::v-deep .summary-operation-cell { position: sticky; right: 0; z-index: 1; background: #fff; }
+.summary-table ::v-deep .summary-operation-cell::before { content: ''; position: absolute; top: -8px; bottom: -8px; left: 0; width: 30px; pointer-events: none; box-shadow: -6px 0 6px -4px rgba(0,0,0,.15); clip-path: inset(8px 100% 7px -10px); opacity: 0; transition: opacity .3s ease; }
+.has-operation-shadow .summary-table ::v-deep .summary-operation-cell::before { opacity: 1; }
 .summary-table ::v-deep th.summary-operation-cell { background: #f7f9fc; }
 .summary-table ::v-deep .ant-table-tbody > tr:not(.ant-table-expanded-row):hover > td,
 .summary-table ::v-deep .ant-table-tbody > tr.ant-table-row-hover:not(.ant-table-expanded-row) > td { background: #f8fbff !important; }
 .summary-table ::v-deep .ant-table-tbody > tr:hover > .summary-operation-cell .operation-button,
 .summary-table ::v-deep .ant-table-tbody > tr.ant-table-row-hover > .summary-operation-cell .operation-button,
 .summary-table ::v-deep .summary-operation-cell:hover .operation-button { background: transparent !important; }
-.summary-table ::v-deep .operation-button { gap: 2px; }
-.summary-table ::v-deep .operation-button > span + .anticon { margin-left: 0; }
+
 .summary-table ::v-deep .ant-table-expanded-row > td { padding: 30px !important; background: #f4f7fb; }
 .summary-table ::v-deep .ant-table-expanded-row:hover > td { background: #f4f7fb; }
-.summary-table .table-project > div:last-child { row-gap: 5px; }
 .organization-names { display: inline-block; max-width: 100%; color: #536277; line-height: 1.55; overflow-wrap: anywhere; cursor: help; }
 .application-section, .application-table { width: 100%; box-sizing: border-box; }
 .application-section { margin: 0; border: 0; border-radius: 0; background: transparent; }

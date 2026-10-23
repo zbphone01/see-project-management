@@ -24,7 +24,7 @@ export default {
         { title: '导出账号', dataIndex: 'account', width: '20%', align: 'center', scopedSlots: { customRender: 'account' } },
         { title: '数据条数', dataIndex: 'count', width: '20%', align: 'center' },
         { title: '状态', key: 'status', width: '20%', align: 'center', scopedSlots: { customRender: 'status' } },
-        { title: '操作', key: 'operation', width: '20%', align: 'center', scopedSlots: { customRender: 'operation' } }
+        { title: '操作', key: 'operation', width: 120, align: 'center', scopedSlots: { customRender: 'operation' } }
       ]
     }
   },

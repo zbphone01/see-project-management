@@ -1,17 +1,6 @@
+import example from './benefit-species-details.json'
+
 // 物种详情本地示例，未连接后端统计接口。
 export function createSpeciesDetails () {
-  return [
-    { id: 'species-partridge', category: '动物', name: '环颈山鹧鸪', latinName: 'Arborophila torqueola', protection: '中国二级', iucn: 'IUCN无危(LC)', project: 100000, department: 120000, projects: 2 },
-    { id: 'species-firmiana', category: '植物', name: '云南梧桐', latinName: 'Firmiana major', protection: '中国二级', iucn: 'IUCN濒危(EN)', project: null, department: null, projects: 1 },
-    { id: 'species-panda', category: '动物', name: '大熊猫', latinName: 'Ailuropoda melanoleuca', protection: '中国一级', iucn: 'IUCN易危(VU)', project: 1286, department: 1600, projects: 18 },
-    { id: 'species-ibis', category: '动物', name: '朱鹮', latinName: 'Nipponia nippon', protection: '中国一级', iucn: 'IUCN濒危(EN)', project: 3680, department: 4800, projects: 12 },
-    { id: 'species-monkey', category: '动物', name: '滇金丝猴', latinName: 'Rhinopithecus bieti', protection: '中国一级', iucn: 'IUCN濒危(EN)', project: 2450, department: 3000, projects: 9 },
-    { id: 'species-ginkgo', category: '植物', name: '银杏', latinName: 'Ginkgo biloba', protection: '中国一级', iucn: 'IUCN濒危(EN)', project: 18560, department: 24000, projects: 16 },
-    { id: 'species-davidia', category: '植物', name: '珙桐', latinName: 'Davidia involucrata', protection: '中国一级', iucn: 'IUCN易危(VU)', project: 8650, department: 12000, projects: 8 },
-    { id: 'species-crane', category: '动物', name: '黑颈鹤', latinName: 'Grus nigricollis', protection: '中国一级', iucn: 'IUCN近危(NT)', project: 960, department: 1200, projects: 6 },
-    { id: 'species-deer', category: '动物', name: '麋鹿', latinName: 'Elaphurus davidianus', protection: '中国一级', iucn: 'IUCN野外灭绝(EW)', project: 0, department: 0, projects: 2 },
-    { id: 'species-magnolia', category: '植物', name: '华盖木', latinName: 'Magnolia sinica', protection: '中国一级', iucn: 'IUCN极危(CR)', project: 96, department: 120, projects: 5 },
-    { id: 'species-leopard', category: '动物', name: '雪豹', latinName: 'Panthera uncia', protection: '中国一级', iucn: 'IUCN易危(VU)', project: 320, department: 500, projects: 7 },
-    { id: 'species-tetracentron', category: '植物', name: '水青树', latinName: 'Tetracentron sinense', protection: '中国二级', iucn: 'IUCN无危(LC)', project: 12480, department: 16000, projects: 11 }
-  ]
+  return example.records.map(record => Object.assign({}, record))
 }

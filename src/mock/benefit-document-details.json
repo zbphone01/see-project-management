@@ -1,0 +1,59 @@
+{
+  "total": 6,
+  "records": [
+    {
+      "id": "document-detail-1",
+      "name": "海洋生态保护与公众参与实践",
+      "category": "SEE支持出版-公开发行出版物",
+      "year": 2025,
+      "file": "",
+      "edition": "ISBN 978-7-01-000922-3",
+      "projectName": "2025年净滩公益行动—蓝湾生态青岛站"
+    },
+    {
+      "id": "document-detail-2",
+      "name": "光照未来：光伏组件企业可持续披露观察与建议",
+      "category": "行业报告",
+      "year": 2025,
+      "file": "《光照未来：光伏组件企业可持续披露观察与建议》.pdf",
+      "edition": "—",
+      "projectName": "2025年净滩公益行动—蓝湾生态青岛站"
+    },
+    {
+      "id": "document-detail-3",
+      "name": "社区减塑行动实施指南",
+      "category": "倡导文件",
+      "year": 2026,
+      "file": "社区减塑行动实施指南.pdf",
+      "edition": "—",
+      "projectName": "社区减塑与生活垃圾源头减量行动"
+    },
+    {
+      "id": "document-detail-4",
+      "name": "区域生物多样性保护合作年度观察",
+      "category": "SEE合作出版-公开发行出版物",
+      "year": 2026,
+      "file": "区域生物多样性保护合作年度观察.pdf",
+      "edition": "ISBN 978-7-01-000922-3",
+      "projectName": "区域生物多样性保护与协作网络建设"
+    },
+    {
+      "id": "document-detail-5",
+      "name": "城乡青少年自然教育课程手册",
+      "category": "SEE自行出版-公开发行出版物",
+      "year": 2025,
+      "file": "城乡青少年自然教育课程手册.pdf",
+      "edition": "ISBN 978-7-01-000922-3",
+      "projectName": "面向城乡青少年的自然教育与生态体验活动"
+    },
+    {
+      "id": "document-detail-6",
+      "name": "绿色供应链环境信息披露研究",
+      "category": "科研论文",
+      "year": 2026,
+      "file": "绿色供应链环境信息披露研究.pdf",
+      "edition": "—",
+      "projectName": "推动企业绿色采购与可持续供应链示范项目"
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 <template>
   <section class="benefit-summary-page">
     <section class="panel applied-table-panel">
-      <a-tabs v-model="activeTab" class="benefit-tabs" @change="changeTab">
+      <a-tabs v-model="activeTab" class="benefit-tabs shared-list-tabs" @change="changeTab">
         <a-tab-pane v-for="tab in tabs" :key="tab.key" :tab="tab.label" />
       </a-tabs>
       <form class="filter-grid benefit-filters" @submit.prevent="applyFilters">
@@ -72,9 +72,7 @@ export default {
 
 <style scoped>
 .benefit-summary-page { min-width: 0; }
-.benefit-tabs >>> .ant-tabs-bar { min-height: 76px; margin: 0; padding: 0 20px; border-bottom-color: #edf1f5; }
-.benefit-tabs >>> .ant-tabs-nav .ant-tabs-tab { height: 76px; margin-right: 28px; padding: 0; display: inline-flex; align-items: center; box-sizing: border-box; }
-.benefit-tabs >>> .ant-tabs-tab-active { color: #1677ff; font-weight: 600; }
+
 .benefit-filters { display: flex; align-items: center; gap: 12px; padding: 20px; flex-wrap: wrap; }
 .benefit-filters .ant-select { width: 200px; }
 .benefit-filters .ant-btn { height: 38px; border-radius: 8px; }
@@ -84,7 +82,6 @@ export default {
 .benefit-table-wrap { min-width: 0; overflow-x: auto; }
 .benefit-table-heading { margin: 0; padding: 0 20px 16px; color: #18253c; font-size: 16px; font-weight: 700; line-height: 1.6; }
 .benefit-table { width: 100%; min-width: 1140px; table-layout: fixed; border-collapse: collapse; color: #35455a; }
-.benefit-number { width: 170px; }.benefit-rate { width: 120px; }.benefit-coverage { width: 160px; }.benefit-count { width: 110px; }
 .benefit-table th { height: 54px; color: #506177; font-weight: 700; background: #f7f9fc; }
 .benefit-table th, .benefit-table td { padding: 14px 12px; border-bottom: 1px solid #e8edf3; line-height: 1.6; white-space: normal; overflow-wrap: anywhere; }
 .benefit-table th:first-child, .benefit-table td:first-child { padding-left: 20px; }
@@ -93,13 +90,10 @@ export default {
 .benefit-completion { color: #1677ff; }
 .benefit-table tbody tr:hover { background: #fafcff; }
 .benefit-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
-@media (max-width: 1439px) { .benefit-table { min-width: max(1140px, calc(100vw - 100px)); } }
-.benefit-species-table { min-width: 1140px; }
 .benefit-species-table col:first-child { width: auto; }
 .benefit-species-table .benefit-number,
 .benefit-species-table .benefit-rate,
 .benefit-species-table .benefit-count { width: 180px; }
-.benefit-area-table { min-width: 1140px; }
 .benefit-area-table col:first-child { width: auto; }
 .benefit-area-table .benefit-number,
 .benefit-area-table .benefit-rate,

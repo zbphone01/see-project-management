@@ -12,7 +12,7 @@
       </div>
     </section>
     <section class="panel applied-table-panel">
-      <a-table class="applied-table" :columns="columns" :data-source="filteredReports" :pagination="pagination" :scroll="{ x: true }" row-key="id" @change="changePage">
+      <a-table class="applied-table shared-list-table shared-list-fixed shared-list-inset-8 shared-list-operation-spacing" :columns="columns" :data-source="filteredReports" :pagination="pagination" :scroll="{ x: true }" row-key="id" @change="changePage">
         <template slot="project" slot-scope="text, report">
           <div class="table-project">
             <div :class="['table-project-cover', report.cover]"><img v-if="report.image" :src="report.image" :alt="report.name" /><a-icon v-else :type="report.icon" /></div>
@@ -63,7 +63,7 @@ export default {
         { title: '报告周期', key: 'period', width: 120, align: 'center', scopedSlots: { customRender: 'period' } },
         { title: '提交时间', dataIndex: 'submittedAt', width: 120, align: 'center', scopedSlots: { customRender: 'submittedAt' } },
         { title: '成果指标', dataIndex: 'outcome', width: 90, align: 'center', scopedSlots: { customRender: 'outcome' } },
-        { title: '操作', key: 'operation', width: 90, fixed: 'right', align: 'center', scopedSlots: { customRender: 'operation' } }
+        { title: '操作', key: 'operation', width: 120, fixed: 'right', align: 'center', scopedSlots: { customRender: 'operation' } }
       ]
     }
   },
@@ -112,11 +112,8 @@ export default {
 .reports-filters { grid-template-columns: minmax(140px, 1.2fr) repeat(3, minmax(120px, 1fr)) minmax(140px, 1fr) minmax(150px, 1fr) 193px; gap: 10px; }
 .reports-filters .filter-actions { grid-column: auto; }
 .reports-filters .filter-actions .ant-btn { flex: none; width: 92px; }
-.reports-page ::v-deep .applied-table .ant-table-thead > tr > th,
-.reports-page ::v-deep .applied-table .ant-table-tbody > tr > td { padding-right: 8px; padding-left: 8px; }
+
 .reports-page ::v-deep .applied-table .report-id-column { box-sizing: border-box; width: 110px !important; min-width: 110px !important; max-width: 110px !important; }
-.reports-page ::v-deep .applied-table .ant-table-scroll table { width: 100% !important; min-width: 1140px !important; table-layout: fixed; }
-.reports-page ::v-deep .operation-button { gap: 2px; }
-.reports-page ::v-deep .operation-button > span + .anticon { margin-left: 0; }
+
 .report-project-name { max-width: 100%; min-width: 0; margin-bottom: 5px; color: #18253c; font-size: 16px; text-align: left; white-space: normal; overflow-wrap: anywhere; line-height: 1.5; }
 </style>

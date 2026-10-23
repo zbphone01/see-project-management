@@ -95,7 +95,7 @@ export default {
     noticeHistoryVisible: false,
     // 本地演示通知；接入接口后由服务端提供历史记录。
     historyNotices: systemNotices,
-    expandedNav: { projects: true },
+    expandedNav: {},
     navigation: [
         { key: 'dashboard', label: '工作台', icon: 'desktop' },
         { key: 'dashboard-see', label: '工作台-SEE', icon: 'dashboard' },
@@ -118,7 +118,7 @@ export default {
       ]
   } },
   computed: {
-    activeNav () { if (['benefit-species-detail', 'benefit-list-detail', 'benefit-document-detail'].includes(this.$route.name)) return 'benefit-summary'; return ['fundraising-plan-detail', 'fundraising-plan-form'].includes(this.$route.name) ? 'fundraising-plans' : ['fundraising-application-detail', 'fundraising-application-form'].includes(this.$route.name) ? 'framework-agreements' : this.$route.name },
+    activeNav () { if (this.$route.name === 'benefit-region-detail') return 'benefit-regions'; if (['benefit-species-detail', 'benefit-list-detail', 'benefit-document-detail'].includes(this.$route.name)) return 'benefit-summary'; return ['fundraising-plan-detail', 'fundraising-plan-form'].includes(this.$route.name) ? 'fundraising-plans' : ['fundraising-application-detail', 'fundraising-application-form'].includes(this.$route.name) ? 'framework-agreements' : this.$route.name },
     breadcrumbRoot () {
       if (['benefit-summary', 'benefit-regions'].includes(this.activeNav)) return '收益数据'
       if (['organization-list', 'organization-detail', 'organization-form'].includes(this.activeNav)) return '机构管理'
@@ -137,18 +137,6 @@ export default {
       if (this.activeNav === 'payment-applications') return '请款申请'
       if (this.activeNav === 'framework-agreements') return '框架协议'
       return this.activeNav === 'recruitment-summary' ? '招募汇总' : this.activeNav === 'project-reports' ? '进展/结项' : this.activeNav === 'dashboard-see' ? 'SEE首页' : this.activeNav === 'available-projects' ? '可申请项目' : this.activeNav === 'applied-projects' ? '已申请项目' : '伙伴首页'
-    }
-  },
-  watch: {
-    '$route.name': {
-      immediate: true,
-      handler () {
-      if (['benefit-summary', 'benefit-regions'].includes(this.activeNav)) this.$set(this.expandedNav, 'benefit', true)
-      if (['organization-list', 'organization-detail', 'organization-form'].includes(this.activeNav)) this.$set(this.expandedNav, 'organization', true)
-      if (['recruitment-summary', 'available-projects', 'recruitment-detail', 'recruitment-form', 'applied-projects', 'fundraising-plans', 'framework-agreements', 'project-detail', 'project-form', 'project-reports', 'payment-applications', 'report-detail'].includes(this.activeNav)) {
-        this.$set(this.expandedNav, 'projects', true)
-      }
-      }
     }
   },
   methods: {

@@ -1,14 +1,14 @@
 <template>
-  <section class="species-detail-page">
+  <section class="species-detail-page shared-list-detail">
     <div class="detail-back-row"><a-button class="detail-back" @click="goBack"><a-icon type="arrow-left" /> 返回</a-button></div>
     <section class="panel applied-table-panel">
-      <div class="species-title"><h2>物种详情</h2></div>
-      <form class="filter-grid species-filters" @submit.prevent="applyFilters">
+      <div class="species-title shared-list-title"><h2>物种详情</h2></div>
+      <form class="filter-grid species-filters shared-list-detail-filters" @submit.prevent="applyFilters">
         <a-select v-model="filters.year" aria-label="年份"><a-select-option value="all">全部年份</a-select-option><a-select-option v-for="year in years" :key="year" :value="year">{{ year }}年</a-select-option></a-select>
         <a-select v-model="filters.department" aria-label="部门"><a-select-option value="all">全部部门</a-select-option><a-select-option v-for="department in departments" :key="department" :value="department">{{ department }}</a-select-option></a-select>
         <div class="filter-actions"><a-button type="primary" html-type="submit" icon="filter">筛选</a-button></div>
       </form>
-      <a-table class="applied-table species-table" :columns="columns" :data-source="filteredRecords" row-key="id" :pagination="pagination" :scroll="{ x: true }" :locale="{ emptyText: '暂无符合条件的物种数据' }" @change="changePage">
+      <a-table class="applied-table species-table shared-list-table shared-list-fixed shared-list-inset-8 shared-list-wrap shared-list-first-inset" :columns="columns" :data-source="filteredRecords" row-key="id" :pagination="pagination" :scroll="{ x: true }" :locale="{ emptyText: '暂无符合条件的物种数据' }" @change="changePage">
         <template slot="name" slot-scope="text, record"><div class="species-name">{{ record.name }}</div><div class="species-latin">{{ record.latinName }}</div></template>
         <template slot="number" slot-scope="value">{{ formatNumber(value) }}</template>
         <template slot="completion" slot-scope="text, record"><span class="species-completion">{{ completion(record) }}</span></template>
@@ -57,14 +57,7 @@ export default {
 </script>
 
 <style scoped>
-.species-detail-page { min-width: 0; display: grid; gap: 20px; }
-.species-title { padding: 20px; border-bottom: 1px solid #edf1f5; }
-.species-title h2 { margin: 0; font-size: 16px; font-weight: 700; color: #18253c; }
-.species-filters { padding: 20px; grid-template-columns: 200px 200px 88px; }
-.species-filters .filter-actions { grid-template-columns: 1fr; }
-.species-table >>> .ant-table-scroll table { width: 100% !important; min-width: 1140px !important; table-layout: fixed; }
-.species-table >>> .ant-table-thead > tr > th, .species-table >>> .ant-table-tbody > tr > td { padding-left: 8px; padding-right: 8px; white-space: normal; overflow-wrap: anywhere; }
-.species-table >>> .ant-table-thead > tr > th:first-child, .species-table >>> .ant-table-tbody > tr > td:first-child { padding-left: 20px; }
+
 .species-name, .species-latin { min-width: 0; white-space: normal; overflow-wrap: anywhere; line-height: 1.6; }
 .species-latin { margin-top: 4px; color: #718095; }
 .species-completion { color: #1677ff; }

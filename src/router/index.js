@@ -4,6 +4,7 @@ import { appliedProjects } from '../mock/projects'
 import { editableDraftIds } from '../mock/project-drafts'
 import recruitmentDetails from '../mock/recruitment-details.json'
 import { createOrganizations } from '../mock/organizations'
+import { getBenefitRegion, getBenefitRegionCode } from '../mock/benefit-regions'
 
 Vue.use(VueRouter)
 
@@ -16,6 +17,11 @@ const router = new VueRouter({
     { path: '/downloads', name: 'download', component: () => import('../views/DataDownloads.vue') },
     { path: '/benefits/summary', name: 'benefit-summary', component: () => import('../views/BenefitSummary.vue') },
     { path: '/benefits/regions', name: 'benefit-regions', component: () => import('../views/BenefitRegions.vue') },
+    { path: '/benefits/regions/detail', name: 'benefit-region-detail', component: () => import('../views/BenefitRegionDetail.vue') },
+    { path: '/benefits/regions/example', redirect: route => {
+      const regionCode = route.query.regionCode || (route.query.region ? getBenefitRegionCode(route.query.region) : '110000')
+      return getBenefitRegion(regionCode) ? { name: 'benefit-region-detail', query: { regionCode } } : { name: 'benefit-regions' }
+    } },
     { path: '/benefits/species', name: 'benefit-species-detail', component: () => import('../views/BenefitSpeciesDetail.vue') },
     { path: '/benefits/lists', name: 'benefit-list-detail', component: () => import('../views/BenefitListDetail.vue') },
     { path: '/benefits/documents', name: 'benefit-document-detail', component: () => import('../views/BenefitDocumentDetail.vue') },
@@ -60,6 +66,9 @@ const router = new VueRouter({
 
 // 全局守卫也覆盖详情页之间仅变更项目 ID 的导航。
 router.beforeEach((to, from, next) => {
+  if (to.name === 'benefit-region-detail' && !getBenefitRegion(to.query.regionCode)) {
+    next({ name: 'benefit-regions', replace: true }); return
+  }
   if (['organization-detail', 'organization-form'].includes(to.name) && !(to.name === 'organization-form' && to.params.id === 'new') && !createOrganizations().some(item => item.id === to.params.id)) {
     next({ name: 'organization-list', replace: true }); return
   }

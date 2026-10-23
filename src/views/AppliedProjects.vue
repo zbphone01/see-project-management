@@ -37,7 +37,7 @@
           </div>
 
           <a-table
-            class="applied-table"
+            class="applied-table shared-list-table shared-list-inset-8 shared-list-operation-spacing"
             :columns="appliedColumns"
             :data-source="filteredAppliedProjects"
             :row-selection="appliedRowSelection"
@@ -177,7 +177,7 @@ export default {
         { title: '项目状态', dataIndex: 'status', key: 'status', width: 150, align: 'center', scopedSlots: { customRender: 'status' } },
         { title: '筹款状态', dataIndex: 'fundraising', key: 'fundraising', width: 110, align: 'center', scopedSlots: { customRender: 'fundraising' } },
         { title: '状态更新时间', dataIndex: 'updatedAt', key: 'updatedAt', width: 120, align: 'center', scopedSlots: { customRender: 'updatedAt' } },
-        { title: '操作', key: 'operation', fixed: 'right', width: 90, align: 'center', scopedSlots: { customRender: 'operation' } }
+        { title: '操作', key: 'operation', fixed: 'right', width: 120, align: 'center', scopedSlots: { customRender: 'operation' } }
       ]
   } },
   computed: {
@@ -296,10 +296,5 @@ export default {
 </script>
 
 <style scoped>
-.applied-projects-page ::v-deep .applied-table .ant-table-thead > tr > th,
-.applied-projects-page ::v-deep .applied-table .ant-table-tbody > tr > td { padding-right: 8px; padding-left: 8px; }
-.applied-projects-page ::v-deep .operation-button { gap: 2px; }
-.applied-projects-page ::v-deep .operation-button > span + .anticon { margin-left: 0; }
-.applied-projects-page ::v-deep .ant-table-scroll table { width: 100% !important; min-width: 1140px !important; }
 .applied-overdue-label { display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: 8px; color: #d48806; line-height: 1.5; }
 </style>
