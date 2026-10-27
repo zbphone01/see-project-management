@@ -188,7 +188,7 @@
 
         <section id="detail-budget" class="panel detail-section">
           <div class="detail-section-header"><span class="detail-section-icon gold"><a-icon type="fund" /></span><div><h2>在线预算表</h2><p>项目预算及执行情况概览</p></div></div><div class="detail-module-content">
-          <budget-prototype embedded :donation-project="isDonationProject" :project-name="detailProject.name" :budget="detailTableData.budget" />
+          <budget-prototype embedded shared-data :donation-project="isDonationProject" :project-name="budgetProject ? budgetProject.name : detailProject.name" :project="budgetContext" :budget="budgetProject ? budgetProject.budget : detailTableData.budget" />
         </div></section>
 
         <section v-if="!snapshotEntry && !isGreenHomeExample" id="detail-attachments" class="panel detail-section">
@@ -289,6 +289,7 @@
 </template>
 
 <script>
+import { budgetKey, readBudgetProject, readSavedBudget, normalizeBudget } from '../utils/project-budget'
 import defaultTableData from '../mock/project-tables.json'
 import greenHomeTableData from '../mock/project-green-home-detail.json'
 import grassTableData from '../mock/project-grass-detail.json'
@@ -405,16 +406,17 @@ export default {
   },
   data () {
     const typeTableData = detailTableDataByType[this.detailType] || defaultTableData
-    const sourceTableData = this.tableData || (['one-time-donation', 'monthly-donation'].includes(this.detailType)
+    const sourceTableData = (this.tableData ? { ...typeTableData, ...this.tableData, basic: { ...typeTableData.basic, ...(this.tableData.basic || {}) } } : null) || (['one-time-donation', 'monthly-donation'].includes(this.detailType)
       ? { ...defaultTableData, ...typeTableData, basic: { ...defaultTableData.basic, ...typeTableData.basic } }
       : typeTableData)
     const comments = Object.prototype.hasOwnProperty.call(sourceTableData, 'reviewComments') ? { ...sourceTableData.reviewComments } : { targets: '请补充各项目目标板块对应的成果指标及衡量方式。', overview: '请补充项目受益范围和社区参与方式。', 'areas.areas-1': '请核实实施区域与活动地点的一致性。', 'outputs.output-1': '请明确产出的数量、完成时间和验收依据。', 'activities.activity-2-1': '请补充活动实施安排及执行人员分工。' }
     try {
       const saved = JSON.parse(localStorage.getItem('see-project-review-example-' + this.projectId))
-      if (saved && saved.reviewComments && typeof saved.reviewComments === 'object' && !Array.isArray(saved.reviewComments)) { Object.keys(comments).forEach(key => delete comments[key]); Object.assign(comments, saved.reviewComments) }
+      if (!this.tableData && saved && saved.reviewComments && typeof saved.reviewComments === 'object' && !Array.isArray(saved.reviewComments)) { Object.keys(comments).forEach(key => delete comments[key]); Object.assign(comments, saved.reviewComments) }
     } catch (error) { /* Invalid local data does not prevent opening the page. */ }
     return {
     detailTableData: { ...JSON.parse(JSON.stringify(sourceTableData)), reviewComments: comments },
+    budgetProject: null,
     activeSnapshot: null,
     snapshotData: null,
     targetReviewVisible: false,
@@ -434,6 +436,11 @@ export default {
     auditExecutingFundingTotal: 5000
   } },
   computed: {
+    budgetContext () {
+      if (this.budgetProject) return this.budgetProject
+      const source = this.tableData || this.detailTableData
+      return { ...(source.basic || {}), ...source }
+    },
     isDonationProject () { return ['one-time-donation', 'monthly-donation'].includes(this.detailType) },
     reviewComments () { return this.detailTableData.reviewComments },
     detailAttachments () {
@@ -495,6 +502,20 @@ export default {
     }
   },
   methods: {
+    loadSharedBudget () {
+      this.budgetProject = null
+      if (this.snapshotEntry || this.tableData) return
+      try {
+        const key = budgetKey(this.$route)
+        const project = readBudgetProject(key)
+        if (project) { this.budgetProject = project; return }
+        const saved = readSavedBudget(key)
+        if (saved) {
+          const source = this.detailTableData
+          this.budgetProject = { id: this.projectId, name: this.detailProject.name, outputs: source.outputs || [], budget: normalizeBudget(saved, source) }
+        }
+      } catch (error) { this.$message.error('无法读取当前项目预算，请检查已保存数据。'); this.budgetProject = { name: this.detailProject.name, budget: normalizeBudget({}) } }
+    },
     isValidAuditAmount (value) { return typeof value === 'string' && /^\d{1,12}(\.\d{1,2})?$/.test(value.trim()) },
     formatAuditAmount (amount) {
       const value = amount.trim()
@@ -620,7 +641,10 @@ export default {
     notify (label) { this.$message.info(label) }
   },
   components: { ProjectSnapshotWindow, BudgetPrototype, ProjectRichContent, ReviewRowComments },
+  activated () { this.loadSharedBudget() },
   watch: {
+    '$route.fullPath' () { this.loadSharedBudget() },
+    tableData () { this.loadSharedBudget() },
     auditType () {
       // 同一详情页切换审核角色时，恢复演示带入值，避免上一个角色的输入污染只读金额。
       this.auditForm.result = 'approved'

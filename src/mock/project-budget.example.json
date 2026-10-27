@@ -1,0 +1,26 @@
+{
+  "id": 3,
+  "detailType": "project",
+  "name": "生态保护示例项目",
+  "code": "草稿 · 尚未提交",
+  "organization": "示例公益机构",
+  "start": "2026-01-20",
+  "end": "2026-02-05",
+  "thirdParties": [],
+  "team": [{ "id": "member-1", "name": "张三", "position": "正式员工", "responsibilities": "项目统筹和执行" }],
+  "outputs": [{ "id": "output-1", "name": "建立社区保护机制", "activities": [{ "id": "activity-1", "name": "开展社区培训" }] }],
+  "budget": {
+    "schemaVersion": 1,
+    "revision": 0,
+    "editStatus": "completed",
+    "personnelStatus": "completed",
+    "updatedAt": "2026-10-26T08:00:00.000Z",
+    "personnelUpdatedAt": "2026-10-26T08:00:00.000Z",
+    "rows": [{ "id": "cost-1", "kind": "activity", "outputId": "output-1", "activityId": "activity-1", "name": "培训物资", "type": "物资费", "price": 100, "quantity": 2, "unit": "套", "description": "每套100元，采购2套培训材料", "quarters": [200, 0, 0, 0], "adjustment": null, "adjustedBudget": null, "executed": null }],
+    "personnel": [{ "id": "personnel-1", "memberId": "member-1", "name": "张三", "position": "正式员工", "responsibilities": "项目统筹和执行", "nature": "项目人员", "monthly": 1000, "months": 2, "ratio": 50, "quarters": [1000, 1000, 0, 0], "remark": "专职", "adjustment": null, "adjustedBudget": null, "executed": null }],
+    "groups": [],
+    "legacyPersonnel": [],
+    "metadata": { "executionCutoff": "" }
+  },
+  "reviewComments": { "budget.rows.cost-1.description": "请核对培训材料的具体构成。" }
+}

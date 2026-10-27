@@ -55,6 +55,8 @@ const router = new VueRouter({
     { path: '/projects/:id/report/edit', name: 'report-form', component: () => import('../views/ReportForm.vue'),
       props: route => ({ projectId: route.params.id, type: route.query.type === 'completion' ? 'completion' : 'progress' })
     },
+    { path: '/projects/:id/budget', name: 'project-budget-form', component: () => import('../views/ProjectBudgetForm.vue') },
+    { path: '/projects/:id/personnel', name: 'project-personnel-form', component: () => import('../views/ProjectPersonnelForm.vue') },
     { path: '/projects/:id/edit', name: 'project-form', component: () => import('../views/ProjectForm.vue') },
     { path: '/projects/:id', name: 'project-detail', component: () => import('../views/ProjectDetail.vue'),
       props: route => ({ projectId: Number(route.params.id), mode: route.query.mode === 'audit' ? 'audit' : 'view', detailType: route.query.detailType || 'default', auditType: route.query.auditType || 'default' })

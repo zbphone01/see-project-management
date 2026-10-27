@@ -82,7 +82,7 @@
 
     <section v-if="!isDonationProject" class="panel form-section"><div class="detail-section-header"><span class="detail-section-icon red"><a-icon type="safety-certificate" /></span><div><h2>项目管理计划</h2><p v-if="hasManagementReviewComments">请检查并修改标红的项目信息，点击行任意位置可查看具体审核意见</p></div></div><div class="project-module-content"><div v-for="section in tableSections.filter(section => isOrganizationProject ? section.key === 'risks' : ['stakeholders', 'risks', 'monitoring'].includes(section.key))" :key="section.key" class="management-section"><div class="field organization-table-heading"><label>{{ section.title }}</label></div><div class="detail-table-wrap management-table-wrap"><table class="detail-table management-entry-table" :class="{ 'green-home-risk-table': section.key === 'risks' }"><colgroup><col class="management-col-index" /><col v-for="field in section.fields" :key="field.key" /><col class="management-col-actions" /></colgroup><thead><tr><th>序号</th><th v-for="field in section.fields" :key="field.key">{{ section.key === 'risks' && field.key === 'likelihood' ? '可能性' : field.label }}</th><th>操作</th></tr></thead><tbody><tr v-for="(row, index) in draft[section.key]" :key="row.id" :class="rowReviewClass(section.key, row)" :role="rowReviewComment(section.key, row) ? 'button' : undefined" :tabindex="rowReviewComment(section.key, row) ? 0 : undefined" @click="openRowReview(section.key, row)" @keydown.enter.prevent="openRowReview(section.key, row)" @keydown.space.prevent="openRowReview(section.key, row)"><td><a-popover v-if="rowReviewComment(section.key, row)" :visible="rowReviewKey === section.key + '.' + row.id" trigger="click" placement="topLeft" @visibleChange="visible => changeRowReviewVisibility(section.key, row, visible)"><template slot="content"><div class="row-review-content"><div><a-icon type="exclamation-circle" theme="filled" /><p>{{ rowReviewComment(section.key, row) }}</p></div><a-button size="small" type="primary" @click.stop="rowReviewKey = ''">关闭</a-button></div></template><span class="row-review-anchor">{{ index + 1 }}</span></a-popover><template v-else>{{ index + 1 }}</template></td><td v-for="field in section.fields" :key="field.key" :class="reviewClass(section.key + '.' + row.id + '.' + field.key)"><review-comment-label :comment="reviewComment(section.key + '.' + row.id + '.' + field.key)">{{ section.key === 'risks' && field.key === 'affectedActivities' ? riskTargetLabel(row) : row[field.key] }}</review-comment-label></td><td class="management-actions" @click.stop @keydown.stop><a-button type="link" @click="openRow(section.key, index)">编辑</a-button><a-button type="link" class="danger-link" @click="removeRow(section.key, index)">删除</a-button></td></tr><tr class="management-entry-row"><td>{{ draft[section.key].length + 1 }}</td><td v-for="field in section.fields" :key="field.key"></td><td class="management-actions"><a-button type="link" @click="openRow(section.key)">新增</a-button></td></tr></tbody></table></div></div></div></section>
 
-        <section id="form-budget" class="panel form-section budget-section"><div class="detail-section-header"><span class="detail-section-icon gold"><a-icon type="fund" /></span><div><h2>{{ isDonationProject ? '在线预算表' : '预算表' }}</h2></div></div><div class="project-module-content"><project-budget-editor :donation-project="isDonationProject" :hide-cost-type-analysis="isOrganizationProject" v-model="draft.budget" :project-name="draft.name" /></div></section>
+        <section id="form-budget" class="panel form-section budget-section"><div class="detail-section-header"><span class="detail-section-icon gold"><a-icon type="fund" /></span><div><h2>{{ isDonationProject ? '在线预算表' : '预算表' }}</h2></div></div><div class="project-module-content"><project-budget-editor :donation-project="isDonationProject" :hide-cost-type-analysis="isOrganizationProject" v-model="draft.budget" :project-name="draft.name" @open="openBudget" /></div></section>
 
     <section v-if="!isOrganizationProject" class="panel form-section attachment-section"><div class="detail-section-header"><span class="detail-section-icon blue"><a-icon type="paper-clip" /></span><div><h2>附件</h2></div></div><div class="project-module-content"><a-empty v-if="!draft.attachments.length" class="output-empty-add attachment-empty-add" description="点击添加附件" role="button" tabindex="0" @click="openAttachmentPicker" @keydown.enter.native.prevent="openAttachmentPicker" @keydown.space.native.prevent="openAttachmentPicker" /><template v-else><div class="attachment-list form-attachment-list"><div v-for="file in draft.attachments" :key="file.id"><div><strong>{{ file.name }}</strong><span>{{ file.category }} · {{ file.example ? '示例文件' : formatSize(file.size) }} · {{ file.time }}</span></div><a-button type="link" @click="previewAttachment(file)">预览</a-button><a-button type="link" @click="downloadAttachment(file)">下载</a-button><a-button type="link" class="danger-link" @click="removeAttachment(file)">删除</a-button></div></div><a-button class="add-more-attachment" type="dashed" icon="plus" @click="openAttachmentPicker">添加更多附件</a-button></template></div></section>
 
@@ -135,6 +135,7 @@ import { createGrassDraft, loadGrassDraft, saveGrassDraft, grassDecisionOptions,
 import { createGreenHomeDraft, loadGreenHomeDraft, saveGreenHomeDraft } from '../mock/green-home-project-draft'
 import ReviewCommentLabel from '../components/ReviewCommentLabel.vue'
 import ProjectBudgetEditor from '../components/ProjectBudgetEditor.vue'
+import { budgetKey, prepareBudgetContext, readBudgetContext, readSavedBudget, clearBudgetContext, saveProjectBudget, normalizeBudget } from '../utils/project-budget'
 import { createDraft, loadDraft, saveDraft, createDashboardDraft, clone, money, uppercaseMoney, budgetTotal, roundMoney, draftFile } from '../mock/project-drafts'
 
 // 只保留编辑器提供的基础排版，粘贴内容不携带外部 HTML、脚本或样式。
@@ -378,6 +379,11 @@ export default {
   },
   created () {
     try { this.draft = this.isDonationProject ? loadOneTimeDonationDraft(this.isFreshDonation, this.$route.query.detailType) : this.isGrass ? loadGrassDraft(this.$route.query.fresh === '1') : this.isOrganizationProject ? loadGreenHomeDraft(this.$route.query.fresh === '1') : loadDraft(Number(this.$route.params.id), this.isDashboardExample) } catch (error) { this.$message.warning('无法读取本地草稿，已打开空白填写页。原保存内容尚未覆盖。') }
+    try { this.draft.budget = normalizeBudget(this.draft.budget, this.draft) } catch (error) { this.$message.error('预算数据格式无效，请检查原始 JSON。原保存内容尚未覆盖。') }
+    let budgetReturnContext = null
+    if (this.$route.query.budgetReturn === '1') {
+      try { budgetReturnContext = readBudgetContext(budgetKey(this.$route)); if (budgetReturnContext) this.draft = budgetReturnContext.draft } catch (error) { this.$message.warning('无法恢复预算编辑前的项目信息，请核对当前内容') }
+    }
     if (this.isDonationProject) {
       this.richFields = [
         { key: 'overview', label: '项目概述' },
@@ -408,17 +414,36 @@ export default {
     if (this.isGrass) this.amountFields.find(field => field.key === 'requested').label = '申请资金'
     if (this.isGrass) this.tableSections.find(section => section.key === 'organizationMembers').fields.find(field => field.key === 'workType').options = ['全职', '兼职', '实习生', '核心志愿者']
     if (this.isAutomaticBudgetTotal) this.draft.total = this.automaticBudgetTotal
-    this.savedSnapshot = JSON.stringify(this.draft)
+    this.savedSnapshot = budgetReturnContext && budgetReturnContext.savedSnapshot ? budgetReturnContext.savedSnapshot : JSON.stringify(this.draft)
   },
-  activated () { window.addEventListener('beforeunload', this.beforeUnload) },
+  activated () { this.restoreBudget(); window.addEventListener('beforeunload', this.beforeUnload) },
   deactivated () { window.removeEventListener('beforeunload', this.beforeUnload) },
   beforeDestroy () { this.clearPreview(); window.removeEventListener('beforeunload', this.beforeUnload) },
   beforeRouteLeave (to, from, next) {
     if (this.uploading) { this.$message.info('附件正在保存，请稍候。'); next(false); return }
+    if (['project-budget-form', 'project-personnel-form'].includes(to.name) && budgetKey(to) === budgetKey(from)) { next(); return }
     if (!this.dirty && !this.fundraisingEdit.id) { next(); return }
     this.$confirm({ title: '填写内容尚未保存', content: '是否保存为本地草稿后离开？', maskClosable: false, okText: '保存并离开', cancelText: '继续填写', onOk: () => { if (this.save()) next(); else next(false) }, onCancel: () => next(false) })
   },
   methods: {
+    restoreBudget () {
+      try { const saved = readSavedBudget(budgetKey(this.$route)); if (saved) this.$set(this.draft, 'budget', saved); if (this.$route.query.budgetReturn === '1') clearBudgetContext(budgetKey(this.$route)) } catch (error) { this.$message.warning('无法读取已保存预算，原保存内容尚未覆盖') }
+    },
+    openBudget ({ action, detail, title }) {
+      if (this.uploading) { this.$message.info('附件正在保存，请稍候'); return }
+      if (action === '编辑') {
+        const missing = []
+        if (!this.draft.outputs.length || !this.draft.outputs.some(output => (output.activities || []).length)) missing.push('产出及活动')
+        const team = this.isOrganizationProject ? this.draft.organizationMembers : this.draft.team
+        if (!(team || []).length) missing.push(this.isOrganizationProject ? '组织人员' : '执行团队')
+        if (missing.length) { this.$info({ title: '请先完善项目信息', content: '需要先添加' + missing.join('、') + '，再编辑预算表。', maskClosable: false, okText: '知道了' }); return }
+      }
+      if (!detail && title !== '人力成本分摊表') { this.$message.info(title + action + '功能暂未开放'); return }
+      try {
+        prepareBudgetContext(this.$route, this.draft, this.isDonationProject, this.savedSnapshot)
+        this.$router.push({ name: detail ? 'project-budget-form' : 'project-personnel-form', params: { id: this.$route.params.id }, query: { ...this.$route.query, budgetType: this.isDonationProject ? 'donation' : 'project', mode: action === '查看' ? 'view' : 'edit' } })
+      } catch (error) { this.$message.error('无法保留当前项目信息，请检查浏览器存储后重试') }
+    },
     saveAndRemind () { if (this.save()) this.$message.info('草稿已保存；提醒SEE填写为演示操作，尚未发送通知') },
     prefillDonationGuidance () {
       if (!this.isDonationProject || this.draft.savedAt) return
@@ -529,7 +554,7 @@ export default {
       if (this.uploading) { this.$message.info('请等待附件保存完成'); return false }
       if (this.fundraisingEdit.id) { this.$message.warning('请先保存或取消正在编辑的筹资记录'); return false }
       if (this.isAutomaticBudgetTotal) this.draft.total = this.automaticBudgetTotal
-      try { this.draft.savedAt = this.isDonationProject ? saveOneTimeDonationDraft(this.draft, this.isFreshDonation, this.$route.query.detailType) : this.isGrass ? saveGrassDraft({ ...this.draft, organizationBasicInfo: { ...this.draft.organizationBasicInfo, staffCounts: this.organizationStaffCounts } }, this.$route.query.fresh === '1') : this.isOrganizationProject ? saveGreenHomeDraft({ ...this.draft, organizationBasicInfo: { ...this.draft.organizationBasicInfo, staffCounts: this.organizationStaffCounts } }, this.$route.query.fresh === '1') : saveDraft(this.draft, this.isDashboardExample); this.savedSnapshot = JSON.stringify(this.draft); this.$message.success('草稿已保存到当前浏览器'); return true } catch (error) { this.$message.error('保存失败：浏览器存储不可用或空间不足，请保留当前页面后重试。'); return false }
+      try { this.draft.budget = saveProjectBudget(budgetKey(this.$route), this.draft); this.draft.savedAt = this.isDonationProject ? saveOneTimeDonationDraft(this.draft, this.isFreshDonation, this.$route.query.detailType) : this.isGrass ? saveGrassDraft({ ...this.draft, organizationBasicInfo: { ...this.draft.organizationBasicInfo, staffCounts: this.organizationStaffCounts } }, this.$route.query.fresh === '1') : this.isOrganizationProject ? saveGreenHomeDraft({ ...this.draft, organizationBasicInfo: { ...this.draft.organizationBasicInfo, staffCounts: this.organizationStaffCounts } }, this.$route.query.fresh === '1') : saveDraft(this.draft, this.isDashboardExample); this.savedSnapshot = JSON.stringify(this.draft); this.$message.success('草稿已保存到当前浏览器'); return true } catch (error) { this.$message.error('保存失败：浏览器存储不可用或空间不足，请保留当前页面后重试。'); return false }
     },
     submit () {
       if (this.isAutomaticBudgetTotal) this.draft.total = this.automaticBudgetTotal

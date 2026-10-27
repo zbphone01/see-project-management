@@ -26,7 +26,7 @@
               :key="child.key"
               :title="child.label"
               class="nav-child"
-              :class="{ active: activeNav === child.key || (['organization-detail', 'organization-form'].includes(activeNav) && child.key === 'organization-list') || (['project-detail', 'project-form'].includes(activeNav) && child.key === 'applied-projects') || (activeNav === 'report-detail' && child.key === 'project-reports') || (['recruitment-detail', 'recruitment-form'].includes(activeNav) && child.key === 'available-projects') }"
+              :class="{ active: activeNav === child.key || (['organization-detail', 'organization-form'].includes(activeNav) && child.key === 'organization-list') || (['project-detail', 'project-form', 'project-budget-form', 'project-personnel-form'].includes(activeNav) && child.key === 'applied-projects') || (activeNav === 'report-detail' && child.key === 'project-reports') || (['recruitment-detail', 'recruitment-form'].includes(activeNav) && child.key === 'available-projects') }"
               @click="selectNav(child)"
             >
               <span>{{ child.label }}</span>
@@ -120,11 +120,14 @@ export default {
   computed: {
     activeNav () { if (this.$route.name === 'benefit-region-detail') return 'benefit-regions'; if (['benefit-species-detail', 'benefit-list-detail', 'benefit-document-detail'].includes(this.$route.name)) return 'benefit-summary'; return ['fundraising-plan-detail', 'fundraising-plan-form'].includes(this.$route.name) ? 'fundraising-plans' : ['fundraising-application-detail', 'fundraising-application-form'].includes(this.$route.name) ? 'framework-agreements' : this.$route.name },
     breadcrumbRoot () {
+      if (['project-budget-form', 'project-personnel-form'].includes(this.activeNav)) return '项目管理'
       if (['benefit-summary', 'benefit-regions'].includes(this.activeNav)) return '收益数据'
       if (['organization-list', 'organization-detail', 'organization-form'].includes(this.activeNav)) return '机构管理'
       return ['recruitment-summary', 'available-projects', 'recruitment-detail', 'recruitment-form', 'applied-projects', 'fundraising-plans', 'framework-agreements', 'project-detail', 'project-form', 'project-reports', 'payment-applications', 'report-detail'].includes(this.activeNav) ? '项目管理' : '工作台'
     },
     breadcrumbLeaf () {
+      if (this.activeNav === 'project-personnel-form') return '人力成本分摊表'
+      if (this.activeNav === 'project-budget-form') return '预算及执行明细表'
       if (this.activeNav === 'benefit-summary') return '数据汇总'
       if (this.activeNav === 'benefit-regions') return '地区数据'
       if (this.activeNav === 'download') return '数据下载'

@@ -122,7 +122,7 @@
             <img class="ai-banner-avatar" src="/assets/ai-agent.png" alt="AI 项目助手头像" />
             <span class="ai-banner-copy">
               <strong>AI 项目助手</strong>
-              <span>申请、执行、财务问题，随时问我</span>
+              <span>机构、项目、制度问题即时解答</span>
             </span>
             <span class="ai-banner-action">立即对话</span>
           </button>
@@ -200,6 +200,9 @@ export default {
       this.$router.push({ name: 'recruitment-detail', params: { id: String(item.id) }, query: { from: 'dashboard' } })
     },
     handleProjectAction (project, action) {
+      if (action.label === '上传预算表') {
+        this.$message.info('待后续开发'); return
+      }
       if (action.label === '请求修订') {
         this.$confirm({
           title: '请求修订',
@@ -237,6 +240,18 @@ export default {
 </script>
 
 <style scoped>
+.dashboard-grid { font-size: 14px; }
+.panel-header h2 { font-size: 16px; font-weight: 700; }
+.status-chip { font-size: 13px; }
+button, .ant-btn { font-size: 14px; }
+.project-info h3, .donation-info h3, .recruit-info h3, .recommend-copy strong { font-size: 16px; }
+.project-info p, .project-time, .recruit-info p, .recruit-meta,
+.notice-content, .notice-item time, .side-link,
+.organization-title > div > span, .contact-list, .last-login { font-size: 14px; }
+.organization-title strong { font-size: 16px; font-weight: 700; }
+.organization-stats strong { font-size: 20px; font-weight: 700; }
+.ai-banner-copy strong { font-size: 16px; font-weight: 700; }
+.organization-stats span, .ai-banner-copy > span { font-size: 14px; }
 .registration-banner {
   position: relative;
   min-width: 0;
@@ -278,7 +293,7 @@ export default {
   color: #fff;
   background: linear-gradient(180deg, #ff8729, #ff6420);
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
   box-shadow: 0 2px 0 rgba(0,0,0,.043);
 }
 .registration-banner-action.ant-btn:hover,

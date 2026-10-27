@@ -1,3 +1,4 @@
+import { buildBudgetRows, budgetPersonnelAmount, budgetMoney } from '../utils/project-budget-data'
 // 独立的本地演示草稿，不改变已申请项目与审核页的数据。
 export const draftId = 3
 export const revisionDraftId = 5
@@ -118,8 +119,8 @@ export async function draftFile (operation, key, file) {
   } finally { db.close() }
 }
 
-export const personnelTotal = rows => roundMoney(rows.reduce((sum, row) => sum + roundMoney(row.monthly * row.months * row.ratio / 100), 0))
-export const budgetTotal = budget => roundMoney(budget.rows.reduce((sum, row) => sum + row.quarters.reduce((value, amount) => value + roundMoney(amount), 0), 0) + personnelTotal(budget.personnel))
+export const personnelTotal = rows => budgetMoney(rows.reduce((sum, row) => sum + budgetPersonnelAmount(row), 0))
+export const budgetTotal = budget => buildBudgetRows({}, budget)[0].total
 
 export function uppercaseMoney (value) {
   if (value === null || value === '' || !Number.isFinite(Number(value))) return '—'
