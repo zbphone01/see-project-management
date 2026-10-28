@@ -364,19 +364,16 @@ export default {
 .report-benefits-table tr.review-row-trigger:focus-visible { outline: 2px solid #ff7875; outline-offset: -2px; }
 .report-detail-page .output-title > span { flex: none; }
 
-.report-progress-records h3, .report-activity-label { margin: 0 0 12px; color: #18253c; font-size: 14px; font-weight: 600; }
+.report-progress-records h3, .report-activity-label { margin: 0 0 12px; color: #18253c; }
 .report-progress-entry { position: relative; display: grid; grid-template-columns: 94px minmax(0, 1fr); align-items: start; gap: 16px; padding: 3px 0 11px; border-top: 0; }
 .report-progress-entry time { color: #18253c; font-variant-numeric: tabular-nums; line-height: 1.65; }
 .report-progress-entry p { position: relative; margin: 0; min-width: 0; color: #18253c; line-height: 1.65; overflow-wrap: anywhere; }
 
-
-
 .report-detail-page .output-standard > div { padding-top: 4px; }
 .output-progress-records { display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: start; gap: 8px; margin: 0; padding: 16px 18px; border: 0; border-radius: 0; background: #fff; }
-.output-progress-records > h3 { width: max-content; margin: 0; padding: 4px 9px; border-radius: 6px; color: #1677ff; background: #edf5ff; font-size: var(--text-14); line-height: 1.55; }
+.output-progress-records > h3 { width: max-content; margin: 0; padding: 4px 9px; border-radius: 6px; color: #1677ff; background: #edf5ff; line-height: 1.55; }
 .output-progress-list { min-width: 0; padding-top: 0; }
 .output-progress-list .report-progress-entry + .report-progress-entry { padding-top: 8px; border-top: 1px solid #edf1f5; }
-.output-progress-list .report-progress-entry time, .output-progress-list .report-progress-entry p { font-size: var(--text-14); }
 .output-progress-list .report-progress-entry p { white-space: normal; }
 
 .output-progress-list .report-progress-entry.is-latest { min-height: 48px; padding-top: 12px; padding-bottom: 12px; }
@@ -391,7 +388,6 @@ export default {
 .report-activity-label { margin-bottom: 6px; }
 .report-detail-page .activity-card > p { color: #18253c; }
 .report-detail-page .activity-card > div:first-child > span { flex: none; }
-.report-detail-page .rich-content h3 { font-size: 16px; }
 .report-detail-page .rich-text-field { overflow-wrap: anywhere; }
 .report-benefits-table td { overflow-wrap: anywhere; }
 .report-benefits-table .report-benefit-indicator { width: 120px; }
@@ -412,14 +408,14 @@ export default {
 .report-mismatch-modal >>> .ant-modal-body { padding: 36px 28px 28px; }
 .report-mismatch-heading { display: flex; align-items: center; gap: 12px; }
 .report-mismatch-heading .anticon { font-size: 22px; }
-.report-mismatch-dialog h3 { margin: 0; color: #18253c; font-size: 16px; font-weight: 700; line-height: 1.5; }
+.report-mismatch-dialog h3 { margin: 0; color: #18253c; line-height: 1.5; }
 .report-mismatch-copy { margin: 8px 0 0 34px; color: #718095; line-height: 1.7; }
 .report-mismatch-actions { display: flex; justify-content: flex-end; margin-top: 24px; }
 .report-mismatch-actions .ant-btn { min-width: 72px; height: 32px; box-shadow: 0 2px 0 rgba(0,0,0,.043); }
 .report-aid-modal >>> .ant-modal-body { padding: 36px 28px 28px; }
 .report-aid-heading { display: flex; align-items: center; gap: 12px; }
 .report-aid-heading .anticon { font-size: 22px; }
-.report-aid-dialog h3 { margin: 0; color: #18253c; font-size: 16px; font-weight: 700; line-height: 1.5; }
+.report-aid-dialog h3 { margin: 0; color: #18253c; line-height: 1.5; }
 .report-aid-copy { margin: 8px 0 0 34px; color: #718095; line-height: 1.7; }
 .report-aid-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; }
 .report-aid-actions .ant-btn { min-width: 72px; height: 32px; box-shadow: 0 2px 0 rgba(0,0,0,.043); }

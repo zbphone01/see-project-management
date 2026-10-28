@@ -245,8 +245,7 @@ export default {
 .application-notice-text { white-space: pre-line; overflow-wrap: anywhere; }
 .application-content { padding: 24px; --detail-inner-padding: 0; --detail-inner-margin: 0; }
 .application-content .detail-table-wrap { margin: 0; }
-.application-content h3 { font-size: 16px; }
-.application-content h4 { font-family: inherit; font-size: 10pt; font-weight: 500; line-height: 1.6; }
+.application-content h4 { font-family: inherit; line-height: 1.6; }
 .application-content p, .detail-table td { overflow-wrap: anywhere; }
 .saved-rich-content >>> img { max-width: 100%; height: auto; }
 .saved-rich-content >>> table { max-width: 100%; border-collapse: collapse; }

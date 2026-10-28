@@ -20,7 +20,7 @@ export function normalizeBudget (value = {}, project = {}) {
   if (value.rows !== undefined && !Array.isArray(value.rows)) throw new Error('费用明细格式无效')
   if (value.personnel !== undefined && !Array.isArray(value.personnel)) throw new Error('人力明细格式无效')
   const source = copyBudgetData(value)
-  const groups = [], rows = [], legacyPersonnel = []
+  const groups = [], rows = [], legacyPersonnel = [], legacyPlaceholders = []
   let output = null, activity = null
   ;(source.rows || []).forEach(row => {
     if (row.kind === 'total') return
@@ -43,6 +43,10 @@ export function normalizeBudget (value = {}, project = {}) {
     }
     const item = { ...row, quarters: quarters(row) }
     if (!item.id) throw new Error('费用明细缺少稳定 ID')
+    // 旧示例用“无”费用行表示无预算活动，保留原记录但不再作为费用明细展示。
+    if (row.kind === 'detail' && row.name === '无' && (row.detail || row.description) === '无' && row.type === '/' && item.quarters.every(value => !value) && ['price', 'quantity', 'adjustment', 'adjustedBudget', 'executed'].every(field => budgetNumber(row[field]) === null || budgetNumber(row[field]) === 0)) {
+      legacyPlaceholders.push(copyBudgetData(row)); return
+    }
     if (row.kind === 'detail') {
       // 旧展示 JSON 只保留原始明细文字，不能反推缺失的单价、数量或人员。
       item.description = row.description || row.detail || ''
@@ -66,8 +70,7 @@ export function normalizeBudget (value = {}, project = {}) {
   const personnel = (source.personnel || []).map(row => {
     if (!row.id) throw new Error('人员明细缺少稳定 ID')
     const memberId = row.memberId || row.id
-    const member = (project.organizationMembers || project.team || []).find(item => item.id === memberId)
-    const item = { ...row, memberId, ...(member ? { name: member.name, position: member.position, responsibilities: member.responsibilities } : {}), quarters: quarters(row) }
+    const item = { ...row, memberId, quarters: quarters(row) }
     ;['monthly', 'months', 'ratio', 'adjustment', 'adjustedBudget', 'executed'].forEach(field => { item[field] = budgetNumber(row[field]) })
     item.nature = row.nature || null; item.remark = row.remark || null
     delete item.total
@@ -85,8 +88,57 @@ export function normalizeBudget (value = {}, project = {}) {
     rows, personnel,
     groups: groups.length ? groups : source.groups || [],
     legacyPersonnel: legacyPersonnel.length ? legacyPersonnel : source.legacyPersonnel || [],
-    metadata: { organization: source.organization || '', period: source.period || '', partners: source.partners || '', executionCutoff: source.executionCutoff || '', ...(source.metadata || {}) }
+    legacyPlaceholders: (source.legacyPlaceholders || []).concat(legacyPlaceholders),
+    metadata: { projectName: source.projectName || '', tableTitle: source.tableTitle || '', organization: source.organization || '', period: source.period || '', partners: source.partners || '', executionCutoff: source.executionCutoff || '', ...(source.metadata || {}) }
   }
+}
+// 仅编辑入口/保存调用：把表格所需的项目资料写成预算自己的快照。
+export function snapshotBudget (value, project = {}, donationProject = false) {
+  const budget = normalizeBudget(value || {}, project)
+  const metadata = budget.metadata
+  const outputs = Array.isArray(project.outputs) ? project.outputs : budget.groups
+  budget.groups = outputs.map((output, index) => ({
+    id: output.id, code: '产出' + (index + 1), name: output.name,
+    activities: (output.activities || []).map((activity, activityIndex) => ({ id: activity.id, code: '产出活动' + (index + 1) + '.' + (activityIndex + 1), name: activity.name }))
+  }))
+  budget.metadata = { ...metadata, snapshotVersion: 1,
+    projectName: project.name === undefined ? metadata.projectName : project.name,
+    projectCode: project.code === undefined ? metadata.projectCode || '' : project.code,
+    tableTitle: donationProject ? '北京市企业家环保基金会联合公益项目预算表' : '项目预算及执行情况明细表',
+    organization: project.organization === undefined ? metadata.organization : project.organization,
+    period: project.start !== undefined || project.end !== undefined ? (project.start || '未填写') + ' 至 ' + (project.end || '未填写') : project.period || metadata.period,
+    partners: Array.isArray(project.thirdParties) ? project.thirdParties.join('、') || '无' : project.thirdParties === undefined ? metadata.partners : project.thirdParties,
+    executionCutoff: metadata.executionCutoff || '无'
+  }
+  const team = project.organizationMembers || project.team || []
+  budget.personnel = budget.personnel.map(row => {
+    const member = team.find(item => item.id === row.memberId)
+    return member ? { ...row, name: member.name, position: member.position, responsibilities: member.responsibilities } : row
+  })
+  budget.rows = budget.rows.map(row => {
+    if (row.kind === 'support') return { ...row, code: '1-支撑' }
+    for (let i = 0; i < budget.groups.length; i++) {
+      const output = budget.groups[i]
+      const j = output.activities.findIndex(activity => activity.id === row.activityId)
+      if (output.id === row.outputId && j >= 0) {
+        const siblings = budget.rows.filter(item => item.outputId === output.id && item.activityId === row.activityId)
+        return { ...row, code: (i + 1) + '.' + (j + 1) + '.' + (siblings.findIndex(item => item.id === row.id) + 1) }
+      }
+    }
+    return row
+  })
+  return budget
+}
+// 旧合并文本只用于排版与格式化，不反写推测的单价、数量。
+export function budgetDetailParts (row) {
+  const cost = row.cost
+  if (cost && cost.price !== null && cost.price !== undefined && cost.quantity !== null && cost.quantity !== undefined) {
+    return { price: cost.price, quantity: cost.quantity, unit: cost.unit || '', description: cost.description || '' }
+  }
+  const text = String(row.description || '')
+  const parts = text.split(/\r?\n[ \t]*\r?\n/)
+  const expression = /^(\d[\d,]*(?:\.\d+)?)\s*元\s*[*×]\s*(\d[\d,]*(?:\.\d+)?)\s*([^\r\n]*)$/.exec(parts[0])
+  return expression ? { price: budgetNumber(expression[1]), quantity: budgetNumber(expression[2]), unit: expression[3], description: parts.slice(1).join('\n\n') } : { text }
 }
 export function buildBudgetRows (project, value, editable = false) {
   const budget = normalizeBudget(value, project), costs = budget.rows, result = []
@@ -99,7 +151,7 @@ export function buildBudgetRows (project, value, editable = false) {
     row.executionRatio = row.executed === null || !(row.adjustedBudget === null ? row.total : row.adjustedBudget) ? null : (row.executed / (row.adjustedBudget === null ? row.total : row.adjustedBudget) * 100).toFixed(1) + '%'
     return row
   }
-  const detail = (row, code) => ({ ...aggregate(row.id, 'detail', code, row.name, [row]), type: row.type, cost: row, description: row.description })
+  const detail = (row, code) => ({ ...aggregate(row.id, 'detail', row.code || code, row.name, [row]), type: row.type, cost: row, description: row.description })
   const support = costs.filter(row => row.kind === 'support')
   result.push(aggregate('total', 'total', '', '', costs.concat(personnel)))
   result.push(aggregate('support', 'group', '1-支撑', '项目支撑费用', support))
@@ -108,13 +160,13 @@ export function buildBudgetRows (project, value, editable = false) {
   result.push(aggregate('personnel', 'group', '2-人力', '项目执行团队人力成本', personnel))
   result.push({ ...aggregate('personnel-detail', 'detail', '2-人力', '项目人员人力成本', personnel), description: '详见人力成本分摊表', type: '工资薪金' })
   if (editable) result.push({ key: 'edit-personnel', kind: 'action', costKind: 'personnel', action: '编辑人力费用', note: '项目执行团队的人力成本在人力成本分摊表中填写' })
-  const outputs = project.outputs || budget.groups
+  const outputs = budget.metadata.snapshotVersion === 1 ? budget.groups : project.outputs || budget.groups
   outputs.forEach((output, outputIndex) => {
-    result.push(aggregate('output:' + output.id, 'group', '产出' + (outputIndex + 1), output.name, costs.filter(row => row.outputId === output.id), output.id))
+    result.push(aggregate('output:' + output.id, 'group', output.code || '产出' + (outputIndex + 1), output.name, costs.filter(row => row.outputId === output.id), output.id))
     ;(output.activities || []).forEach((activity, activityIndex) => {
       const code = (outputIndex + 1) + '.' + (activityIndex + 1)
       const records = costs.filter(row => row.outputId === output.id && row.activityId === activity.id)
-      result.push(aggregate('activity:' + activity.id, 'activity', '产出活动' + code, activity.name, records, output.id))
+      result.push(aggregate('activity:' + activity.id, 'activity', activity.code || '产出活动' + code, activity.name, records, output.id))
       records.forEach((row, index) => result.push(detail(row, code + '.' + (index + 1))))
       if (editable) result.push({ key: 'add:' + activity.id, kind: 'action', costKind: 'activity', outputId: output.id, activityId: activity.id, activityName: code + ' ' + activity.name, action: '添加活动预算', note: '如果活动无需预算可不进行添加；建议按预算科目或类型逐条添加，以提高审核效率。预算明细采用单价 × 数量填写，明细说明可用于解释单价及数量。' })
     })

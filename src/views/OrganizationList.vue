@@ -132,18 +132,18 @@ export default {
 .organization-table >>> .ant-table-thead > tr > th:nth-child(4) { white-space: nowrap; }
 .organization-logo { width: 80px; height: 80px; border-radius: 13px; overflow: hidden; display: grid; place-items: center; flex: none; background: #f1fbf5; color: #61bd98; font-size: 28px; }
 .organization-logo img { width: 100%; height: 100%; object-fit: cover; }
-.organization-name { min-width: 0; white-space: normal; overflow-wrap: anywhere; line-height: 1.6; font-size: 16px; color: #18253c; font-weight: 600; }
-.organization-name span { display: block; margin-top: 8px; color: #718095; font-size: 10pt; font-weight: 400; }
-.organization-name .primary-account-tag { display: table; margin-top: 8px; padding: 2px 7px; border-radius: 3px; color: #62bfe6; background: #effaff; font-size: 10pt; font-weight: 400; line-height: 1.5; }
+.organization-name { min-width: 0; white-space: normal; overflow-wrap: anywhere; line-height: 1.6; color: #18253c; }
+.organization-name span { display: block; margin-top: 8px; color: #718095; font-weight: 400; }
+.organization-name .primary-account-tag { display: table; margin-top: 8px; padding: 2px 7px; border-radius: 3px; color: #62bfe6; background: #effaff; font-weight: 400; line-height: 1.5; }
 .organization-subline { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
 .organization-subline > span { display: inline-block; margin: 0; }
-.organization-name .sub-account-tag { display: table; margin-top: 8px; padding: 2px 7px; border-radius: 3px; color: #61bd98; background: #f1fbf5; font-size: 10pt; font-weight: 400; line-height: 1.5; }
+.organization-name .sub-account-tag { display: table; margin-top: 8px; padding: 2px 7px; border-radius: 3px; color: #61bd98; background: #f1fbf5; font-weight: 400; line-height: 1.5; }
 .organization-subline .sub-account-tag { display: inline-block; margin: 0; }
 .organization-contact { display: grid; gap: 6px; overflow-wrap: anywhere; }
 .organization-contact span + span { color: #718095; }
 .report-picker { display: grid; width: 470px; max-width: 100%; gap: 16px; margin: 0 auto; padding: 16px 0 12px; }
 .report-picker .area-picker-row { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 18px; align-items: start; }
-.report-picker .area-picker-row label { display: flex; min-height: 32px; align-items: center; justify-content: flex-end; padding-top: 5px; color: #27384e; line-height: 22px; text-align: right; white-space: nowrap; }
+.report-picker .area-picker-row label { display: flex; min-height: 32px; align-items: center; justify-content: flex-end; color: #27384e; text-align: right; white-space: nowrap; }
 .report-picker .area-picker-row .ant-select { width: 100%; }
 .report-picker > .form-error { margin: -4px 0 0 108px; }
 .operation-button { border: 0; background: transparent; padding: 0; height: 32px; box-shadow: none; }

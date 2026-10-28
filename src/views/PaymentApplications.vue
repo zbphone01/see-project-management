@@ -114,10 +114,10 @@ export default {
 .payments-page ::v-deep .applied-table th.payment-centered-column,
 .payments-page ::v-deep .applied-table td.payment-centered-column { text-align: center !important; }
 .payment-project { min-width: 0; }
-.payment-project-name { color: #18253c; min-width: 0; max-width: 100%; white-space: normal; overflow-wrap: anywhere; font-size: 16px; line-height: 1.5; margin-bottom: 5px; }
+.payment-project-name { color: #18253c; min-width: 0; max-width: 100%; white-space: normal; overflow-wrap: anywhere; line-height: 1.5; margin-bottom: 5px; }
 .payment-report-type { color: #722ed1; white-space: nowrap; }
 .payment-report-type.completion { color: #00a870; }
-.payment-status-button { cursor: pointer; font-size: 14px; font-family: inherit; }
+.payment-status-button { cursor: pointer; font-family: inherit; }
 .payment-status-button:focus-visible { outline: 2px solid #1677ff; outline-offset: 3px; }
 .manual-mark { margin-left: 3px; color: #ff4d4f; }
 .payment-amount-form { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 18px; align-items: start; }

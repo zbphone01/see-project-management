@@ -132,7 +132,7 @@ export default {
 
 .plan-table >>> .ant-table-body > table > thead > tr > th:first-child, .plan-table >>> .ant-table-body > table > tbody > tr > td:first-child { padding-left: 20px; }
 .plan-name, .plan-text, .plan-amount { min-width: 0; white-space: normal; overflow-wrap: anywhere; line-height: 1.6; }
-.plan-name { display: block; color: #18253c; font-size: var(--text-14); font-weight: 400; }
+.plan-name { display: block; color: #18253c; }
 .plan-amount { font-variant-numeric: tabular-nums; }
 
 @media (max-width: 1439px) {

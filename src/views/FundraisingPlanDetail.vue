@@ -264,7 +264,7 @@ export default {
 .detail-module-content { padding: 24px; --detail-inner-padding: 0; --detail-inner-margin: 0; }
 .description-grid { --detail-inner-padding: 0 22px 22px; }
 .description-item { gap: 8px; }
-.rich-content >>> h3 { margin: 0 0 12px; font-size: 16px; }
+.rich-content >>> h3 { margin: 0 0 12px; }
 .rich-content >>> .rich-text-section { margin: 0; }
 .rich-content >>> p { overflow-wrap: anywhere; white-space: pre-wrap; }
 .rich-content >>> h3::before, .rich-content >>> h3::after { content: none; }

@@ -240,18 +240,7 @@ export default {
 </script>
 
 <style scoped>
-.dashboard-grid { font-size: 14px; }
-.panel-header h2 { font-size: 16px; font-weight: 700; }
-.status-chip { font-size: 13px; }
-button, .ant-btn { font-size: 14px; }
-.project-info h3, .donation-info h3, .recruit-info h3, .recommend-copy strong { font-size: 16px; }
-.project-info p, .project-time, .recruit-info p, .recruit-meta,
-.notice-content, .notice-item time, .side-link,
-.organization-title > div > span, .contact-list, .last-login { font-size: 14px; }
-.organization-title strong { font-size: 16px; font-weight: 700; }
 .organization-stats strong { font-size: 20px; font-weight: 700; }
-.ai-banner-copy strong { font-size: 16px; font-weight: 700; }
-.organization-stats span, .ai-banner-copy > span { font-size: 14px; }
 .registration-banner {
   position: relative;
   min-width: 0;

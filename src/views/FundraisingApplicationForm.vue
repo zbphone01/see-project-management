@@ -1,5 +1,5 @@
 <template>
-  <section class="project-detail-page fundraising-form-page">
+  <section class="standard-edit-scope project-detail-page fundraising-form-page">
     <div class="detail-back-row"><a-button class="detail-back" @click="goBack"><a-icon type="arrow-left" /> 返回</a-button></div>
     <section class="panel detail-section">
       <div class="detail-section-header"><span class="detail-section-icon"><a-icon type="file-text" /></span><div><h2>{{ draft.recruitment || '招募名称' }} - 募捐申请书</h2><p v-if="basicFieldsOrdered.some(field => comment(field.key)) || basicRichContent.some(section => comment(section.key))">{{ fieldReviewHint }}</p></div></div>
@@ -135,7 +135,7 @@
       <p v-else class="muted">暂无审核信息</p></div>
     </section>
 
-    <a-modal wrap-class-name="standard-form-modal" :visible="rowEditor.visible" :title="rowEditorTitle" :width="550" :mask-closable="false" ok-text="保存" cancel-text="取消" @ok="saveRow" @cancel="rowEditor.visible = false">
+    <a-modal wrap-class-name="standard-form-modal standard-edit-scope standard-edit-modal" :visible="rowEditor.visible" :title="rowEditorTitle" :width="550" :mask-closable="false" ok-text="保存" cancel-text="取消" @ok="saveRow" @cancel="rowEditor.visible = false">
       <div class="compact-modal-form">
         <div v-for="field in rowEditorFields" :key="field.key" class="modal-field"><label :for="'fundraising-row-' + field.key">{{ field.label }}</label><div>
           <a-input-number v-if="field.numeric" :id="'fundraising-row-' + field.key" v-model="rowEditor.value[field.key]" :min="0" :max="field.key === 'ratio' ? 100 : 1000000000" :precision="field.key === 'ratio' ? 2 : 4" :placeholder="field.placeholder" />
@@ -144,8 +144,8 @@
         </div></div>
       </div>
     </a-modal>
-    <a-modal wrap-class-name="standard-form-modal" :visible="attachmentPicker.visible" title="上传附件" :width="550" :mask-closable="false" :confirm-loading="uploading > 0" :closable="!uploading" :keyboard="!uploading" :cancel-button-props="{ props: { disabled: uploading > 0 } }" ok-text="上传" cancel-text="取消" @ok="confirmAttachment" @cancel="closeAttachment">
-      <div class="compact-modal-form"><div class="modal-field"><label for="fundraising-file-type">附件类型</label><a-select id="fundraising-file-type" v-model="attachmentPicker.category" :disabled="uploading > 0"><a-select-option v-for="category in attachmentTypes" :key="category" :value="category">{{ category }}</a-select-option></a-select></div>
+    <a-modal wrap-class-name="standard-form-modal standard-edit-scope standard-edit-modal" :visible="attachmentPicker.visible" title="上传附件" :width="550" :mask-closable="false" :confirm-loading="uploading > 0" :closable="!uploading" :keyboard="!uploading" :cancel-button-props="{ props: { disabled: uploading > 0 } }" ok-text="上传" cancel-text="取消" @ok="confirmAttachment" @cancel="closeAttachment">
+      <div class="compact-modal-form"><div class="modal-field"><label for="fundraising-file-type">附件类型</label><a-select dropdown-class-name="standard-edit-dropdown" id="fundraising-file-type" v-model="attachmentPicker.category" :disabled="uploading > 0"><a-select-option v-for="category in attachmentTypes" :key="category" :value="category">{{ category }}</a-select-option></a-select></div>
         <div class="modal-field"><label>选择文件</label><div><a-upload accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" :before-upload="selectAttachment" :show-upload-list="false" :disabled="uploading > 0"><a-button icon="upload" :disabled="uploading > 0">选择文件</a-button></a-upload><p v-if="attachmentPicker.file" class="picked-file">{{ attachmentPicker.file.name }}</p><p class="muted file-hint">支持 PDF、Word、Excel、PNG、JPG，单个文件不超过 20 MB。</p><p v-if="attachmentPicker.error" class="form-error" role="alert">{{ attachmentPicker.error }}</p></div></div>
       </div>
     </a-modal>
@@ -413,27 +413,26 @@ em { color: #ff4d4f; font-style: normal; margin-right: 6px; }
 .date-pair { display: flex; gap: 12px; align-items: center; }
 .date-pair .ant-input { min-width: 0; width: calc(50% - 20px); }
 .date-pair > span, .muted, .edit-field small { color: #718095; }
-.edit-grid >>> .ant-input, .edit-grid >>> .ant-input-number-input { color: #27384e; font-size: 16px; }
-.edit-field >>> input.ant-input:placeholder-shown { font-size: 14px; }
-.fundraising-form-page >>> input::placeholder, .fundraising-form-page >>> textarea::placeholder { color: #5b8ff9; font-size: 14px; opacity: 1; }
+.edit-grid >>> .ant-input, .edit-grid >>> .ant-input-number-input { color: #27384e; }
+.fundraising-form-page >>> input::placeholder, .fundraising-form-page >>> textarea::placeholder { color: #5b8ff9; opacity: 1; }
 .section-body { padding: 24px; margin: 0; --detail-inner-padding: 0; }
 .application-edit-content { padding: 24px; display: grid; gap: 32px; }
 .application-edit-content .section-body { padding: 0; }
-.organization-introduction h3 { margin: 0 0 8px; font-size: 10pt; font-weight: 500; line-height: 1.6; }
+.organization-introduction h3 { margin: 0 0 8px; line-height: 1.6; }
 .merged-input-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
 .merged-input-heading > div { flex: 1; min-width: 0; }
-.merged-input-heading h3 { margin: 0 0 8px; font-size: 10pt; font-weight: 500; line-height: 1.6; }
+.merged-input-heading h3 { margin: 0 0 8px; line-height: 1.6; }
 .word-count { flex: none; color: #718095; line-height: 1.6; white-space: nowrap; }
 .word-count-error { color: #ff4d4f; }
-.basic-annual-title { margin: 0 0 8px; font-size: 10pt; font-weight: 500; line-height: 1.6; }
+.basic-annual-title { margin: 0 0 8px; line-height: 1.6; }
 .annual-entry-table th:nth-child(3), .annual-entry-table td:nth-child(3) { text-align: right; }
 .annual-entry-table th:nth-child(4), .annual-entry-table td:nth-child(4) { text-align: center; }
 .annual-input-row .ant-input-number { width: 100%; }
 .annual-input-row td:nth-child(3) >>> input, .annual-input-row td:nth-child(4) >>> input { text-align: left; }
 .annual-review-hint { margin: 0 0 9px; color: #718095; line-height: 1.6; }
-.input-hint { color: #5b8ff9; font-size: 14px; line-height: 1.7; margin: 0 0 16px; }
+.input-hint { color: #5b8ff9; line-height: 1.7; margin: 0 0 16px; }
 .subheading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 8px; }
-.subheading h3 { margin: 0; font-family: inherit; font-size: 10pt; font-weight: 500; line-height: 1.6; }
+.subheading h3 { margin: 0; font-family: inherit; line-height: 1.6; }
 .annual-group + .annual-group { margin-top: 16px; }
 .detail-table-wrap { margin: 0; overflow-x: auto; }
 .entry-table { table-layout: fixed; min-width: 760px; }
@@ -455,8 +454,8 @@ em { color: #ff4d4f; font-style: normal; margin-right: 6px; }
 .amount-input >>> .ant-input-number { flex: none; width: 190px; height: 40px; }
 .amount-input >>> .ant-input-number-input { height: 38px; padding: 0 12px; line-height: 38px; }
 .amount-target-hint { margin: 0; }
-.amount-input > span { color: #536277; font-size: 16px; }
-.edit-field small { font-size: 14px; line-height: 1.6; }
+.amount-input > span { color: #536277; }
+.edit-field small { line-height: 1.6; }
 .image-editor { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
 .image-item { position: relative; flex: none; width: 112px; height: 112px; border-radius: 10px; overflow: hidden; }
 .image-button { display: block; width: 100%; height: 100%; padding: 0; border: 0; background: transparent; cursor: zoom-in; }
@@ -471,7 +470,7 @@ em { color: #ff4d4f; font-style: normal; margin-right: 6px; }
 .image-upload-placeholder:hover { border-color: #1677ff; }
 .image-upload-placeholder:disabled { cursor: wait; opacity: .5; }
 .image-upload-placeholder:focus-visible { outline: 2px solid #1677ff; outline-offset: 3px; }
-.detail-section-header .image-module-hint { color: #718095; font-size: 14px; margin: 4px 0 0; }
+.detail-section-header .image-module-hint { color: #718095; margin: 4px 0 0; }
 .image-button:focus-visible { outline: 2px solid #1677ff; outline-offset: 3px; }
 .form-attachment-list { padding: 0; }
 .attachment-empty-add { margin: 0; cursor: pointer; }
@@ -485,12 +484,11 @@ em { color: #ff4d4f; font-style: normal; margin-right: 6px; }
 .form-attachment-list .ant-btn { padding: 0 6px; }
 .compact-modal-form { display: grid; gap: 16px; width: 470px; max-width: 100%; margin: 0 auto; padding: 0; }
 .modal-field { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 18px; align-items: start; }
-.modal-field > label { text-align: right; padding-top: 5px; line-height: 22px; }
+.modal-field > label { text-align: right; }
 .modal-field .ant-input-number, .modal-field > .ant-select { width: 100%; }
-.compact-modal-form >>> input, .compact-modal-form >>> textarea { font-size: 14px; }
-.compact-modal-form >>> input::placeholder, .compact-modal-form >>> textarea::placeholder { color: #bfbfbf; font-size: 14px; }
+.compact-modal-form >>> input::placeholder, .compact-modal-form >>> textarea::placeholder { color: #5b8ff9; }
 .picked-file { margin: 10px 0 0; overflow-wrap: anywhere; }
-.file-hint { margin: 10px 0 0; font-size: 14px; line-height: 1.6; }
+.file-hint { margin: 10px 0 0; line-height: 1.6; }
 .form-error { color: #ff4d4f !important; margin: 8px 0 0; line-height: 1.6; }
 .preview-image { display: block; max-width: 100%; max-height: 70vh; margin: auto; object-fit: contain; }
 .preview-pdf { width: 100%; height: 65vh; border: 0; }
@@ -500,7 +498,7 @@ em { color: #ff4d4f; font-style: normal; margin-right: 6px; }
 .review-row-has-comment { cursor: pointer; }
 .review-row-has-comment:focus-visible { outline: 2px solid #ff7875; outline-offset: -2px; }
 .review-text { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
-.validation-heading { display: flex; align-items: center; gap: 12px; font-size: 16px; }
+.validation-heading { display: flex; align-items: center; gap: 12px; }
 .validation-heading .anticon { color: #ff4d4f; font-size: 22px; }
 .validation-errors { margin: 14px 0 24px 34px; padding-left: 18px; color: #718095; line-height: 1.7; max-height: 50vh; overflow: auto; }
 .validation-action { display: flex; justify-content: flex-end; }

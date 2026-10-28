@@ -29,7 +29,7 @@
         </section>
 
         <section id="detail-basic" class="panel detail-section">
-          <div class="detail-section-header"><span class="detail-section-icon"><a-icon type="profile" /></span><div><h2>项目基本信息</h2><p v-if="mode === 'audit'">点击字段内容可添加审核意见</p><div v-if="!snapshotEntry" class="detail-basic-meta"><span class="project-code"><a-icon type="flag" /> {{ basicInfo.code }}</span><button class="project-recruitment" type="button" :title="basicInfo.recruitment" @click="notify(`打开招募详情：${basicInfo.recruitment}`)"><a-icon type="notification" /> {{ basicInfo.recruitment }}</button></div></div></div>
+          <div class="detail-section-header"><span class="detail-section-icon"><a-icon type="profile" /></span><div><h2>项目基本信息</h2><div v-if="!snapshotEntry" class="detail-basic-meta"><span class="project-code"><a-icon type="flag" /> {{ basicInfo.code }}</span><button class="project-recruitment" type="button" :title="basicInfo.recruitment" @click="notify(`打开招募详情：${basicInfo.recruitment}`)"><a-icon type="notification" /> {{ basicInfo.recruitment }}</button></div><p v-if="mode === 'audit'" class="basic-review-hint review-hint">点击内容区域（伙伴填写）可添加审核意见，添加后该内容区域底色标红</p></div></div>
           <div class="description-grid">
             <div class="description-item wide project-name-item" :class="basicReviewClass('name')" v-bind="reviewAttributes('name')" v-on="reviewEvents('name')"><span>项目名称</span><strong>{{ basicInfo.name }}</strong></div>
             <div class="description-item"><span>项目类型</span><strong>{{ basicInfo.type }}</strong></div>
@@ -44,7 +44,7 @@
         </section>
 
         <section v-if="isGreenHomeExample && detailTableData.organizationBasicInfo" id="detail-organization-basic" class="panel detail-section">
-          <div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="bank" /></span><div><h2>机构基本信息</h2><p v-if="hasOrganizationReviewComments">点击字段内容、信息小标题或行任意位置可添加审核意见</p></div></div><div class="detail-module-content">
+          <div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="bank" /></span><div><h2>机构基本信息</h2><p v-if="hasOrganizationReviewComments" class="review-hint">点击内容区域（伙伴填写）可添加审核意见，添加后该内容区域底色标红</p></div></div><div class="detail-module-content">
           <div class="description-grid">
             <div class="description-item wide" :class="basicReviewClass(organizationReviewKey('entrepreneurshipOverview'))" v-bind="reviewAttributes(organizationReviewKey('entrepreneurshipOverview'))" v-on="reviewEvents(organizationReviewKey('entrepreneurshipOverview'))"><span>{{ detailType === 'grass' ? '机构简介' : '创业概述' }}</span><strong class="basic-field-multiline">{{ detailTableData.organizationBasicInfo.entrepreneurshipOverview }}</strong></div>
             <div v-for="item in detailTableData.organizationBasicInfo.staffCounts" :key="item.key || item.label" class="description-item"><span>{{ item.label }}</span><strong>{{ item.count }}</strong></div>
@@ -72,7 +72,7 @@
         </div></section>
 
         <section v-if="isGreenHomeExample && detailTableData.organizationDevelopment" id="detail-organization-background" class="panel detail-section">
-          <div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="solution" /></span><div><h2>{{ detailType === 'grass' ? '机构成长需求分析' : '创业背景 / 机构成长需求分析' }}</h2><p v-if="detailType === 'grass' ? mode === 'audit' : hasDevelopmentReviewComments('background')">{{ detailType === 'grass' ? '点击字段内容可添加审核意见' : '请检查并修改标红的项目信息，点击信息小标题可添加具体审核意见' }}</p></div></div><div class="detail-module-content">
+          <div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="solution" /></span><div><h2>{{ detailType === 'grass' ? '机构成长需求分析' : '创业背景 / 机构成长需求分析' }}</h2><p v-if="detailType === 'grass' ? mode === 'audit' : hasDevelopmentReviewComments('background')" class="review-hint">点击内容区域（伙伴填写）可添加审核意见，添加后该内容区域底色标红</p></div></div><div class="detail-module-content">
           <div v-if="detailType === 'grass'" class="description-grid grass-growth-details">
             <div v-for="item in detailTableData.organizationDevelopment.growthNeeds" :key="item.key" class="description-item wide" :class="basicReviewClass(item.key)" v-bind="reviewAttributes(item.key)" v-on="reviewEvents(item.key)"><span>{{ item.title }}</span><strong class="basic-field-multiline">{{ item.content }}</strong></div>
           </div>
@@ -85,7 +85,7 @@
         </div></section>
 
         <section v-if="isGreenHomeExample && detailTableData.organizationDevelopment" id="detail-organization-plan" class="panel detail-section">
-          <div class="detail-section-header"><span class="detail-section-icon blue"><a-icon type="compass" /></span><div><h2>发展目标与实施计划</h2><p v-if="hasDevelopmentReviewComments('plan')">请检查并修改标红的项目信息，点击信息小标题可添加具体审核意见</p></div></div><div class="detail-module-content">
+          <div class="detail-section-header"><span class="detail-section-icon blue"><a-icon type="compass" /></span><div><h2>发展目标与实施计划</h2><p v-if="hasDevelopmentReviewComments('plan')" class="review-hint">点击内容区域（伙伴填写）可添加审核意见，添加后该内容区域底色标红</p></div></div><div class="detail-module-content">
           <project-rich-content class="rich-content">
             <section v-for="item in detailTableData.organizationDevelopment.plan" :key="item.key" class="project-rich-section">
               <h3 :class="{ 'review-heading': mode === 'audit' }"><button v-if="mode === 'audit'" type="button" @click="openReview(developmentReviewKey('plan', item))">{{ item.title }}</button><template v-else>{{ item.title }}</template></h3>
@@ -95,7 +95,7 @@
         </div></section>
 
         <section v-if="!isGreenHomeExample" id="detail-content" class="panel detail-section">
-          <div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="read" /></span><div><h2>{{ isDonationProject ? '详细资料' : '附加信息' }}</h2><p v-if="hasAdditionalReviewComments">{{ isDonationProject ? '点击信息小标题可添加审核意见' : '请检查并修改标红的项目信息，点击信息小标题可添加具体审核意见' }}</p></div></div><div class="detail-module-content">
+          <div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="read" /></span><div><h2>{{ isDonationProject ? '详细资料' : '附加信息' }}</h2><p v-if="hasAdditionalReviewComments" class="review-hint">点击标题添加或编辑审核意见，添加审核意见后内容区域底色标红</p></div></div><div class="detail-module-content">
           <project-rich-content v-if="isDonationProject" class="rich-content">
             <section v-for="field in detailTableData.detailedMaterials" :key="field.key" class="project-rich-section" :data-field="field.key">
               <h3 :class="{ 'review-heading': mode === 'audit' }"><button v-if="mode === 'audit'" type="button" @click="openReview(field.key)">{{ field.title }}</button><template v-else>{{ field.title }}</template></h3>
@@ -133,12 +133,12 @@
         </div></section>
 
         <section v-if="!isGreenHomeExample" id="detail-area" class="panel detail-section">
-          <div class="detail-section-header"><span class="detail-section-icon cyan"><a-icon type="environment" /></span><div><h2>项目实施区域</h2><p v-if="hasAreaReviewComments">{{ isDonationProject ? '点击行任意位置可添加审核意见' : '请检查并修改标红的项目信息，点击行任意位置可添加具体审核意见' }}</p></div></div><div class="detail-module-content">
+          <div class="detail-section-header"><span class="detail-section-icon cyan"><a-icon type="environment" /></span><div><h2>项目实施区域</h2><p v-if="hasAreaReviewComments" class="review-hint">点击表格行添加或编辑审核意见，添加审核意见后行背景色标红</p></div></div><div class="detail-module-content">
           <div class="detail-table-wrap"><table class="detail-table project-area-table"><colgroup><col class="project-detail-index-col" /><col /><col /><col /></colgroup><thead><tr><th>序号</th><th>省 / 直辖市</th><th>地级市 / 直辖市区</th><th>行政区</th></tr></thead><tbody><tr v-for="(row, rowIndex) in detailTableData.areas" :key="row.id" :class="reviewRowClass('areas', row.id)" v-bind="reviewAttributes(rowReviewKey('areas', row.id))" v-on="reviewEvents(rowReviewKey('areas', row.id))"><td><review-row-comments :comment="rowCellReviewComment('areas', row.id)">{{ rowIndex + 1 }}</review-row-comments></td><td>{{ row.province }}</td><td>{{ row.city }}</td><td>{{ row.district }}</td></tr></tbody></table></div>
         </div></section>
 
         <section v-if="!isGreenHomeExample" id="detail-team" class="panel detail-section">
-          <div class="detail-section-header"><span class="detail-section-icon violet"><a-icon type="team" /></span><div><h2>执行团队</h2><p v-if="hasTeamReviewComments">{{ isDonationProject ? '点击信息小标题或行任意位置可添加审核意见' : '请检查并修改标红的项目信息，点击信息小标题或行任意位置可添加具体审核意见' }}</p></div></div><div class="detail-module-content">
+          <div class="detail-section-header"><span class="detail-section-icon violet"><a-icon type="team" /></span><div><h2>执行团队</h2><p v-if="mode === 'audit'" class="review-hint">点击表格行、标题添加或编辑审核意见</p></div></div><div class="detail-module-content">
           <div class="detail-table-wrap">
             <table class="detail-table team-table">
               <colgroup><col class="project-detail-index-col" /><col class="team-col-name" /><col class="team-col-role" /><col /></colgroup>
@@ -158,7 +158,7 @@
         </div></section>
 
         <section id="detail-output" class="panel detail-section">
-          <div class="detail-section-header"><span class="detail-section-icon orange"><a-icon type="project" /></span><div><h2>{{ isGreenHomeExample ? '机构发展衡量指标及活动' : '项目产出 / 活动' }}</h2><p v-if="hasOutputReviewComments">点击产出行或活动表任意位置可添加审核意见</p></div></div><div class="detail-module-content">
+          <div class="detail-section-header"><span class="detail-section-icon orange"><a-icon type="project" /></span><div><h2>{{ isGreenHomeExample ? '机构发展衡量指标及活动' : '项目产出 / 活动' }}</h2><p v-if="hasOutputReviewComments" class="review-hint">点击产出标题或活动的内容区域，添加或编辑审核意见</p></div></div><div class="detail-module-content">
           <div v-for="(output, outputIndex) in detailTableData.outputs" :key="output.id" class="output-block">
             <div class="output-title" :class="outputReviewClass('output', output.id)" v-bind="reviewAttributes(outputReviewKey('output', output.id))" v-on="reviewEvents(outputReviewKey('output', output.id))"><span>产出 {{ outputIndex + 1 }}</span><strong><review-row-comments :comment="rowCellReviewComment('outputs', output.id)">{{ output.name }}</review-row-comments></strong></div>
             <div class="output-standard"><span>产出衡量标准</span><div><p v-for="(paragraph, paragraphIndex) in output.standard.split('\n')" :key="paragraphIndex">{{ paragraph }}</p></div></div>
@@ -167,7 +167,7 @@
         </div></section>
 
         <section v-if="!isDonationProject" id="detail-management" class="panel detail-section">
-          <div class="detail-section-header"><span class="detail-section-icon red"><a-icon type="safety-certificate" /></span><div><h2>项目管理计划</h2><p v-if="mode === 'audit' && (detailType !== 'grass' || detailTableData.risks.some(row => hasReviewComment(reviewComments[rowReviewKey('risks', row.id)])))">点击行任意位置可添加审核意见</p></div></div><div class="detail-module-content">
+          <div class="detail-section-header"><span class="detail-section-icon red"><a-icon type="safety-certificate" /></span><div><h2>项目管理计划</h2><p v-if="mode === 'audit' && (detailType !== 'grass' || detailTableData.risks.some(row => hasReviewComment(reviewComments[rowReviewKey('risks', row.id)])))" class="review-hint">点击表格行添加或编辑审核意见，添加审核意见后行背景色标红</p></div></div><div class="detail-module-content">
           <template v-if="!isGreenHomeExample">
             <h3 class="table-subtitle">项目相关方</h3>
             <div class="detail-table-wrap">
@@ -188,7 +188,7 @@
 
         <section id="detail-budget" class="panel detail-section">
           <div class="detail-section-header"><span class="detail-section-icon gold"><a-icon type="fund" /></span><div><h2>在线预算表</h2><p>项目预算及执行情况概览</p></div></div><div class="detail-module-content">
-          <budget-prototype embedded shared-data :donation-project="isDonationProject" :project-name="budgetProject ? budgetProject.name : detailProject.name" :project="budgetContext" :budget="budgetProject ? budgetProject.budget : detailTableData.budget" />
+          <budget-prototype embedded shared-data editor-table :audit="mode === 'audit'" :donation-project="isDonationProject" :budget="displayBudget" />
         </div></section>
 
         <section v-if="!snapshotEntry && !isGreenHomeExample" id="detail-attachments" class="panel detail-section">
@@ -291,6 +291,7 @@
 <script>
 import { budgetKey, readBudgetProject, readSavedBudget, normalizeBudget } from '../utils/project-budget'
 import defaultTableData from '../mock/project-tables.json'
+import auditBudget0258 from '../mock/project-1764740258-budget.json'
 import greenHomeTableData from '../mock/project-green-home-detail.json'
 import grassTableData from '../mock/project-grass-detail.json'
 import monthlyDonationTableData from '../mock/project-monthly-donation-detail.json'
@@ -436,10 +437,10 @@ export default {
     auditExecutingFundingTotal: 5000
   } },
   computed: {
-    budgetContext () {
-      if (this.budgetProject) return this.budgetProject
-      const source = this.tableData || this.detailTableData
-      return { ...(source.basic || {}), ...source }
+    displayBudget () {
+      if (this.budgetProject) return this.budgetProject.budget
+      if (!this.tableData && !this.snapshotEntry && this.projectId === 6 && this.detailType === 'default') return auditBudget0258
+      return this.detailTableData.budget
     },
     isDonationProject () { return ['one-time-donation', 'monthly-donation'].includes(this.detailType) },
     reviewComments () { return this.detailTableData.reviewComments },
@@ -511,10 +512,9 @@ export default {
         if (project) { this.budgetProject = project; return }
         const saved = readSavedBudget(key)
         if (saved) {
-          const source = this.detailTableData
-          this.budgetProject = { id: this.projectId, name: this.detailProject.name, outputs: source.outputs || [], budget: normalizeBudget(saved, source) }
+          this.budgetProject = { budget: normalizeBudget(saved) }
         }
-      } catch (error) { this.$message.error('无法读取当前项目预算，请检查已保存数据。'); this.budgetProject = { name: this.detailProject.name, budget: normalizeBudget({}) } }
+      } catch (error) { this.$message.error('无法读取当前项目预算，请检查已保存数据。'); this.budgetProject = { budget: normalizeBudget({}) } }
     },
     isValidAuditAmount (value) { return typeof value === 'string' && /^\d{1,12}(\.\d{1,2})?$/.test(value.trim()) },
     formatAuditAmount (amount) {
@@ -659,6 +659,8 @@ export default {
 </script>
 
 <style scoped>
+.detail-section-header .basic-review-hint { margin-top: 8px; }
+.detail-section-header .review-hint { color: #AAAAAA; }
 .project-snapshot-content { min-width: 0; }
 #detail-audit ::v-deep #audit-amount.ant-input-disabled,
 #detail-audit ::v-deep #audit-expected-amount.ant-input-disabled { background-color: #f5f5f5; color: #718095; }
@@ -691,8 +693,7 @@ export default {
 #detail-basic > .description-grid { --detail-inner-padding: 0 22px 22px; }
 #detail-basic .description-item { gap: 8px; }
 
-
-.detail-module-content .table-subtitle { font-family: inherit; font-size: 10pt; font-weight: 500; line-height: 1.6; }
+.detail-module-content .table-subtitle { font-family: inherit; line-height: 1.6; }
 #detail-organization-basic .description-grid > .description-item:first-child,
 .grass-growth-details > .description-item:first-child { min-height: 0; padding-top: 0; align-content: start; }
 .review-row-summary { display: inline; }

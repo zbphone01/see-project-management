@@ -1,42 +1,42 @@
 <template>
-  <section class="project-form-page">
+  <section class="standard-edit-scope project-form-page">
     <div class="detail-back-row"><a-button class="detail-back" @click="goBack"><a-icon type="arrow-left" /> 返回</a-button></div>
     <div v-if="errors.length" class="validation-summary" role="alert"><a-icon type="exclamation-circle" /><div><strong>请完善以下内容后再提交</strong><ul><li v-for="message in errors" :key="message">{{ message }}</li></ul></div></div>
 
     <section id="form-basic" class="panel form-section"><div class="detail-section-header"><span class="detail-section-icon"><a-icon type="profile" /></span><div><h2>项目基本信息</h2><p v-if="hasBasicReviewComments">请检查并修改标红的项目信息，点击信息小标题可查看具体审核意见</p><div v-if="isOrganizationProject" class="detail-basic-meta"><button class="project-recruitment" type="button" :title="greenHomeRecruitment" @click="$message.info('打开招募详情：' + greenHomeRecruitment)"><a-icon type="notification" /> {{ greenHomeRecruitment }}</button></div><p v-else-if="!hasBasicReviewComments">{{ draft.code }}</p></div></div>
       <div v-if="!isDonationProject" class="form-fields description-grid" :class="{ 'green-home-basic-fields': isOrganizationProject }">
-        <div class="field full" :class="reviewClass('name')"><label><review-comment-label :comment="reviewComment('name')">项目名称</review-comment-label></label><a-input id="application-name" v-model="draft.name" :placeholder="isGrass ? '例：劲草同行支持xxxx级机构名称发展项目（第n年）' : '请填写项目名称'" :max-length="200" /></div>
+        <div class="field full" :class="reviewClass('name')"><label><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment('name')">项目名称</review-comment-label></label><a-input id="application-name" v-model="draft.name" :placeholder="isGrass ? '例：劲草同行支持xxxx级机构名称发展项目（第n年）' : '请填写项目名称'" :max-length="200" /></div>
         <template v-for="field in inheritedFields">
           <div :key="field.key" class="field"><span class="basic-field-label">{{ field.label }}</span><span class="basic-field-value" :class="{ 'empty-hint': field.key !== 'funding' && !draft[field.key] }">{{ field.key === 'funding' ? fundingSourceText : (draft[field.key] || '选择招募后自动带入') }}</span></div>
         </template>
-        <div class="field" :class="reviewClass('targets')"><label><review-comment-label :comment="reviewComment('targets')">项目目标板块（多选）</review-comment-label></label><a-select id="application-targets" v-model="draft.targets" class="target-select" mode="multiple" placeholder="请选择项目目标板块"><a-select-option v-for="target in targetOptions" :key="target">{{ target }}</a-select-option></a-select></div>
-        <div class="field" :class="reviewClass('organization')"><label><review-comment-label :comment="reviewComment('organization')">{{ isOrganizationProject ? '申请机构' : '执行机构' }}</review-comment-label></label><span v-if="isOrganizationProject" class="basic-field-value">{{ draft.organization }}</span><a-select v-else id="application-organization" v-model="draft.organization" placeholder="请选择执行机构"><a-select-option value="青海省三江源生态环境保护协会">青海省三江源生态环境保护协会</a-select-option><a-select-option value="重庆江北飞地猫盟生态科普保护中心">重庆江北飞地猫盟生态科普保护中心</a-select-option></a-select></div>
+        <div class="field" :class="reviewClass('targets')"><label><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment('targets')">项目目标板块（多选）</review-comment-label></label><a-select dropdown-class-name="standard-edit-dropdown" id="application-targets" v-model="draft.targets" class="target-select" mode="multiple" placeholder="请选择项目目标板块"><a-select-option v-for="target in targetOptions" :key="target">{{ target }}</a-select-option></a-select></div>
+        <div class="field" :class="reviewClass('organization')"><label><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment('organization')">{{ isOrganizationProject ? '申请机构' : '执行机构' }}</review-comment-label></label><span v-if="isOrganizationProject" class="basic-field-value">{{ draft.organization }}</span><a-select dropdown-class-name="standard-edit-dropdown" v-else id="application-organization" v-model="draft.organization" placeholder="请选择执行机构"><a-select-option value="青海省三江源生态环境保护协会">青海省三江源生态环境保护协会</a-select-option><a-select-option value="重庆江北飞地猫盟生态科普保护中心">重庆江北飞地猫盟生态科普保护中心</a-select-option></a-select></div>
           <div v-if="isOrganizationProject" class="field"><span class="basic-field-label">机构信息编码</span><span class="basic-field-value">{{ draft.organizationCode }}</span></div>
-        <div class="field" :class="reviewClass('thirdParties')"><label><review-comment-label :comment="reviewComment('thirdParties')">第三方</review-comment-label></label><project-third-parties id="application-third-parties" :value="draft.thirdParties" :expanded="thirdVisible" @click="openThirdParties" /></div>
-        <div class="field execution-period" :class="reviewClass('executionPeriod')"><label><review-comment-label :comment="reviewComment('executionPeriod')">{{ isOrganizationProject ? '资助周期' : '执行周期' }}</review-comment-label></label><project-date-range :start.sync="draft.start" :end.sync="draft.end" /></div>
-        <div class="field rural-field" :class="reviewClass('rural')"><label><review-comment-label :comment="reviewComment('rural')">是否在国家乡村振兴重点帮扶县开展项目</review-comment-label></label><project-binary-choice id="application-rural" v-model="draft.rural" /></div>
-        <div class="field" :class="reviewClass('aid')"><label><review-comment-label :comment="reviewComment('aid')">直接或委托其他组织资助给受益人款物</review-comment-label></label><project-binary-choice id="application-aid" v-model="draft.aid" /></div>
-<template v-if="isOrganizationProject">          <div v-for="field in greenHomeBasicFields.filter(item => ['environmentalFields'].includes(item.key))" :key="field.key" class="field" :class="reviewClass(field.key)"><label><review-comment-label :comment="reviewComment(field.key)">{{ field.label }}</review-comment-label></label><a-select v-if="field.key === 'environmentalFields'" v-model="draft.environmentalFieldSelection" class="target-select" mode="multiple" placeholder="请选择"><a-select-option v-for="option in environmentalOptions" :key="option">{{ option }}</a-select-option></a-select><a-textarea v-else-if="field.multiline" v-model="draft[field.key]" :rows="3" :placeholder="'请填写' + field.label" /><a-input v-else v-model="draft[field.key]" :placeholder="'请填写' + field.label" /></div></template>
-        <div v-if="!isOrganizationProject" class="field full" :class="reviewClass('beneficiaries')"><label><review-comment-label :comment="reviewComment('beneficiaries')">受益对象</review-comment-label></label><a-textarea id="application-beneficiaries" v-model="draft.beneficiaries" class="resizable-textarea" :rows="1" placeholder="请填写受益对象" /></div>
-        <div v-if="!isOrganizationProject" class="field full" :class="reviewClass('publicBenefit')"><label><review-comment-label :comment="reviewComment('publicBenefit')">项目公益性</review-comment-label></label><a-textarea id="application-publicBenefit" v-model="draft.publicBenefit" class="resizable-textarea" :rows="1" placeholder="请说明项目的公益目的、受益范围和成果共享方式" /></div>
-        <div class="amount-fields full"><div v-for="field in amountFields" :key="field.key" class="field" :class="reviewClass(field.key)"><label><review-comment-label :comment="reviewComment(field.key)">{{ field.label }}</review-comment-label></label><template v-if="isAutomaticBudgetTotal && field.key === 'total'"><span class="basic-field-value">{{ automaticBudgetTotal === null ? '0' : money(automaticBudgetTotal) }} 元</span><small v-if="automaticBudgetTotal === null" class="budget-total-note">{{ isOrganizationProject ? '由申请SEE资金和其他地方资助自动计算' : '由申请SEE资金和配套金额自动计算' }}</small><small v-else>大写：{{ uppercaseMoney(automaticBudgetTotal) }}</small></template><template v-else><project-amount-input :id="'application-' + field.key" v-model="draft[field.key]" :label="field.label" /><small>{{ draft[field.key] === null ? '填写金额后自动显示大写' : '大写：' + uppercaseMoney(draft[field.key]) }}</small></template></div></div>
-        <div v-if="isOrganizationProject" class="field" :class="reviewClass('otherLocalFunding')"><label><review-comment-label :comment="reviewComment('otherLocalFunding')">其他地方资助</review-comment-label></label><a-textarea v-model="draft.otherLocalFundingDescription" class="resizable-textarea" :rows="1" placeholder="请填写其他地方资助说明" /><project-amount-input v-model="draft.otherLocalFundingAmount" label="其他地方资助金额" /><small>{{ draft.otherLocalFundingAmount === null || draft.otherLocalFundingAmount === '' ? '填写金额后自动显示大写' : '大写：' + uppercaseMoney(draft.otherLocalFundingAmount) }}</small></div>
-        <div class="field" :class="reviewClass('leader')"><label><review-comment-label :comment="reviewComment('leader')">负责人</review-comment-label></label><a-input class="contact-input" id="application-leader" v-model="draft.leader" placeholder="请填写负责人姓名" /></div><div class="field" :class="reviewClass('phone')"><label><review-comment-label :comment="reviewComment('phone')">联系方式</review-comment-label></label><a-input class="contact-input" id="application-phone" v-model="draft.phone" placeholder="请填写联系电话" /></div>
-<template v-if="isGrass">          <div v-for="field in greenHomeBasicFields.filter(item => ['email','mailingAddress'].includes(item.key))" :key="field.key" class="field" :class="reviewClass(field.key)"><label><review-comment-label :comment="reviewComment(field.key)">{{ field.label }}</review-comment-label></label><a-textarea v-if="field.multiline" v-model="draft[field.key]" :rows="1" class="resizable-textarea" :placeholder="'请填写' + field.label" /><a-input v-else v-model="draft[field.key]" :placeholder="'请填写' + field.label" /><a-input v-if="field.key === 'mailingAddress'" v-model="draft.postalCode" placeholder="请填写邮编" aria-label="邮编" /></div></template>
+        <div class="field" :class="reviewClass('thirdParties')"><label><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment('thirdParties')">第三方</review-comment-label></label><project-third-parties id="application-third-parties" :value="draft.thirdParties" :expanded="thirdVisible" @click="openThirdParties" /></div>
+        <div class="field execution-period" :class="reviewClass('executionPeriod')"><label><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment('executionPeriod')">{{ isOrganizationProject ? '资助周期' : '执行周期' }}</review-comment-label></label><project-date-range :start.sync="draft.start" :end.sync="draft.end" /></div>
+        <div class="field rural-field" :class="reviewClass('rural')"><label><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment('rural')">是否在国家乡村振兴重点帮扶县开展项目</review-comment-label></label><project-binary-choice id="application-rural" v-model="draft.rural" /></div>
+        <div class="field" :class="reviewClass('aid')"><label><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment('aid')">直接或委托其他组织资助给受益人款物</review-comment-label></label><project-binary-choice id="application-aid" v-model="draft.aid" /></div>
+<template v-if="isOrganizationProject">          <div v-for="field in greenHomeBasicFields.filter(item => ['environmentalFields'].includes(item.key))" :key="field.key" class="field" :class="reviewClass(field.key)"><label><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment(field.key)">{{ field.label }}</review-comment-label></label><a-select dropdown-class-name="standard-edit-dropdown" v-if="field.key === 'environmentalFields'" v-model="draft.environmentalFieldSelection" class="target-select" mode="multiple" placeholder="请选择"><a-select-option v-for="option in environmentalOptions" :key="option">{{ option }}</a-select-option></a-select><a-textarea v-else-if="field.multiline" v-model="draft[field.key]" :rows="3" :placeholder="'请填写' + field.label" /><a-input v-else v-model="draft[field.key]" :placeholder="'请填写' + field.label" /></div></template>
+        <div v-if="!isOrganizationProject" class="field full" :class="reviewClass('beneficiaries')"><label><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment('beneficiaries')">受益对象</review-comment-label></label><a-textarea id="application-beneficiaries" v-model="draft.beneficiaries" class="resizable-textarea" :rows="1" placeholder="请填写受益对象" /></div>
+        <div v-if="!isOrganizationProject" class="field full" :class="reviewClass('publicBenefit')"><label><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment('publicBenefit')">项目公益性</review-comment-label></label><a-textarea id="application-publicBenefit" v-model="draft.publicBenefit" class="resizable-textarea" :rows="1" placeholder="请说明项目的公益目的、受益范围和成果共享方式" /></div>
+        <div class="amount-fields full"><div v-for="field in amountFields" :key="field.key" class="field" :class="reviewClass(field.key)"><label><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment(field.key)">{{ field.label }}</review-comment-label></label><template v-if="isAutomaticBudgetTotal && field.key === 'total'"><span class="basic-field-value">{{ automaticBudgetTotal === null ? '0' : money(automaticBudgetTotal) }} 元</span><small v-if="automaticBudgetTotal === null" class="budget-total-note">{{ isOrganizationProject ? '由申请SEE资金和其他地方资助自动计算' : '由申请SEE资金和配套金额自动计算' }}</small><small v-else>大写：{{ uppercaseMoney(automaticBudgetTotal) }}</small></template><template v-else><project-amount-input :id="'application-' + field.key" v-model="draft[field.key]" :label="field.label" /><small>{{ draft[field.key] === null ? '填写金额后自动显示大写' : '大写：' + uppercaseMoney(draft[field.key]) }}</small></template></div></div>
+        <div v-if="isOrganizationProject" class="field" :class="reviewClass('otherLocalFunding')"><label><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment('otherLocalFunding')">其他地方资助</review-comment-label></label><a-textarea v-model="draft.otherLocalFundingDescription" class="resizable-textarea" :rows="1" placeholder="请填写其他地方资助说明" /><project-amount-input v-model="draft.otherLocalFundingAmount" label="其他地方资助金额" /><small>{{ draft.otherLocalFundingAmount === null || draft.otherLocalFundingAmount === '' ? '填写金额后自动显示大写' : '大写：' + uppercaseMoney(draft.otherLocalFundingAmount) }}</small></div>
+        <div class="field" :class="reviewClass('leader')"><label><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment('leader')">负责人</review-comment-label></label><a-input class="contact-input" id="application-leader" v-model="draft.leader" placeholder="请填写负责人姓名" /></div><div class="field" :class="reviewClass('phone')"><label><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment('phone')">联系方式</review-comment-label></label><a-input class="contact-input" id="application-phone" v-model="draft.phone" placeholder="请填写联系电话" /></div>
+<template v-if="isGrass">          <div v-for="field in greenHomeBasicFields.filter(item => ['email','mailingAddress'].includes(item.key))" :key="field.key" class="field" :class="reviewClass(field.key)"><label><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment(field.key)">{{ field.label }}</review-comment-label></label><a-textarea v-if="field.multiline" v-model="draft[field.key]" :rows="1" class="resizable-textarea" :placeholder="'请填写' + field.label" /><a-input v-else v-model="draft[field.key]" :placeholder="'请填写' + field.label" /><a-input v-if="field.key === 'mailingAddress'" v-model="draft.postalCode" placeholder="请填写邮编" aria-label="邮编" /></div></template>
 
       </div>
 
       <div v-else class="form-fields description-grid one-time-donation-fields">
         <div v-for="field in donationBasicFields" :key="field.key" class="field" :class="[field.full ? 'full' : '', field.readonly ? {} : reviewClass(field.key), { 'project-name-item': isMonthlyDonation && field.key === 'name' }]">
-          <label><review-comment-label :comment="field.readonly ? '' : reviewComment(field.key)">{{ field.label }}</review-comment-label></label>
+          <label><review-comment-label overlay-class-name="project-review-comment" :comment="field.readonly ? '' : reviewComment(field.key)">{{ field.label }}</review-comment-label></label>
           <strong v-if="isMonthlyDonation && field.key === 'name'" class="basic-field-value">{{ draft.name || '—' }}</strong>
           <span v-else-if="isDonationProject && !isMonthlyDonation && field.key === 'frameworkAgreementNumber'" class="donation-field-hint">项目审核通过后由SEE填写</span>
           <div v-else-if="isMonthlyDonation && field.key === 'requested'" class="donation-allocation-prompt"><span>金额由SEE在审核前填写</span><a-button class="donation-reminder" type="primary" @click="saveAndRemind">保存草稿并提醒SEE填写</a-button></div>
           <span v-else-if="field.readonly" class="basic-field-value">{{ field.money ? money(draft[field.key]) + ' 元（' + uppercaseMoney(draft[field.key]) + '）' : draft[field.key] || '—' }}</span>
-          <a-select v-else-if="field.key === 'targets'" v-model="draft.targets" mode="multiple" class="target-select" placeholder="请选择项目目标板块"><a-select-option v-for="option in targetOptions" :key="option">{{ option }}</a-select-option></a-select>
-          <a-select v-else-if="field.key === 'organization'" v-model="draft.organization" placeholder="请选择执行机构"><a-select-option :value="donationOrganization">{{ donationOrganization }}</a-select-option></a-select>
+          <a-select dropdown-class-name="standard-edit-dropdown" v-else-if="field.key === 'targets'" v-model="draft.targets" mode="multiple" class="target-select" placeholder="请选择项目目标板块"><a-select-option v-for="option in targetOptions" :key="option">{{ option }}</a-select-option></a-select>
+          <a-select dropdown-class-name="standard-edit-dropdown" v-else-if="field.key === 'organization'" v-model="draft.organization" placeholder="请选择执行机构"><a-select-option :value="donationOrganization">{{ donationOrganization }}</a-select-option></a-select>
           <project-third-parties v-else-if="field.key === 'thirdParties'" :value="draft.thirdParties" :expanded="thirdVisible" @click="openThirdParties" />
-          <a-select v-else-if="field.key === 'onlineFundraisingPlatform'" v-model="draft.onlineFundraisingPlatform" placeholder="请选择" allow-clear><a-select-option v-for="option in donationPlatformOptions" :key="option">{{ option }}</a-select-option></a-select>
+          <a-select dropdown-class-name="standard-edit-dropdown" v-else-if="field.key === 'onlineFundraisingPlatform'" v-model="draft.onlineFundraisingPlatform" placeholder="请选择" allow-clear><a-select-option v-for="option in donationPlatformOptions" :key="option">{{ option }}</a-select-option></a-select>
           <project-date-range v-else-if="field.start" :start.sync="draft[field.start]" :end.sync="draft[field.end]" :label="field.label" />
           <project-binary-choice v-else-if="field.key === 'rural' || field.key === 'aid'" v-model="draft[field.key]" />
           <template v-else-if="field.money"><project-amount-input v-model="draft[field.key]" :label="field.label" /><small>{{ draft[field.key] === null ? '填写金额后自动显示大写' : '大写：' + uppercaseMoney(draft[field.key]) }}</small></template>
@@ -47,31 +47,31 @@
     </section>
 
     <section v-if="isOrganizationProject" class="panel form-section"><div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="bank" /></span><div><h2>机构基本信息</h2><p v-if="hasOrganizationReviewComments">请检查并修改标红的项目信息，点击信息小标题或行任意位置可查看具体审核意见</p></div></div><div class="project-module-content">
-      <div class="form-fields description-grid"><div class="field full organization-overview-field" :class="reviewClass('organizationBasicInfo.entrepreneurshipOverview')"><label><review-comment-label :comment="reviewComment('organizationBasicInfo.entrepreneurshipOverview')">{{ isGrass ? '机构简介' : '创业概述' }}</review-comment-label></label><a-textarea v-model="draft.organizationBasicInfo.entrepreneurshipOverview" class="resizable-textarea organization-overview-input" :rows="2" :max-length="isGrass ? 200 : undefined" :placeholder="isGrass ? '请填写机构简介' : '请用精炼的语言概括说明创业计划'" /></div><div v-for="item in organizationStaffCounts" :key="item.label" class="field"><span class="basic-field-label">{{ item.label }}</span><review-comment-label v-if="isGrass" :comment="reviewComment(item.key)"><span class="basic-field-value" :class="reviewClass(item.key)">{{ item.count }}</span></review-comment-label><span v-else class="basic-field-value">{{ item.count }}</span></div></div>
+      <div class="form-fields description-grid"><div class="field full organization-overview-field" :class="reviewClass('organizationBasicInfo.entrepreneurshipOverview')"><label><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment('organizationBasicInfo.entrepreneurshipOverview')">{{ isGrass ? '机构简介' : '创业概述' }}</review-comment-label></label><a-textarea v-model="draft.organizationBasicInfo.entrepreneurshipOverview" class="resizable-textarea organization-overview-input" :rows="2" :max-length="isGrass ? 200 : undefined" :placeholder="isGrass ? '请填写机构简介' : '请用精炼的语言概括说明创业计划'" /></div><div v-for="item in organizationStaffCounts" :key="item.label" class="field"><span class="basic-field-label">{{ item.label }}</span><review-comment-label overlay-class-name="project-review-comment" v-if="isGrass" :comment="reviewComment(item.key)"><span class="basic-field-value" :class="reviewClass(item.key)">{{ item.count }}</span></review-comment-label><span v-else class="basic-field-value">{{ item.count }}</span></div></div>
       <div class="field organization-table-heading"><label>组织信息</label></div><template v-for="section in tableSections.filter(section => section.key === 'organizationMembers')">
-      <div class="detail-table-wrap"><table class="detail-table team-table organization-members-table"><colgroup><col style="width: 70px" /><col class="team-col-name" /><col class="team-col-role" /><col /><col class="organization-work-type-col" /><col style="width: 130px" /></colgroup><thead><tr><th>序号</th><th v-for="field in section.fields.filter(field => field.key !== 'usesLingxi')" :key="field.key">{{ field.key === 'responsibilities' ? '团队分工' : field.key === 'workType' ? '工作性质' : field.label }}</th><th>操作</th></tr></thead><tbody><tr v-for="(row, index) in draft[section.key]" :key="row.id" :class="rowReviewClass(section.key, row)" :role="rowReviewComment(section.key, row) ? 'button' : undefined" :tabindex="rowReviewComment(section.key, row) ? 0 : undefined" @click="openRowReview(section.key, row)" @keydown.enter.prevent="openRowReview(section.key, row)" @keydown.space.prevent="openRowReview(section.key, row)"><td><a-popover v-if="rowReviewComment(section.key, row)" :visible="rowReviewKey === section.key + '.' + row.id" trigger="click" placement="topLeft" @visibleChange="visible => changeRowReviewVisibility(section.key, row, visible)"><template slot="content"><div class="row-review-content"><div><a-icon type="exclamation-circle" theme="filled" /><p>{{ rowReviewComment(section.key, row) }}</p></div><a-button size="small" type="primary" @click.stop="rowReviewKey = ''">关闭</a-button></div></template><span class="row-review-anchor">{{ index + 1 }}</span></a-popover><template v-else>{{ index + 1 }}</template></td><td v-for="field in section.fields.filter(field => field.key !== 'usesLingxi')" :key="field.key" :class="reviewClass(section.key + '.' + row.id + '.' + field.key)"><review-comment-label :comment="reviewComment(section.key + '.' + row.id + '.' + field.key)">{{ field.key === 'workType' ? organizationWorkType(row) : (row[field.key] || '—') }}</review-comment-label></td><td class="team-actions" @click.stop @keydown.stop><a-button type="link" @click="openRow(section.key, index)">编辑</a-button><a-button type="link" class="danger-link" @click="removeRow(section.key, index)">删除</a-button></td></tr><tr class="team-entry-row"><td>{{ draft[section.key].length + 1 }}</td><td v-for="field in section.fields.filter(field => field.key !== 'usesLingxi')" :key="field.key"></td><td class="team-actions"><a-button type="link" @click="openRow(section.key)">新增</a-button></td></tr></tbody></table></div>
+      <div class="detail-table-wrap"><table class="detail-table team-table organization-members-table"><colgroup><col style="width: 70px" /><col class="team-col-name" /><col class="team-col-role" /><col /><col class="organization-work-type-col" /><col style="width: 130px" /></colgroup><thead><tr><th>序号</th><th v-for="field in section.fields.filter(field => field.key !== 'usesLingxi')" :key="field.key">{{ field.key === 'responsibilities' ? '团队分工' : field.key === 'workType' ? '工作性质' : field.label }}</th><th>操作</th></tr></thead><tbody><tr v-for="(row, index) in draft[section.key]" :key="row.id" :class="rowReviewClass(section.key, row)" :role="rowReviewComment(section.key, row) ? 'button' : undefined" :tabindex="rowReviewComment(section.key, row) ? 0 : undefined" @click="openRowReview(section.key, row)" @keydown.enter.prevent="openRowReview(section.key, row)" @keydown.space.prevent="openRowReview(section.key, row)"><td><a-popover v-if="rowReviewComment(section.key, row)" :visible="rowReviewKey === section.key + '.' + row.id" trigger="click" placement="topLeft" @visibleChange="visible => changeRowReviewVisibility(section.key, row, visible)"><template slot="content"><div class="row-review-content"><div><a-icon type="exclamation-circle" theme="filled" /><p>{{ rowReviewComment(section.key, row) }}</p></div><a-button size="small" type="primary" @click.stop="rowReviewKey = ''">关闭</a-button></div></template><span class="row-review-anchor">{{ index + 1 }}</span></a-popover><template v-else>{{ index + 1 }}</template></td><td v-for="field in section.fields.filter(field => field.key !== 'usesLingxi')" :key="field.key" :class="reviewClass(section.key + '.' + row.id + '.' + field.key)"><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment(section.key + '.' + row.id + '.' + field.key)">{{ field.key === 'workType' ? organizationWorkType(row) : (row[field.key] || '—') }}</review-comment-label></td><td class="team-actions" @click.stop @keydown.stop><a-button type="link" @click="openRow(section.key, index)">编辑</a-button><a-button type="link" class="danger-link" @click="removeRow(section.key, index)">删除</a-button></td></tr><tr class="team-entry-row"><td>{{ draft[section.key].length + 1 }}</td><td v-for="field in section.fields.filter(field => field.key !== 'usesLingxi')" :key="field.key"></td><td class="team-actions"><a-button type="link" @click="openRow(section.key)">新增</a-button></td></tr></tbody></table></div>
       </template>
-      <div v-if="isGrass" class="rich-fields"><div v-for="field in organizationFields.filter(item => item.key !== 'entrepreneurshipOverview')" :key="field.key" class="field"><label><review-comment-label :comment="reviewComment('organizationBasicInfo.' + field.key)">{{ field.label }}</review-comment-label></label><rich-editor v-model="draft.organizationBasicInfo[field.key]" :label="field.label" :placeholder="isGrass && field.key === 'governanceStructure' ? '请添加结构图并通过不超过300字的描述进行说明' : isGrass && field.key === 'businessLogic' ? '请添加逻辑图并通过不超过500字的描述进行说明' : undefined" :class="{ 'rich-review-has-comment': !!reviewComment('organizationBasicInfo.' + field.key) }" /></div></div>
+      <div v-if="isGrass" class="rich-fields"><div v-for="field in organizationFields.filter(item => item.key !== 'entrepreneurshipOverview')" :key="field.key" class="field"><label><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment('organizationBasicInfo.' + field.key)">{{ field.label }}</review-comment-label></label><rich-editor v-model="draft.organizationBasicInfo[field.key]" :label="field.label" :placeholder="isGrass && field.key === 'governanceStructure' ? '请添加结构图并通过不超过300字的描述进行说明' : isGrass && field.key === 'businessLogic' ? '请添加逻辑图并通过不超过500字的描述进行说明' : undefined" :class="{ 'rich-review-has-comment': !!reviewComment('organizationBasicInfo.' + field.key) }" /></div></div>
 
       <template v-if="isGrass">
         <div class="field organization-table-heading"><label>机构最高决策层</label></div>
-        <div class="detail-table-wrap"><table class="detail-table grass-decision-table"><colgroup><col /><col style="width:130px" /></colgroup><thead><tr><th>机构最高决策层</th><th>选择</th></tr></thead><tbody><tr v-for="option in grassDecisionOptions" :key="option.id" :class="rowReviewClass('highestDecisionMakingBody', option)"><td><review-comment-label v-if="option.id !== 'decision-body-4'" :comment="rowReviewComment('highestDecisionMakingBody', option)">{{ option.label }}</review-comment-label><a-input v-if="option.id === 'decision-body-4'" v-model="draft.decisionBodyOther" class="grass-decision-input" aria-label="其他决策层" placeholder="其他请填写" @input="selectCustomDecision" /></td><td><a-checkbox :aria-label="'选择' + option.label" :checked="draft.decisionBodySelection.includes(option.id)" @change="setDecisionSelection(option.id, $event.target.checked)" /></td></tr></tbody></table></div>
+        <div class="detail-table-wrap"><table class="detail-table grass-decision-table"><colgroup><col /><col style="width:130px" /></colgroup><thead><tr><th>机构最高决策层</th><th>选择</th></tr></thead><tbody><tr v-for="option in grassDecisionOptions" :key="option.id" :class="rowReviewClass('highestDecisionMakingBody', option)"><td><review-comment-label overlay-class-name="project-review-comment" v-if="option.id !== 'decision-body-4'" :comment="rowReviewComment('highestDecisionMakingBody', option)">{{ option.label }}</review-comment-label><a-input v-if="option.id === 'decision-body-4'" v-model="draft.decisionBodyOther" class="grass-decision-input" aria-label="其他决策层" placeholder="其他请填写" @input="selectCustomDecision" /></td><td><a-checkbox :aria-label="'选择' + option.label" :checked="draft.decisionBodySelection.includes(option.id)" @change="setDecisionSelection(option.id, $event.target.checked)" /></td></tr></tbody></table></div>
         <div class="field organization-table-heading"><label>筹资情况（机构前三年）</label></div>
         <div class="detail-table-wrap"><table class="detail-table grass-fundraising-table"><colgroup><col style="width:100px" /><col /><col style="width:180px" /><col style="width:130px" /><col style="width:130px" /></colgroup><thead><tr><th>年份</th><th>主要资助方</th><th>筹资额度（单位：元）</th><th>支撑费比例</th><th>操作</th></tr></thead><tbody><tr v-for="row in draft.organizationBasicInfo.fundraising.rows" :key="row.id" :class="rowReviewClass('organizationFundraising', row)" :role="rowReviewComment('organizationFundraising', row) ? 'button' : undefined" :tabindex="rowReviewComment('organizationFundraising', row) ? 0 : undefined" @click="openRowReview('organizationFundraising', row)" @keydown.enter.self.prevent="openRowReview('organizationFundraising', row)" @keydown.space.self.prevent="openRowReview('organizationFundraising', row)"><td><a-popover v-if="rowReviewComment('organizationFundraising', row)" :visible="rowReviewKey === 'organizationFundraising.' + row.id" trigger="click" placement="topLeft" @visibleChange="visible => changeRowReviewVisibility('organizationFundraising', row, visible)"><template slot="content"><div class="row-review-content"><p>{{ rowReviewComment('organizationFundraising', row) }}</p><a-button size="small" type="primary" @click.stop="rowReviewKey = ''">关闭</a-button></div></template><span>{{ row.year }}</span></a-popover><template v-else>{{ row.year }}</template></td><td :class="reviewClass('organizationFundraising.' + row.id + '.funders')"><a-textarea v-if="fundraisingEdit.id === row.id" v-model="fundraisingEdit.value.funders" :rows="2" placeholder="请填写主要资助方" @click.native.stop @keydown.native.stop /><template v-else>{{ row.funders }}</template></td><td :class="reviewClass('organizationFundraising.' + row.id + '.amount')"><a-input-number v-if="fundraisingEdit.id === row.id" v-model="fundraisingEdit.value.amount" :min="0" :precision="2" placeholder="请输入金额" @click.native.stop @keydown.native.stop /><template v-else>{{ money(row.amount) }}</template></td><td :class="reviewClass('organizationFundraising.' + row.id + '.supportRatio')"><a-input-number v-if="fundraisingEdit.id === row.id" v-model="fundraisingEdit.value.supportRatio" :min="0" :max="100" :precision="2" placeholder="请输入比例" @click.native.stop @keydown.native.stop /><template v-else>{{ row.supportRatio }}%</template></td><td class="team-actions" @click.stop @keydown.stop><template v-if="fundraisingEdit.id === row.id"><a-button type="link" @click="saveFundraising">保存</a-button><a-button type="link" @click="fundraisingEdit = { id: '', value: {}, error: '' }">取消</a-button></template><a-button v-else type="link" @click="editFundraising(row)">编辑</a-button></td></tr><tr><td>合计</td><td></td><td>{{ money(fundraisingTotal) }}</td><td></td><td></td></tr></tbody></table></div><p v-if="fundraisingEdit.error" class="form-error" role="alert">{{ fundraisingEdit.error }}</p>
       </template>
     </div></section>
-    <section v-if="isGrass" class="panel form-section"><div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="solution" /></span><div><h2>机构成长需求分析</h2><p v-if="draft.organizationDevelopment.growthNeeds.some(item => reviewComment(item.key))">请检查并修改标红的项目信息，点击信息小标题可查看具体审核意见</p></div></div><div class="project-module-content"><div class="form-fields description-grid grass-growth-fields"><div v-for="item in draft.organizationDevelopment.growthNeeds" :key="item.key" class="field full" :class="reviewClass(item.key)"><label><review-comment-label :comment="reviewComment(item.key)">{{ item.title }}</review-comment-label></label><template v-if="item.key === 'organizationCoachingNeeds'"><div class="detail-table-wrap"><table class="detail-table grass-decision-table"><colgroup><col /><col style="width:130px" /></colgroup><thead><tr><th>机构层面的辅导需求</th><th>选择</th></tr></thead><tbody><tr v-for="option in grassCoachingOptions" :key="option"><td>{{ option }}</td><td><a-checkbox :aria-label="'选择' + option" :checked="draft.coachingSelection.includes(option)" @change="setCoachingSelection(option, $event.target.checked)" /></td></tr><tr><td><a-input v-model="draft.coachingOther" class="grass-decision-input" aria-label="其他辅导需求" placeholder="其他请填写" @input="selectCustomCoaching" /></td><td><a-checkbox v-model="draft.coachingOtherSelected" aria-label="选择其他辅导需求" /></td></tr></tbody></table></div></template><template v-else><a-textarea v-model="item.content" :rows="3" :max-length="item.key === 'bottleneckAnalysis' ? 500 : undefined" :placeholder="item.key === 'bottleneckAnalysis' ? '机构战略、业务、团队、资源发展的瓶颈与困惑？它的现象是什么？原因？（500字以内）' : item.key === 'priorityNeeds' ? '请在个人层面或者机构层面，各选择一个最优需求进行详细说明' : '请填写' + item.title" /></template></div></div></div></section>
- <section v-for="section in isOrganizationProject ? greenHomeDevelopmentSections : []" :key="section.key" class="panel form-section"><div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="solution" /></span><div><h2>{{ section.title }}</h2><p v-if="draft.organizationDevelopment[section.key].some(item => reviewComment('organizationDevelopment.' + section.key + '.' + item.key))">请检查并修改标红的项目信息，点击信息小标题可查看具体审核意见</p></div></div><div class="project-module-content"><div class="rich-fields"><div v-for="item in draft.organizationDevelopment[section.key]" :key="item.key" class="field"><label><review-comment-label :comment="reviewComment('organizationDevelopment.' + section.key + '.' + item.key)">{{ item.title }}</review-comment-label></label><rich-editor v-model="item.content" :label="item.title" :placeholder="section.key === 'plan' ? item.paragraphs.join('\n') : undefined" :class="{ 'rich-review-has-comment': !!reviewComment('organizationDevelopment.' + section.key + '.' + item.key) }" /></div></div></div></section>
+    <section v-if="isGrass" class="panel form-section"><div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="solution" /></span><div><h2>机构成长需求分析</h2><p v-if="draft.organizationDevelopment.growthNeeds.some(item => reviewComment(item.key))">请检查并修改标红的项目信息，点击信息小标题可查看具体审核意见</p></div></div><div class="project-module-content"><div class="form-fields description-grid grass-growth-fields"><div v-for="item in draft.organizationDevelopment.growthNeeds" :key="item.key" class="field full" :class="reviewClass(item.key)"><label><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment(item.key)">{{ item.title }}</review-comment-label></label><template v-if="item.key === 'organizationCoachingNeeds'"><div class="detail-table-wrap"><table class="detail-table grass-decision-table"><colgroup><col /><col style="width:130px" /></colgroup><thead><tr><th>机构层面的辅导需求</th><th>选择</th></tr></thead><tbody><tr v-for="option in grassCoachingOptions" :key="option"><td>{{ option }}</td><td><a-checkbox :aria-label="'选择' + option" :checked="draft.coachingSelection.includes(option)" @change="setCoachingSelection(option, $event.target.checked)" /></td></tr><tr><td><a-input v-model="draft.coachingOther" class="grass-decision-input" aria-label="其他辅导需求" placeholder="其他请填写" @input="selectCustomCoaching" /></td><td><a-checkbox v-model="draft.coachingOtherSelected" aria-label="选择其他辅导需求" /></td></tr></tbody></table></div></template><template v-else><a-textarea v-model="item.content" :rows="3" :max-length="item.key === 'bottleneckAnalysis' ? 500 : undefined" :placeholder="item.key === 'bottleneckAnalysis' ? '机构战略、业务、团队、资源发展的瓶颈与困惑？它的现象是什么？原因？（500字以内）' : item.key === 'priorityNeeds' ? '请在个人层面或者机构层面，各选择一个最优需求进行详细说明' : '请填写' + item.title" /></template></div></div></div></section>
+ <section v-for="section in isOrganizationProject ? greenHomeDevelopmentSections : []" :key="section.key" class="panel form-section"><div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="solution" /></span><div><h2>{{ section.title }}</h2><p v-if="draft.organizationDevelopment[section.key].some(item => reviewComment('organizationDevelopment.' + section.key + '.' + item.key))">请检查并修改标红的项目信息，点击信息小标题可查看具体审核意见</p></div></div><div class="project-module-content"><div class="rich-fields"><div v-for="item in draft.organizationDevelopment[section.key]" :key="item.key" class="field"><label><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment('organizationDevelopment.' + section.key + '.' + item.key)">{{ item.title }}</review-comment-label></label><rich-editor v-model="item.content" :label="item.title" :placeholder="section.key === 'plan' ? item.paragraphs.join('\n') : undefined" :class="{ 'rich-review-has-comment': !!reviewComment('organizationDevelopment.' + section.key + '.' + item.key) }" /></div></div></div></section>
 
-    <section v-if="!isOrganizationProject" class="panel form-section"><div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="read" /></span><div><h2>{{ isDonationProject ? '详细资料' : '附加信息' }}</h2><p v-if="hasAdditionalReviewComments">请检查并修改标红的项目信息，点击信息小标题可查看具体审核意见</p></div></div><div class="project-module-content"><div class="rich-fields"><div v-for="field in richFields" :key="field.key" class="field"><label><review-comment-label :comment="reviewComment(field.key)">{{ field.label }}</review-comment-label></label><rich-editor v-model="draft[field.key]" :label="field.label" :placeholder="field.placeholder" :class="{ 'rich-review-has-comment': !!reviewComment(field.key) }" /></div></div></div></section>
+    <section v-if="!isOrganizationProject" class="panel form-section"><div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="read" /></span><div><h2>{{ isDonationProject ? '详细资料' : '附加信息' }}</h2><p v-if="hasAdditionalReviewComments">请检查并修改标红的项目信息，点击信息小标题可查看具体审核意见</p></div></div><div class="project-module-content"><div class="rich-fields"><div v-for="field in richFields" :key="field.key" class="field"><label><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment(field.key)">{{ field.label }}</review-comment-label></label><rich-editor v-model="draft[field.key]" :label="field.label" :placeholder="field.placeholder" :class="{ 'rich-review-has-comment': !!reviewComment(field.key) }" /></div></div></div></section>
 
     <section v-if="!isOrganizationProject" id="form-areas" class="panel form-section area-section"><div class="detail-section-header"><span class="detail-section-icon cyan"><a-icon type="environment" /></span><div><h2>项目实施区域</h2><p v-if="hasAreaReviewComments">请检查并修改标红的项目信息，点击行任意位置可查看具体审核意见</p></div></div><div class="project-module-content">
-      <div class="detail-table-wrap area-entry-wrap"><table class="detail-table area-entry-table"><thead><tr><th class="index-col">序号</th><th>省 / 直辖市</th><th>地级市 / 直辖市区</th><th>行政区</th><th class="action-col">操作</th></tr></thead><tbody><tr v-for="(row, index) in draft.areas" :key="row.id" :class="rowReviewClass('areas', row)" :role="rowReviewComment('areas', row) ? 'button' : undefined" :tabindex="rowReviewComment('areas', row) ? 0 : undefined" @click="openRowReview('areas', row)" @keydown.enter.prevent="openRowReview('areas', row)" @keydown.space.prevent="openRowReview('areas', row)"><td><a-popover v-if="rowReviewComment('areas', row)" :visible="rowReviewKey === 'areas.' + row.id" trigger="click" placement="topLeft" @visibleChange="visible => changeRowReviewVisibility('areas', row, visible)"><template slot="content"><div class="row-review-content"><div><a-icon type="exclamation-circle" theme="filled" /><p>{{ rowReviewComment('areas', row) }}</p></div><a-button size="small" type="primary" @click.stop="rowReviewKey = ''">关闭</a-button></div></template><span class="row-review-anchor">{{ index + 1 }}</span></a-popover><template v-else>{{ index + 1 }}</template></td><td :class="reviewClass('areas.' + row.id + '.province')"><review-comment-label :comment="reviewComment('areas.' + row.id + '.province')">{{ row.province }}</review-comment-label></td><td :class="reviewClass('areas.' + row.id + '.city')"><review-comment-label :comment="reviewComment('areas.' + row.id + '.city')">{{ row.city }}</review-comment-label></td><td :class="reviewClass('areas.' + row.id + '.district')"><review-comment-label :comment="reviewComment('areas.' + row.id + '.district')">{{ row.district }}</review-comment-label></td><td class="area-actions" @click.stop @keydown.stop><a-button type="link" class="danger-link" @click="removeRow('areas', index)">删除</a-button></td></tr><tr class="area-entry-row"><td>{{ draft.areas.length + 1 }}</td><td></td><td></td><td></td><td class="area-actions"><a-button type="link" @click="openAreaPicker">新增</a-button></td></tr></tbody></table></div>
+      <div class="detail-table-wrap area-entry-wrap"><table class="detail-table area-entry-table"><thead><tr><th class="index-col">序号</th><th>省 / 直辖市</th><th>地级市 / 直辖市区</th><th>行政区</th><th class="action-col">操作</th></tr></thead><tbody><tr v-for="(row, index) in draft.areas" :key="row.id" :class="rowReviewClass('areas', row)" :role="rowReviewComment('areas', row) ? 'button' : undefined" :tabindex="rowReviewComment('areas', row) ? 0 : undefined" @click="openRowReview('areas', row)" @keydown.enter.prevent="openRowReview('areas', row)" @keydown.space.prevent="openRowReview('areas', row)"><td><a-popover v-if="rowReviewComment('areas', row)" :visible="rowReviewKey === 'areas.' + row.id" trigger="click" placement="topLeft" @visibleChange="visible => changeRowReviewVisibility('areas', row, visible)"><template slot="content"><div class="row-review-content"><div><a-icon type="exclamation-circle" theme="filled" /><p>{{ rowReviewComment('areas', row) }}</p></div><a-button size="small" type="primary" @click.stop="rowReviewKey = ''">关闭</a-button></div></template><span class="row-review-anchor">{{ index + 1 }}</span></a-popover><template v-else>{{ index + 1 }}</template></td><td :class="reviewClass('areas.' + row.id + '.province')"><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment('areas.' + row.id + '.province')">{{ row.province }}</review-comment-label></td><td :class="reviewClass('areas.' + row.id + '.city')"><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment('areas.' + row.id + '.city')">{{ row.city }}</review-comment-label></td><td :class="reviewClass('areas.' + row.id + '.district')"><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment('areas.' + row.id + '.district')">{{ row.district }}</review-comment-label></td><td class="area-actions" @click.stop @keydown.stop><a-button type="link" class="danger-link" @click="removeRow('areas', index)">删除</a-button></td></tr><tr class="area-entry-row"><td>{{ draft.areas.length + 1 }}</td><td></td><td></td><td></td><td class="area-actions"><a-button type="link" @click="openAreaPicker">新增</a-button></td></tr></tbody></table></div>
     </div></section>
 
     <section v-for="section in tableSections.filter(section => !isOrganizationProject && section.key === 'team')" :key="section.key" :id="'form-' + section.key" class="panel form-section team-section"><div class="detail-section-header"><span class="detail-section-icon" :class="section.tone"><a-icon :type="section.icon" /></span><div><h2>{{ section.title }}</h2><p v-if="hasTeamReviewComments">请检查并修改标红的项目信息，点击信息小标题或行任意位置可查看具体审核意见</p></div></div><div class="project-module-content">
-      <div class="detail-table-wrap"><table class="detail-table team-table team-entry-table"><colgroup><col class="team-col-index" /><col class="team-col-name" /><col class="team-col-role" /><col /><col v-if="isOrganizationProject" /><col class="team-col-actions" /></colgroup><thead><tr><th>序号</th><th v-for="field in section.fields" :key="field.key">{{ field.label }}</th><th>操作</th></tr></thead><tbody><tr v-for="(row, index) in draft[section.key]" :key="row.id" :class="rowReviewClass(section.key, row)" :role="rowReviewComment(section.key, row) ? 'button' : undefined" :tabindex="rowReviewComment(section.key, row) ? 0 : undefined" @click="openRowReview(section.key, row)" @keydown.enter.prevent="openRowReview(section.key, row)" @keydown.space.prevent="openRowReview(section.key, row)"><td><a-popover v-if="rowReviewComment(section.key, row)" :visible="rowReviewKey === section.key + '.' + row.id" trigger="click" placement="topLeft" @visibleChange="visible => changeRowReviewVisibility(section.key, row, visible)"><template slot="content"><div class="row-review-content"><div><a-icon type="exclamation-circle" theme="filled" /><p>{{ rowReviewComment(section.key, row) }}</p></div><a-button size="small" type="primary" @click.stop="rowReviewKey = ''">关闭</a-button></div></template><span class="row-review-anchor">{{ index + 1 }}</span></a-popover><template v-else>{{ index + 1 }}</template></td><td v-for="field in section.fields" :key="field.key" :class="reviewClass(section.key + '.' + row.id + '.' + field.key)"><review-comment-label :comment="reviewComment(section.key + '.' + row.id + '.' + field.key)">{{ row[field.key] || '—' }}</review-comment-label></td><td class="team-actions" @click.stop @keydown.stop><a-button type="link" @click="openRow(section.key, index)">编辑</a-button><a-button type="link" class="danger-link" @click="removeRow(section.key, index)">删除</a-button></td></tr><tr class="team-entry-row"><td>{{ draft[section.key].length + 1 }}</td><td v-for="field in section.fields" :key="field.key"></td><td class="team-actions"><a-button type="link" @click="openRow(section.key)">新增</a-button></td></tr></tbody></table></div>
-      <div v-if="section.key === 'team'" class="team-experience field"><label><review-comment-label :comment="reviewComment('experience')">团队或成员项目管理执行经验</review-comment-label></label><rich-editor v-model="draft.experience" label="团队或成员项目管理执行经验" :class="{ 'rich-review-has-comment': !!reviewComment('experience') }" /></div>
+      <div class="detail-table-wrap"><table class="detail-table team-table team-entry-table"><colgroup><col class="team-col-index" /><col class="team-col-name" /><col class="team-col-role" /><col /><col v-if="isOrganizationProject" /><col class="team-col-actions" /></colgroup><thead><tr><th>序号</th><th v-for="field in section.fields" :key="field.key">{{ field.label }}</th><th>操作</th></tr></thead><tbody><tr v-for="(row, index) in draft[section.key]" :key="row.id" :class="rowReviewClass(section.key, row)" :role="rowReviewComment(section.key, row) ? 'button' : undefined" :tabindex="rowReviewComment(section.key, row) ? 0 : undefined" @click="openRowReview(section.key, row)" @keydown.enter.prevent="openRowReview(section.key, row)" @keydown.space.prevent="openRowReview(section.key, row)"><td><a-popover v-if="rowReviewComment(section.key, row)" :visible="rowReviewKey === section.key + '.' + row.id" trigger="click" placement="topLeft" @visibleChange="visible => changeRowReviewVisibility(section.key, row, visible)"><template slot="content"><div class="row-review-content"><div><a-icon type="exclamation-circle" theme="filled" /><p>{{ rowReviewComment(section.key, row) }}</p></div><a-button size="small" type="primary" @click.stop="rowReviewKey = ''">关闭</a-button></div></template><span class="row-review-anchor">{{ index + 1 }}</span></a-popover><template v-else>{{ index + 1 }}</template></td><td v-for="field in section.fields" :key="field.key" :class="reviewClass(section.key + '.' + row.id + '.' + field.key)"><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment(section.key + '.' + row.id + '.' + field.key)">{{ row[field.key] || '—' }}</review-comment-label></td><td class="team-actions" @click.stop @keydown.stop><a-button type="link" @click="openRow(section.key, index)">编辑</a-button><a-button type="link" class="danger-link" @click="removeRow(section.key, index)">删除</a-button></td></tr><tr class="team-entry-row"><td>{{ draft[section.key].length + 1 }}</td><td v-for="field in section.fields" :key="field.key"></td><td class="team-actions"><a-button type="link" @click="openRow(section.key)">新增</a-button></td></tr></tbody></table></div>
+      <div v-if="section.key === 'team'" class="team-experience field"><label><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment('experience')">团队或成员项目管理执行经验</review-comment-label></label><rich-editor v-model="draft.experience" label="团队或成员项目管理执行经验" :class="{ 'rich-review-has-comment': !!reviewComment('experience') }" /></div>
     </div></section>
 
     <section id="form-outputs" class="panel form-section"><div class="detail-section-header"><span class="detail-section-icon orange"><a-icon type="project" /></span><div><h2>{{ isOrganizationProject ? '机构发展衡量指标及活动' : '项目产出 / 活动' }}</h2><p v-if="hasOutputReviewComments">请检查并修改标红的产出或活动内容，点击产出行或活动表任意位置可查看具体审核意见</p></div></div><div class="project-module-content">
@@ -80,7 +80,7 @@
         <a-button class="add-activity" type="dashed" icon="plus" @click="openActivity(index)">增加活动</a-button></article><a-button v-if="draft.outputs.length" class="add-output" type="dashed" icon="plus" @click="openOutput()">增加产出</a-button></div>
     </div></section>
 
-    <section v-if="!isDonationProject" class="panel form-section"><div class="detail-section-header"><span class="detail-section-icon red"><a-icon type="safety-certificate" /></span><div><h2>项目管理计划</h2><p v-if="hasManagementReviewComments">请检查并修改标红的项目信息，点击行任意位置可查看具体审核意见</p></div></div><div class="project-module-content"><div v-for="section in tableSections.filter(section => isOrganizationProject ? section.key === 'risks' : ['stakeholders', 'risks', 'monitoring'].includes(section.key))" :key="section.key" class="management-section"><div class="field organization-table-heading"><label>{{ section.title }}</label></div><div class="detail-table-wrap management-table-wrap"><table class="detail-table management-entry-table" :class="{ 'green-home-risk-table': section.key === 'risks' }"><colgroup><col class="management-col-index" /><col v-for="field in section.fields" :key="field.key" /><col class="management-col-actions" /></colgroup><thead><tr><th>序号</th><th v-for="field in section.fields" :key="field.key">{{ section.key === 'risks' && field.key === 'likelihood' ? '可能性' : field.label }}</th><th>操作</th></tr></thead><tbody><tr v-for="(row, index) in draft[section.key]" :key="row.id" :class="rowReviewClass(section.key, row)" :role="rowReviewComment(section.key, row) ? 'button' : undefined" :tabindex="rowReviewComment(section.key, row) ? 0 : undefined" @click="openRowReview(section.key, row)" @keydown.enter.prevent="openRowReview(section.key, row)" @keydown.space.prevent="openRowReview(section.key, row)"><td><a-popover v-if="rowReviewComment(section.key, row)" :visible="rowReviewKey === section.key + '.' + row.id" trigger="click" placement="topLeft" @visibleChange="visible => changeRowReviewVisibility(section.key, row, visible)"><template slot="content"><div class="row-review-content"><div><a-icon type="exclamation-circle" theme="filled" /><p>{{ rowReviewComment(section.key, row) }}</p></div><a-button size="small" type="primary" @click.stop="rowReviewKey = ''">关闭</a-button></div></template><span class="row-review-anchor">{{ index + 1 }}</span></a-popover><template v-else>{{ index + 1 }}</template></td><td v-for="field in section.fields" :key="field.key" :class="reviewClass(section.key + '.' + row.id + '.' + field.key)"><review-comment-label :comment="reviewComment(section.key + '.' + row.id + '.' + field.key)">{{ section.key === 'risks' && field.key === 'affectedActivities' ? riskTargetLabel(row) : row[field.key] }}</review-comment-label></td><td class="management-actions" @click.stop @keydown.stop><a-button type="link" @click="openRow(section.key, index)">编辑</a-button><a-button type="link" class="danger-link" @click="removeRow(section.key, index)">删除</a-button></td></tr><tr class="management-entry-row"><td>{{ draft[section.key].length + 1 }}</td><td v-for="field in section.fields" :key="field.key"></td><td class="management-actions"><a-button type="link" @click="openRow(section.key)">新增</a-button></td></tr></tbody></table></div></div></div></section>
+    <section v-if="!isDonationProject" class="panel form-section"><div class="detail-section-header"><span class="detail-section-icon red"><a-icon type="safety-certificate" /></span><div><h2>项目管理计划</h2><p v-if="hasManagementReviewComments">请检查并修改标红的项目信息，点击行任意位置可查看具体审核意见</p></div></div><div class="project-module-content"><div v-for="section in tableSections.filter(section => isOrganizationProject ? section.key === 'risks' : ['stakeholders', 'risks', 'monitoring'].includes(section.key))" :key="section.key" class="management-section"><div class="field organization-table-heading"><label>{{ section.title }}</label></div><div class="detail-table-wrap management-table-wrap"><table class="detail-table management-entry-table" :class="{ 'green-home-risk-table': section.key === 'risks' }"><colgroup><col class="management-col-index" /><col v-for="field in section.fields" :key="field.key" /><col class="management-col-actions" /></colgroup><thead><tr><th>序号</th><th v-for="field in section.fields" :key="field.key">{{ section.key === 'risks' && field.key === 'likelihood' ? '可能性' : field.label }}</th><th>操作</th></tr></thead><tbody><tr v-for="(row, index) in draft[section.key]" :key="row.id" :class="rowReviewClass(section.key, row)" :role="rowReviewComment(section.key, row) ? 'button' : undefined" :tabindex="rowReviewComment(section.key, row) ? 0 : undefined" @click="openRowReview(section.key, row)" @keydown.enter.prevent="openRowReview(section.key, row)" @keydown.space.prevent="openRowReview(section.key, row)"><td><a-popover v-if="rowReviewComment(section.key, row)" :visible="rowReviewKey === section.key + '.' + row.id" trigger="click" placement="topLeft" @visibleChange="visible => changeRowReviewVisibility(section.key, row, visible)"><template slot="content"><div class="row-review-content"><div><a-icon type="exclamation-circle" theme="filled" /><p>{{ rowReviewComment(section.key, row) }}</p></div><a-button size="small" type="primary" @click.stop="rowReviewKey = ''">关闭</a-button></div></template><span class="row-review-anchor">{{ index + 1 }}</span></a-popover><template v-else>{{ index + 1 }}</template></td><td v-for="field in section.fields" :key="field.key" :class="reviewClass(section.key + '.' + row.id + '.' + field.key)"><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment(section.key + '.' + row.id + '.' + field.key)">{{ section.key === 'risks' && field.key === 'affectedActivities' ? riskTargetLabel(row) : row[field.key] }}</review-comment-label></td><td class="management-actions" @click.stop @keydown.stop><a-button type="link" @click="openRow(section.key, index)">编辑</a-button><a-button type="link" class="danger-link" @click="removeRow(section.key, index)">删除</a-button></td></tr><tr class="management-entry-row"><td>{{ draft[section.key].length + 1 }}</td><td v-for="field in section.fields" :key="field.key"></td><td class="management-actions"><a-button type="link" @click="openRow(section.key)">新增</a-button></td></tr></tbody></table></div></div></div></section>
 
         <section id="form-budget" class="panel form-section budget-section"><div class="detail-section-header"><span class="detail-section-icon gold"><a-icon type="fund" /></span><div><h2>{{ isDonationProject ? '在线预算表' : '预算表' }}</h2></div></div><div class="project-module-content"><project-budget-editor :donation-project="isDonationProject" :hide-cost-type-analysis="isOrganizationProject" v-model="draft.budget" :project-name="draft.name" @open="openBudget" /></div></section>
 
@@ -97,33 +97,33 @@
 
     <footer class="form-footer"><span><a-icon type="info-circle" /> {{ dirty ? '填写内容尚未保存' : draft.savedAt ? '草稿内容已保留' : '请填写项目信息，可随时存为草稿' }}</span><div><a-button @click="goBack">取消</a-button><a-button icon="save" :disabled="uploading > 0" @click="save">存为草稿</a-button><a-button type="primary" :class="{ 'revision-progress-submit': revisionMode === 'with-progress' }" :disabled="uploading > 0" @click="submit">{{ submitLabel }}</a-button></div></footer>
 
-    <a-modal v-model="modal.visible" wrap-class-name="standard-form-modal" :title="modal.title" :width="modal.kind === 'team' || modal.kind === 'organizationMembers' || modal.kind === 'output' || modal.kind === 'activity' || modal.kind === 'stakeholders' || modal.kind === 'monitoring' || modal.kind === 'risks' ? 550 : 620" :mask-closable="false" :body-style="modal.kind === 'output' ? { overflowY: 'visible' } : { maxHeight: '65vh', overflowY: 'auto' }">
-      <div v-if="modal.kind === 'team' || modal.kind === 'organizationMembers'" class="area-picker team-picker" :class="{ 'organization-member-picker': modal.kind === 'organizationMembers' }"><div v-for="field in modal.fields" :key="field.key" class="area-picker-row"><label :for="'dialog-team-' + field.key">{{ field.label }}：</label><a-select v-if="field.options" :id="'dialog-team-' + field.key" v-model="modal.value[field.key]" placeholder="请选择"><a-select-option v-for="option in field.options" :key="option">{{ option }}</a-select-option></a-select><a-textarea v-else-if="field.type === 'textarea'" :id="'dialog-team-' + field.key" v-model="modal.value[field.key]" :rows="3" :placeholder="'请填写' + field.label" /><a-input v-else :id="'dialog-team-' + field.key" v-model="modal.value[field.key]" :placeholder="'请填写' + field.label" /></div><p v-if="modal.error" class="form-error" role="alert">{{ modal.error }}</p></div>
-      <div v-else class="modal-form" :class="{ 'output-modal-form': modal.kind === 'output', 'compact-modal-form': modal.kind === 'stakeholders' || modal.kind === 'monitoring', 'area-standard-modal-form': modal.kind === 'risks' || modal.kind === 'activity' || modal.kind === 'areas' }"><div v-for="field in modal.fields" v-if="field.key !== 'end'" :key="field.key" class="modal-field" :class="{ 'activity-divider': field.key === 'name' && modal.kind === 'output' }"><label :for="'dialog-' + field.key">{{ field.key === 'start' ? '开展时间' : field.label }}</label>
+    <a-modal v-model="modal.visible" wrap-class-name="standard-form-modal standard-edit-scope standard-edit-modal" :title="modal.title" :width="modal.kind === 'team' || modal.kind === 'organizationMembers' || modal.kind === 'output' || modal.kind === 'activity' || modal.kind === 'stakeholders' || modal.kind === 'monitoring' || modal.kind === 'risks' ? 550 : 620" :mask-closable="false" :body-style="{ maxHeight: '65vh', overflowY: 'auto' }">
+      <div v-if="modal.kind === 'team' || modal.kind === 'organizationMembers'" class="area-picker team-picker" :class="{ 'organization-member-picker': modal.kind === 'organizationMembers' }"><div v-for="field in modal.fields" :key="field.key" class="area-picker-row"><label :for="'dialog-team-' + field.key">{{ field.label }}</label><a-select dropdown-class-name="standard-edit-dropdown" v-if="field.options" :id="'dialog-team-' + field.key" v-model="modal.value[field.key]" placeholder="请选择"><a-select-option v-for="option in field.options" :key="option">{{ option }}</a-select-option></a-select><a-textarea v-else-if="field.type === 'textarea'" :id="'dialog-team-' + field.key" v-model="modal.value[field.key]" :rows="3" :placeholder="'请填写' + field.label" /><a-input v-else :id="'dialog-team-' + field.key" v-model="modal.value[field.key]" :placeholder="'请填写' + field.label" /></div><p v-if="modal.error" class="form-error" role="alert">{{ modal.error }}</p></div>
+      <div v-else class="modal-form" :class="{ 'output-modal-form': modal.kind === 'output', 'compact-modal-form': modal.kind === 'stakeholders' || modal.kind === 'monitoring', 'area-standard-modal-form': modal.kind === 'risks' || modal.kind === 'activity' || modal.kind === 'areas' }"><div v-for="field in modal.fields" v-if="field.key !== 'end'" :key="field.key" class="modal-field" :class="{ 'activity-divider': field.key === 'name' && modal.kind === 'output', 'activity-modal-field': modal.kind === 'activity', 'has-field-error': ['output', 'activity'].includes(modal.kind) && !!modalFieldErrors[field.key] }"><label :for="'dialog-' + field.key">{{ field.key === 'start' ? '开展时间' : field.label }}</label>
         <div v-if="modal.kind === 'risks' && field.key === 'affectedActivities'" class="risk-target-input">
-          <a-tree-select id="dialog-affectedActivities" v-model="riskTargetSelection" class="risk-target-tree" :tree-data="riskTargetTree" :dropdown-match-select-width="true" tree-default-expand-all :show-search="false" dropdown-class-name="risk-target-tree-dropdown" :dropdown-style="{ maxHeight: '320px', overflowY: 'auto', overflowX: 'hidden' }" placeholder="请选择" @change="changeRiskTarget" />
+          <a-tree-select id="dialog-affectedActivities" v-model="riskTargetSelection" class="risk-target-tree" :tree-data="riskTargetTree" :dropdown-match-select-width="true" tree-default-expand-all :show-search="false" dropdown-class-name="standard-edit-dropdown risk-target-tree-dropdown" :dropdown-style="{ maxHeight: '320px', overflowY: 'auto', overflowX: 'hidden' }" placeholder="请选择" @change="changeRiskTarget" />
           <a-textarea v-if="riskTargetSelection === 'other'" v-model="modal.value.affectedActivities" :rows="3" aria-label="自定义风险影响的目标或活动" placeholder="请填写风险影响的目标或活动" />
         </div>
-        <a-select v-else-if="field.key === 'people'" :id="'dialog-' + field.key" v-model="modal.value[field.key]" class="people-select" :mode="isOrganizationProject && !isGrass ? 'tags' : 'multiple'" :token-separators="isOrganizationProject && !isGrass ? ['、', ',', '，'] : undefined" :disabled="!(isOrganizationProject && !isGrass) && !teamMemberOptions.length" :placeholder="isOrganizationProject && !isGrass ? '请输入活动执行人员姓名，按回车确认' : teamMemberOptions.length ? '请选择活动执行人员' : '请先添加执行团队成员'"><a-select-option v-for="name in teamMemberOptions" :key="name" :value="name">{{ name }}</a-select-option></a-select>
-        <a-select v-else-if="field.options" :id="'dialog-' + field.key" v-model="modal.value[field.key]" placeholder="请选择"><a-select-option v-for="option in field.options" :key="option">{{ option }}</a-select-option></a-select>
-        <div v-else-if="field.key === 'start'" class="activity-period-inputs"><input id="dialog-start" v-model="modal.value.start" type="month" class="ant-input" /><span>至</span><input id="dialog-end" v-model="modal.value.end" type="month" class="ant-input" /></div>
-        <a-auto-complete v-else-if="field.key === 'province'" :id="'dialog-' + field.key" v-model="modal.value[field.key]" :data-source="provinces" :filter-option="filterOption" placeholder="请选择或输入省 / 直辖市" @change="resetRegion" />
+        <a-select dropdown-class-name="standard-edit-dropdown" v-else-if="field.key === 'people'" :id="'dialog-' + field.key" v-model="modal.value[field.key]" class="people-select" :show-arrow="true" :max-tag-count="0" :max-tag-placeholder="(modal.value[field.key] || []).join('、')" :mode="isOrganizationProject && !isGrass ? 'tags' : 'multiple'" :token-separators="isOrganizationProject && !isGrass ? ['、', ',', '，'] : undefined" :disabled="!(isOrganizationProject && !isGrass) && !teamMemberOptions.length" :placeholder="isOrganizationProject && !isGrass ? '请输入活动执行人员姓名，按回车确认' : teamMemberOptions.length ? '请选择活动执行人员' : '请先添加执行团队成员'"><a-select-option v-for="name in teamMemberOptions" :key="name" :value="name">{{ name }}</a-select-option></a-select>
+        <a-select dropdown-class-name="standard-edit-dropdown" v-else-if="field.options" :id="'dialog-' + field.key" v-model="modal.value[field.key]" placeholder="请选择"><a-select-option v-for="option in field.options" :key="option">{{ option }}</a-select-option></a-select>
+        <project-month-range v-else-if="field.key === 'start'" :start.sync="modal.value.start" :end.sync="modal.value.end" />
+        <a-auto-complete dropdown-class-name="standard-edit-dropdown" v-else-if="field.key === 'province'" :id="'dialog-' + field.key" v-model="modal.value[field.key]" :data-source="provinces" :filter-option="filterOption" placeholder="请选择或输入省 / 直辖市" @change="resetRegion" />
         <a-input v-else-if="field.key === 'city' || field.key === 'district'" :id="'dialog-' + field.key" v-model="modal.value[field.key]" :disabled="modal.value.province === '全国'" :placeholder="'请填写' + field.label + '（可留空）'" />
         <a-textarea v-else-if="field.type === 'textarea'" :id="'dialog-' + field.key" v-model="modal.value[field.key]" :rows="field.rows || 3" :placeholder="'请填写' + field.label" />
         <a-input v-else :id="'dialog-' + field.key" v-model="modal.value[field.key]" :placeholder="'请填写' + field.label" />
-      </div></div><p v-if="modal.error && modal.kind !== 'team' && modal.kind !== 'organizationMembers'" class="form-error" role="alert">{{ modal.error }}</p><template slot="footer"><a-button @click="modal.visible = false">{{ modal.kind === 'team' || (modal.kind === 'organizationMembers' && modal.index < 0) ? '关闭' : '取消' }}</a-button><a-button type="primary" @click="confirmModal">{{ modal.kind === 'team' || modal.kind === 'organizationMembers' ? (modal.index < 0 ? '添加' : '保存') : '确定' }}</a-button></template>
+      <p v-if="['output', 'activity'].includes(modal.kind) && modalFieldErrors[field.key]" class="form-error modal-field-error" role="alert">{{ modalFieldErrors[field.key] }}</p></div></div><p v-if="modal.error && !['team', 'organizationMembers', 'output', 'activity'].includes(modal.kind)" class="form-error" role="alert">{{ modal.error }}</p><template slot="footer"><a-button @click="modal.visible = false">{{ modal.kind === 'team' || (modal.kind === 'organizationMembers' && modal.index < 0) ? '关闭' : '取消' }}</a-button><a-button type="primary" @click="confirmModal">{{ modal.kind === 'team' || modal.kind === 'organizationMembers' ? (modal.index < 0 ? '添加' : '保存') : '确定' }}</a-button></template>
     </a-modal>
 
-    <a-modal v-model="areaVisible" wrap-class-name="standard-form-modal" title="项目实施区域" :width="550" :mask-closable="false" ok-text="确定" cancel-text="关闭" @ok="confirmArea"><div class="area-picker"><div class="area-picker-row"><label>省 / 直辖市：</label><a-select v-model="areaSelection.province" placeholder="请选择" @change="changeAreaProvince"><a-select-option v-for="option in regionOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option></a-select></div><div class="area-picker-row"><label>地级市 / 直辖市区：</label><a-select v-model="areaSelection.city" :disabled="!areaSelection.province" placeholder="请选择" @change="changeAreaCity"><a-select-option v-for="option in areaCityOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option></a-select></div><div class="area-picker-row"><label>县 / 行政区：</label><a-select v-model="areaSelection.district" :disabled="!areaSelection.city" placeholder="请选择"><a-select-option v-for="option in areaDistrictOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option></a-select></div><p v-if="areaError" class="form-error" role="alert">{{ areaError }}</p></div></a-modal>
+    <a-modal v-model="areaVisible" wrap-class-name="standard-form-modal standard-edit-scope standard-edit-modal" title="项目实施区域" :width="550" :mask-closable="false" ok-text="确定" cancel-text="关闭" @ok="confirmArea"><div class="area-picker"><div class="area-picker-row"><label>省 / 直辖市</label><a-select dropdown-class-name="standard-edit-dropdown" v-model="areaSelection.province" placeholder="请选择" @change="changeAreaProvince"><a-select-option v-for="option in regionOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option></a-select></div><div class="area-picker-row"><label>地级市 / 直辖市区</label><a-select dropdown-class-name="standard-edit-dropdown" v-model="areaSelection.city" :disabled="!areaSelection.province" placeholder="请选择" @change="changeAreaCity"><a-select-option v-for="option in areaCityOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option></a-select></div><div class="area-picker-row"><label>县 / 行政区</label><a-select dropdown-class-name="standard-edit-dropdown" v-model="areaSelection.district" :disabled="!areaSelection.city" placeholder="请选择"><a-select-option v-for="option in areaDistrictOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option></a-select></div><p v-if="areaError" class="form-error" role="alert">{{ areaError }}</p></div></a-modal>
 
-    <a-modal v-model="thirdVisible" title="编辑第三方名单" wrap-class-name="standard-form-modal" :width="550" :mask-closable="false" :body-style="{ maxHeight: '65vh', overflowY: 'auto' }" @ok="confirmThirdParties" ok-text="确定" cancel-text="取消">
+    <a-modal v-model="thirdVisible" title="编辑第三方名单" wrap-class-name="standard-form-modal standard-edit-scope standard-edit-modal" :width="550" :mask-closable="false" :body-style="{ maxHeight: '65vh', overflowY: 'auto' }" @ok="confirmThirdParties" ok-text="确定" cancel-text="取消">
       <div class="third-picker">
         <div class="detail-table-wrap third-selection-wrap"><table class="detail-table third-selection-table"><colgroup><col /><col style="width:65px" /></colgroup><thead><tr><th>第三方</th><th>操作</th></tr></thead><tbody><tr v-for="(name, index) in thirdDraft" :key="name"><td>{{ name }}</td><td><button type="button" class="third-delete-text" :aria-label="'删除' + name" @click="thirdDraft.splice(index, 1)">删除</button></td></tr><tr v-if="!thirdDraft.length"><td colspan="2" class="third-selection-empty">可搜索并添加第三方</td></tr></tbody></table></div>
         <a-input-search v-model="thirdQuery" aria-label="搜索第三方机构" placeholder="请输入机构名称" enter-button="搜索" @search="thirdSearch = thirdQuery.trim()" />
         <div v-if="thirdSearch" class="third-results"><div v-for="name in thirdResults" :key="name"><span>{{ name }}</span><button type="button" class="third-add-text" :disabled="thirdDraft.includes(name)" :aria-label="'添加' + name" @click="thirdDraft.push(name)">添加</button></div></div>
       </div>
     </a-modal>
-    <a-modal v-model="attachmentVisible" wrap-class-name="standard-form-modal" title="添加附件" :width="550" :mask-closable="false" :confirm-loading="uploading > 0" ok-text="上传" cancel-text="取消" @ok="confirmAttachment" @afterClose="resetAttachmentPicker"><div class="area-picker attachment-picker"><div class="area-picker-row"><label for="attachment-category">附件类型：</label><a-select id="attachment-category" v-model="attachmentDraft.category" placeholder="请选择附件类型"><a-select-option v-for="category in attachmentCategories" :key="category" :value="category">{{ category }}</a-select-option></a-select></div><div class="area-picker-row"><label>选择文件：</label><div class="attachment-file-picker"><a-upload :before-upload="selectAttachment" :show-upload-list="false" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"><a-button icon="upload">选择文件</a-button></a-upload><span v-if="attachmentDraft.file">{{ attachmentDraft.file.name }}</span></div></div><p v-if="attachmentDraft.error" class="form-error" role="alert">{{ attachmentDraft.error }}</p></div></a-modal>
+    <a-modal v-model="attachmentVisible" wrap-class-name="standard-form-modal standard-edit-scope standard-edit-modal" title="添加附件" :width="550" :mask-closable="false" :confirm-loading="uploading > 0" ok-text="上传" cancel-text="取消" @ok="confirmAttachment" @afterClose="resetAttachmentPicker"><div class="area-picker attachment-picker"><div class="area-picker-row"><label for="attachment-category">附件类型</label><a-select dropdown-class-name="standard-edit-dropdown" id="attachment-category" v-model="attachmentDraft.category" placeholder="请选择附件类型"><a-select-option v-for="category in attachmentCategories" :key="category" :value="category">{{ category }}</a-select-option></a-select></div><div class="area-picker-row"><label>选择文件</label><div class="attachment-file-picker"><a-upload :before-upload="selectAttachment" :show-upload-list="false" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"><a-button icon="upload">选择文件</a-button></a-upload><span v-if="attachmentDraft.file">{{ attachmentDraft.file.name }}</span></div></div><p v-if="attachmentDraft.error" class="form-error" role="alert">{{ attachmentDraft.error }}</p></div></a-modal>
     <a-modal v-model="previewVisible" :title="previewName" :width="960" :mask-closable="false" :footer="null" @afterClose="clearPreview"><img v-if="previewType === 'image'" :src="previewUrl" :alt="previewName" class="attachment-preview-image" /><iframe v-else-if="previewType === 'pdf'" :src="previewUrl" :title="previewName" class="attachment-preview-pdf"></iframe><p v-else>此格式请下载后使用对应办公软件查看。</p></a-modal>
   </section>
 </template>
@@ -135,6 +135,7 @@ import { createGrassDraft, loadGrassDraft, saveGrassDraft, grassDecisionOptions,
 import { createGreenHomeDraft, loadGreenHomeDraft, saveGreenHomeDraft } from '../mock/green-home-project-draft'
 import ReviewCommentLabel from '../components/ReviewCommentLabel.vue'
 import ProjectBudgetEditor from '../components/ProjectBudgetEditor.vue'
+import datePickerZhCN from 'ant-design-vue/es/date-picker/locale/zh_CN'
 import { budgetKey, prepareBudgetContext, readBudgetContext, readSavedBudget, clearBudgetContext, saveProjectBudget, normalizeBudget } from '../utils/project-budget'
 import { createDraft, loadDraft, saveDraft, createDashboardDraft, clone, money, uppercaseMoney, budgetTotal, roundMoney, draftFile } from '../mock/project-drafts'
 
@@ -208,17 +209,43 @@ const ProjectDateRange = {
   functional: true,
   props: { start: String, end: String, label: { type: String, default: '执行' } },
   render (h, { props, listeners }) {
-    const input = (key, title) => h('input', {
-      class: 'ant-input',
-      attrs: { type: props[key] ? 'date' : 'text', placeholder: '请选择' + title + '日期', 'aria-label': props.label + title + '日期' },
-      domProps: { value: props[key] },
+    const input = (key, title) => h('a-date-picker', {
+      class: 'execution-date-picker',
+      attrs: { 'aria-label': props.label + title + '日期' },
+      props: {
+        value: props[key] || null,
+        valueFormat: 'YYYY-MM-DD',
+        format: 'YYYY-MM-DD',
+        placeholder: '请选择' + title + '日期',
+        locale: { ...datePickerZhCN, lang: { ...datePickerZhCN.lang, monthFormat: 'M月' } },
+        monthCellContentRender: value => value.format('M月'),
+        dropdownClassName: 'project-execution-calendar'
+      },
       on: {
-        input: event => listeners['update:' + key](event.target.value),
-        focus: event => { event.target.type = 'date' },
-        blur: event => { if (!event.target.value) event.target.type = 'text' }
+        change: value => listeners['update:' + key](value || '')
       }
     })
     return h('div', { class: 'date-pair' }, [input('start', '开始'), h('span', '至'), input('end', '结束')])
+  }
+}
+const ProjectMonthRange = {
+  functional: true,
+  props: { start: String, end: String },
+  render (h, { props, listeners }) {
+    const input = (key, title) => h('a-month-picker', {
+      attrs: { id: 'dialog-' + key, 'aria-label': '开展' + title + '月份' },
+      props: {
+        value: props[key] || null,
+        valueFormat: 'YYYY-MM',
+        format: 'YYYY-MM',
+        placeholder: '请选择' + title + '月份',
+        locale: datePickerZhCN,
+        monthCellContentRender: value => value.format('M月'),
+        dropdownClassName: 'project-execution-calendar'
+      },
+      on: { change: value => listeners['update:' + key](value || '') }
+    })
+    return h('div', { class: 'activity-period-inputs' }, [input('start', '开始'), h('span', '至'), input('end', '结束')])
   }
 }
 const ProjectThirdParties = {
@@ -259,6 +286,18 @@ const donationPlanGuidance = [
   '4、其他筹款传播资源。'
 ].join('\n')
 const textField = (key, label, type = 'textarea', extra = {}) => ({ key, label, type, ...extra })
+function outputActivityFieldErrors (fields, value, projectStart, projectEnd) {
+  const errors = {}
+  fields.forEach(field => {
+    if (field.optional || String(value[field.key] || '').trim()) return
+    if (field.key === 'start' || field.key === 'end') errors.start = '请选择开展时间的开始和结束月份'
+    else errors[field.key] = '请填写' + field.label
+  })
+  if (!errors.start && value.start && (value.start > value.end || value.start < projectStart.slice(0, 7) || value.end > projectEnd.slice(0, 7))) {
+    errors.start = '活动结束月份不得早于开始月份，且活动时间应在项目执行周期内。'
+  }
+  return errors
+}
 const activityFields = [textField('name', '产出活动', 'textarea', { rows: 2 }), textField('start', '开始月份', 'month'), textField('end', '结束月份', 'month'), textField('location', '活动地点', 'input'), textField('people', '活动执行人员', 'input'), textField('content', '活动具体内容', 'textarea', { rows: 2 })]
 const tableSections = [
   { key: 'areas', title: '项目实施区域', icon: 'environment', tone: 'cyan', description: '可按全国、省市或具体行政区填写', fields: [textField('province', '省 / 直辖市', 'input'), textField('city', '地级市 / 直辖市区', 'input', { optional: true }), textField('district', '行政区', 'input', { optional: true })] },
@@ -268,7 +307,7 @@ const tableSections = [
   { key: 'monitoring', title: '监测评估计划', description: '帮助团队管理项目目标和指标、了解项目成果；请说明由谁实施、评估频率，以及如何反馈、汇总和分享。', fields: [textField('purpose', '监测评估目的', 'textarea', { rows: 3 }), textField('method', '如何监测评估', 'textarea', { rows: 3 })] }
 ]
 export default {
-  name: 'ProjectForm', components: { ProjectBudgetEditor, RichEditor, ReviewCommentLabel, ProjectDateRange, ProjectThirdParties, ProjectBinaryChoice, ProjectAmountInput },
+  name: 'ProjectForm', components: { ProjectBudgetEditor, RichEditor, ReviewCommentLabel, ProjectDateRange, ProjectMonthRange, ProjectThirdParties, ProjectBinaryChoice, ProjectAmountInput },
   data () { return {
     draft: ((this.$route.query.detailType === 'one-time-donation' && this.$route.params.id === '10') || (this.$route.query.detailType === 'monthly-donation' && this.$route.params.id === '11')) ? createOneTimeDonationDraft(this.$route.query.fresh === '1', this.$route.query.detailType) : this.$route.query.detailType === 'grass' && this.$route.params.id === '9' ? createGrassDraft(this.$route.query.fresh === '1') : this.$route.query.detailType === 'green-home' && this.$route.params.id === '8' ? createGreenHomeDraft(this.$route.query.fresh === '1') : this.$route.query.example === 'filled' && ['3', '5'].includes(this.$route.params.id) ? createDashboardDraft(Number(this.$route.params.id)) : createDraft(Number(this.$route.params.id)), savedSnapshot: '', errors: [], uploading: 0,
     donationPlatformOptions,
@@ -288,8 +327,8 @@ export default {
       { value: '四川省', label: '四川省', children: [{ value: '成都市', label: '成都市', children: [{ value: '锦江区', label: '锦江区' }, { value: '青羊区', label: '青羊区' }] }] },
       { value: '云南省', label: '云南省', children: [{ value: '昆明市', label: '昆明市', children: [{ value: '五华区', label: '五华区' }, { value: '盘龙区', label: '盘龙区' }] }] }
     ],
-    attachmentCategories: ['预算表', '其他附件'], attachmentVisible: false, attachmentDraft: { category: undefined, file: null, error: '' }, modal: { visible: false, kind: '', title: '', fields: [], value: {}, index: -1, parent: -1, error: '' },
-    areaVisible: false, areaSelection: { province: undefined, city: undefined, district: undefined }, areaError: '', rowReviewKey: '', thirdVisible: false, thirdQuery: '', thirdSearch: '', thirdDraft: [], thirdOptions: ['武汉观鸟会', '青海省三江源生态环境保护协会', '社区生态保护合作组织'],
+    modalFieldErrors: {}, attachmentCategories: ['预算表', '其他附件'], attachmentVisible: false, attachmentDraft: { category: undefined, file: null, error: '' }, modal: { visible: false, kind: '', title: '', fields: [], value: {}, index: -1, parent: -1, error: '' },
+    areaVisible: false, areaSelection: { province: undefined, city: undefined, district: undefined }, areaError: '', rowReviewKey: '', thirdVisible: false, thirdQuery: '', thirdSearch: '', thirdDraft: [], thirdOptions: ['武汉观鸟会', '青海省三江源生态环境保护协会', '社区生态保护合作组织', '长江流域湿地生态保护与候鸟迁徙通道修复社区联合行动协作中心（演示）'],
     riskTargetSelection: undefined, previewVisible: false, previewName: '', previewUrl: '', previewType: ''
   } },
   computed: {
@@ -375,6 +414,14 @@ export default {
     teamMemberOptions () { const names = this.draft.team.map(member => String(member.name || '').trim()); if (this.isOrganizationProject) this.draft.organizationMembers.forEach(member => names.push(member.name)); if (this.isOrganizationProject) { this.draft.outputs.forEach(output => output.activities.forEach(activity => names.push(...String(activity.people || '').split(/[、,，]/)))); } return [...new Set(names.map(name => name.trim()).filter(Boolean))] }
   },
   watch: {
+    'modal.value': {
+      deep: true,
+      handler () {
+        if (['output', 'activity'].includes(this.modal.kind) && Object.keys(this.modalFieldErrors).length) {
+          this.modalFieldErrors = outputActivityFieldErrors(this.modal.fields, this.modal.value, this.draft.start, this.draft.end)
+        }
+      }
+    },
     automaticBudgetTotal: { immediate: true, handler (value) { if (this.isAutomaticBudgetTotal) this.draft.total = value } }
   },
   created () {
@@ -440,7 +487,7 @@ export default {
       }
       if (!detail && title !== '人力成本分摊表') { this.$message.info(title + action + '功能暂未开放'); return }
       try {
-        prepareBudgetContext(this.$route, this.draft, this.isDonationProject, this.savedSnapshot)
+        prepareBudgetContext(this.$route, this.draft, this.isDonationProject, this.savedSnapshot, action === '编辑')
         this.$router.push({ name: detail ? 'project-budget-form' : 'project-personnel-form', params: { id: this.$route.params.id }, query: { ...this.$route.query, budgetType: this.isDonationProject ? 'donation' : 'project', mode: action === '查看' ? 'view' : 'edit' } })
       } catch (error) { this.$message.error('无法保留当前项目信息，请检查浏览器存储后重试') }
     },
@@ -509,6 +556,7 @@ export default {
       this.areaVisible = false
     },
     openOutput (index = -1) {
+      this.modalFieldErrors = {}
       const fields = [textField('outputName', '产出', 'textarea', { rows: 2 }), textField('standard', '产出衡量标准', 'textarea', { rows: 2 })]
       const value = index < 0 ? {} : { outputName: this.draft.outputs[index].name, standard: this.draft.outputs[index].standard }
       if (index < 0) fields.push(...activityFields)
@@ -516,6 +564,7 @@ export default {
       this.modal = { visible: true, kind: 'output', title: index < 0 ? '增加产出' : '编辑产出', fields, value, index, parent: -1, error: '' }
     },
     openActivity (parent, index = -1) {
+      this.modalFieldErrors = {}
       const value = index < 0 ? Object.fromEntries(activityFields.map(field => [field.key, field.key === 'people' ? [] : ''])) : clone(this.draft.outputs[parent].activities[index])
       value.people = String(value.people || '').split(/[、,，]/).map(name => name.trim()).filter(name => name && ((this.isOrganizationProject && !this.isGrass) || this.teamMemberOptions.includes(name)))
       this.modal = { visible: true, kind: 'activity', title: index < 0 ? '增加活动' : '编辑活动', fields: activityFields, value, index, parent, error: '' }
@@ -524,8 +573,14 @@ export default {
       const { value, fields, kind, index, parent } = this.modal
       if (this.isOrganizationProject && !this.isGrass && Array.isArray(value.people)) value.people = [...new Set(value.people.map(name => String(name).trim()).filter(Boolean))]
       const missing = fields.filter(field => !field.optional && !String(value[field.key] || '').trim())
-      if (missing.length) { this.modal.error = '请填写：' + missing.map(field => field.label).join('、'); return }
-      if (value.start && (value.start > value.end || value.start < this.draft.start.slice(0, 7) || value.end > this.draft.end.slice(0, 7))) { this.modal.error = '活动结束月份不得早于开始月份，且活动时间应在项目执行周期内。'; return }
+      if (['output', 'activity'].includes(kind)) {
+        this.modal.error = ''
+        this.modalFieldErrors = outputActivityFieldErrors(fields, value, this.draft.start, this.draft.end)
+        if (Object.keys(this.modalFieldErrors).length) return
+      } else {
+        if (missing.length) { this.modal.error = '请填写：' + missing.map(field => field.label).join('、'); return }
+        if (value.start && (value.start > value.end || value.start < this.draft.start.slice(0, 7) || value.end > this.draft.end.slice(0, 7))) { this.modal.error = '活动结束月份不得早于开始月份，且活动时间应在项目执行周期内。'; return }
+      }
       if (kind === 'areas' && value.district && !value.city && !['北京市', '上海市', '天津市', '重庆市'].includes(value.province)) { this.modal.error = '填写行政区前请先填写地级市。'; return }
       if (kind === 'areas' && this.draft.areas.some((row, i) => i !== index && ['province', 'city', 'district'].every(key => (row[key] || '').trim() === (value[key] || '').trim()))) { this.modal.error = '该实施区域已添加。'; return }
       if (kind === 'output') {
@@ -644,7 +699,7 @@ export default {
 <style scoped>
 .risk-target-input { display: grid; gap: 8px; min-width: 0; }
 .risk-target-input >>> .ant-select { width: 100%; }
-.risk-target-input >>> .risk-target-tree .ant-select-selection--single { height: auto; min-height: 32px; }
+.risk-target-input >>> .risk-target-tree .ant-select-selection--single { height: auto; min-height: 40px; }
 .risk-target-input >>> .risk-target-tree .ant-select-selection__rendered { line-height: 22px; padding: 4px 0; }
 .risk-target-input >>> .risk-target-tree .ant-select-selection-selected-value { max-width: 100%; white-space: normal; overflow: visible; overflow-wrap: anywhere; text-overflow: clip; padding-right: 20px; }
 
@@ -652,13 +707,13 @@ export default {
 .form-footer .revision-progress-submit.ant-btn-primary:hover, .form-footer .revision-progress-submit.ant-btn-primary:focus { color: #fff; background: #ad68eb; border-color: #ad68eb; }
 .form-footer .revision-progress-submit.ant-btn-primary[disabled] { color: rgba(0,0,0,.25); background: #f5f5f5; border-color: #d9d9d9; }
 .one-time-donation-fields .basic-field-value { overflow-wrap: anywhere; }
-.field small.budget-total-note { color: #929baa; font-size: 14px; line-height: 1.6; }
+.field small.budget-total-note { color: #929baa; line-height: 1.6; }
 .donation-allocation-prompt { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
 .donation-allocation-prompt > span, .donation-field-hint { color: #718095; line-height: 1.6; }
 .donation-reminder { display: inline-flex; align-items: center; justify-content: center; height: 32px; padding: 0 15px; line-height: 1; color: #fff; background: #1677ff; border-color: #1677ff; box-shadow: 0 2px 0 rgba(0,0,0,.043); }
 .donation-reminder:hover, .donation-reminder:focus { color: #1677ff; background: #fff; border-color: #1677ff; box-shadow: 0 2px 0 rgba(0,0,0,.043); }
-.project-form-page { display: grid; gap: 20px; min-width: 0; color: #18253c; padding-bottom: 18px; }.form-section { overflow: hidden; }.form-section .detail-section-header > .ant-btn { height: 32px; border-radius: 6px; }.form-fields { display: grid; grid-template-columns: 1fr 1fr; }.field { min-width: 0; display: flex; flex-direction: column; gap: 9px; }.field label { font-weight: 500; line-height: 1.6; }.full { grid-column: 1 / -1; }em { color: #ff4d4f; font-style: normal; margin-right: 3px; }.field > .ant-select,.field > .ant-input-number { width: 100%; }.third-parties { display: flex; align-items: flex-start; gap: 12px; min-height: 32px; }.third-parties span { flex: 1; overflow-wrap: anywhere; padding-top: 5px; }.third-parties .ant-btn { padding-right: 0; }.date-pair { display: flex; gap: 12px; align-items: center; }.date-pair .ant-input { min-width: 0; width: 50%; }.date-pair > span:not(.ant-calendar-picker) { color: #718095; }.amount-fields { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; padding: 20px; background: #f8fbff; border-radius: 10px; }.amount-input { position: relative; display: flex; align-items: center; border: 1px solid transparent; border-radius: 4px; }.amount-input:hover { border-color: #d9e1eb; }.amount-input:focus-within { border-color: #1677ff; box-shadow: 0 0 0 2px rgba(22,119,255,.12); }.amount-input .ant-input-number { width: 100%; }.amount-unit { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #536277; font-size: 16px; line-height: 1; pointer-events: none; }.amount-unit i { visibility: hidden; font-style: normal; }.field small { color: #718095; font-size: 14px; line-height: 1.6; }.field >>> .rich-editor { border: 1px solid #d9e1eb; border-radius: 6px; overflow: hidden; }.field >>> .rich-toolbar { display: flex; gap: 8px; align-items: center; padding: 8px 12px; background: #fafbfd; border-bottom: 1px solid #e6ebf2; }.field >>> .rich-toolbar button { border: none; border-radius: 4px; padding: 3px 9px; background: transparent; color: #536277; cursor: pointer; }.field >>> .rich-toolbar button:hover { color: #1677ff; background: #eaf3ff; }.field >>> .rich-toolbar button:first-child { font-weight: 800; }.field >>> .rich-toolbar button:nth-child(2) { font-style: italic; }.field >>> .rich-toolbar button:nth-child(3) { text-decoration: underline; }.field >>> .rich-editable:focus { box-shadow: inset 0 0 0 1px #1677ff; }.field >>> .rich-editable p:last-child { margin-bottom: 0; }
-.danger-link { color: #ff4d4f; }.row-actions { display: flex; flex-shrink: 0; }.row-actions .ant-btn { padding: 0 8px; }.form-activity { padding: 18px 20px; margin-bottom: 12px; background: #f8fbff; border: 1px solid #e9eff7; border-radius: 10px; }.form-activity dl { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin: 14px 0; }.form-activity dt { color: #8491a3; font-size: 12px; margin-bottom: 5px; }.form-activity dd { margin: 0; overflow-wrap: anywhere; }.form-activity p { line-height: 1.8; margin: 0; white-space: pre-line; }.add-activity { width: 100%; color: #1677ff; }.section-description { color: #718095; line-height: 1.8; }.management-entry-table { table-layout: fixed; }.management-entry-table .management-col-index { width: 70px; }.management-entry-table .management-col-actions { width: 130px; }.management-entry-table th:first-child, .management-entry-table td:first-child, .management-entry-table th:last-child, .management-entry-table td:last-child { text-align: center; }.management-entry-table td { white-space: pre-line; overflow-wrap: anywhere; }.management-entry-table .management-entry-row td { vertical-align: middle; background: #fff; }.management-entry-table th:last-child, .management-entry-table .management-actions { padding-right: 12px; padding-left: 12px; }.management-entry-table .management-actions { white-space: nowrap; }.management-entry-table .management-actions .ant-btn { height: auto; padding: 0 7px; }.attachment-section .detail-section-header { align-items: center; }.attachment-section .detail-section-header > div { display: flex; min-height: 40px; align-items: center; }.attachment-section .detail-section-header h2 { margin: 0; }.form-attachment-list > div { grid-template-columns: minmax(0, 1fr) auto auto auto; }.form-attachment-list strong { overflow-wrap: anywhere; }.form-attachment-list .ant-btn { padding: 0 6px; }.attachment-file-picker { min-width: 0; display: flex; align-items: center; gap: 12px; }.attachment-file-picker > span { min-width: 0; color: #536277; overflow-wrap: anywhere; }.attachment-picker > .form-error { margin-left: 108px; }.form-footer { position: sticky; bottom: 0; z-index: 5; border: 1px solid #e6ebf2; border-radius: 12px; background: rgba(255,255,255,.98); box-shadow: 0 -4px 22px rgba(23,56,92,.07); padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }.form-footer > span { color: #718095; }.form-footer > div { display: flex; gap: 12px; }.form-footer .ant-btn { min-width: 100px; }.validation-summary { background: #fff6f5; color: #cf1322; border: 1px solid #ffd3d0; border-radius: 12px; padding: 20px 24px; display: flex; gap: 12px; }.validation-summary .anticon { margin-top: 4px; }.validation-summary ul { padding-left: 18px; margin: 8px 0 0; line-height: 1.8; }.modal-form { display: grid; gap: 20px; padding: 0; }.modal-field { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 16px; align-items: start; }.modal-field label { text-align: right; padding-top: 6px; line-height: 1.6; }.modal-field > .ant-calendar-picker,.modal-field > .ant-select { width: 100%; }.form-error { color: #ff4d4f; margin: 10px 0 0; }.third-results { margin: 0; }.third-results > div { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; padding: 8px 0; border-bottom: 1px solid #edf1f5; }.third-results span { min-width: 0; flex: 1; padding-top: 5px; line-height: 22px; overflow-wrap: anywhere; }.attachment-preview-image { max-width: 100%; display: block; margin: auto; }.attachment-preview-pdf { width: 100%; height: 65vh; border: 0; }
+.project-form-page { display: grid; gap: 20px; min-width: 0; color: #18253c; padding-bottom: 18px; }.form-section { overflow: hidden; }.form-section .detail-section-header > .ant-btn { height: 32px; border-radius: 6px; }.form-fields { display: grid; grid-template-columns: 1fr 1fr; }.field { min-width: 0; display: flex; flex-direction: column; gap: 9px; }.field label { font-weight: 500; line-height: 1.6; }.full { grid-column: 1 / -1; }em { color: #ff4d4f; font-style: normal; margin-right: 3px; }.field > .ant-select,.field > .ant-input-number { width: 100%; }.third-parties { display: flex; align-items: flex-start; gap: 12px; min-height: 32px; }.third-parties span { flex: 1; overflow-wrap: anywhere; padding-top: 5px; }.third-parties .ant-btn { padding-right: 0; }.date-pair { display: flex; gap: 12px; align-items: center; }.date-pair .ant-input { min-width: 0; width: 50%; }.date-pair > span:not(.ant-calendar-picker) { color: #718095; }.amount-fields { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; padding: 20px; background: #f8fbff; border-radius: 10px; }.amount-input { position: relative; display: flex; align-items: center; border: 1px solid transparent; border-radius: 4px; }.amount-input:hover { border-color: #d9e1eb; }.amount-input:focus-within { border-color: #1677ff; box-shadow: 0 0 0 2px rgba(22,119,255,.12); }.amount-input .ant-input-number { width: 100%; }.amount-unit { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #536277; line-height: 1; pointer-events: none; }.amount-unit i { visibility: hidden; font-style: normal; }.field small { color: #718095; line-height: 1.6; }.field >>> .rich-editor { border: 1px solid #d9e1eb; border-radius: 6px; overflow: hidden; }.field >>> .rich-toolbar { display: flex; gap: 8px; align-items: center; padding: 8px 12px; background: #fafbfd; border-bottom: 1px solid #e6ebf2; }.field >>> .rich-toolbar button { border: none; border-radius: 4px; padding: 3px 9px; background: transparent; color: #536277; cursor: pointer; }.field >>> .rich-toolbar button:hover { color: #1677ff; background: #eaf3ff; }.field >>> .rich-toolbar button:first-child { font-weight: 800; }.field >>> .rich-toolbar button:nth-child(2) { font-style: italic; }.field >>> .rich-toolbar button:nth-child(3) { text-decoration: underline; }.field >>> .rich-editable:focus { box-shadow: inset 0 0 0 1px #1677ff; }.field >>> .rich-editable p:last-child { margin-bottom: 0; }
+.danger-link { color: #ff4d4f; }.row-actions { display: flex; flex-shrink: 0; }.row-actions .ant-btn { padding: 0 8px; }.form-activity { padding: 18px 20px; margin-bottom: 12px; background: #f8fbff; border: 1px solid #e9eff7; border-radius: 10px; }.form-activity dl { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin: 14px 0; }.form-activity dt { color: #8491a3; margin-bottom: 5px; }.form-activity dd { margin: 0; overflow-wrap: anywhere; }.form-activity p { line-height: 1.8; margin: 0; white-space: pre-line; }.add-activity { width: 100%; color: #1677ff; }.section-description { color: #718095; line-height: 1.8; }.management-entry-table { table-layout: fixed; }.management-entry-table .management-col-index { width: 70px; }.management-entry-table .management-col-actions { width: 130px; }.management-entry-table th:first-child, .management-entry-table td:first-child, .management-entry-table th:last-child, .management-entry-table td:last-child { text-align: center; }.management-entry-table td { white-space: pre-line; overflow-wrap: anywhere; }.management-entry-table .management-entry-row td { vertical-align: middle; background: #fff; }.management-entry-table th:last-child, .management-entry-table .management-actions { padding-right: 12px; padding-left: 12px; }.management-entry-table .management-actions { white-space: nowrap; }.management-entry-table .management-actions .ant-btn { height: auto; padding: 0 7px; }.attachment-section .detail-section-header { align-items: center; }.attachment-section .detail-section-header > div { display: flex; min-height: 40px; align-items: center; }.attachment-section .detail-section-header h2 { margin: 0; }.form-attachment-list > div { grid-template-columns: minmax(0, 1fr) auto auto auto; }.form-attachment-list strong { overflow-wrap: anywhere; }.form-attachment-list .ant-btn { padding: 0 6px; }.attachment-file-picker { min-width: 0; display: flex; align-items: center; gap: 12px; }.attachment-file-picker > span { min-width: 0; color: #536277; overflow-wrap: anywhere; }.attachment-picker > .form-error { margin-left: 108px; }.form-footer { position: sticky; bottom: 0; z-index: 5; border: 1px solid #e6ebf2; border-radius: 12px; background: rgba(255,255,255,.98); box-shadow: 0 -4px 22px rgba(23,56,92,.07); padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }.form-footer > span { color: #718095; }.form-footer > div { display: flex; gap: 12px; }.form-footer .ant-btn { min-width: 100px; }.validation-summary { background: #fff6f5; color: #cf1322; border: 1px solid #ffd3d0; border-radius: 12px; padding: 20px 24px; display: flex; gap: 12px; }.validation-summary .anticon { margin-top: 4px; }.validation-summary ul { padding-left: 18px; margin: 8px 0 0; line-height: 1.8; }.modal-form { display: grid; gap: 20px; padding: 0; }.modal-field { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 16px; align-items: start; }.modal-field label { text-align: right; }.modal-field > .ant-calendar-picker,.modal-field > .ant-select { width: 100%; }.form-error { color: #ff4d4f; margin: 10px 0 0; }.third-results { margin: 0; }.third-results > div { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; padding: 8px 0; border-bottom: 1px solid #edf1f5; }.third-results span { min-width: 0; flex: 1; padding-top: 5px; line-height: 22px; overflow-wrap: anywhere; }.attachment-preview-image { max-width: 100%; display: block; margin: auto; }.attachment-preview-pdf { width: 100%; height: 65vh; border: 0; }
 .management-section { display: contents; }
 @media(max-width: 1440px) {.modal-field { grid-template-columns: 120px minmax(0, 1fr); } }
 /* 基本信息沿用详情页的双列列表，长内容独占一行。 */
@@ -666,26 +721,26 @@ export default {
 .form-fields > .field, .form-fields .amount-fields > .field { min-height: 76px; padding: 17px 18px; display: grid; align-content: center; gap: 8px; border-bottom: 1px solid #edf1f5; }
 .form-fields .field > label, .basic-field-label { color: #7b899b; font-weight: 400; }
 .basic-field-value { color: #27384e; font-weight: 500; line-height: 1.6; }
-.project-name-item .basic-field-value { font-size: 16px; font-weight: 600; line-height: 1.55; }
+.project-name-item .basic-field-value { line-height: 1.55; }
 .form-fields .amount-fields { display: contents; }
 .form-fields .amount-fields > .field:first-child { grid-column: 1 / -1; }
-.form-fields .amount-fields small { grid-column: 1 / -1; font-size: 14px; }
+.form-fields .amount-fields small { grid-column: 1 / -1; }
 .form-fields .amount-input { position: static; max-width: none; gap: 8px; border: 0; box-shadow: none; }
 .form-fields .amount-input:hover, .form-fields .amount-input:focus-within { border: 0; box-shadow: none; }
 .form-fields .amount-input .ant-input-number { flex: none; width: 190px; }
 .form-fields .amount-input .ant-input-number:hover { border-color: #d9e1eb; }
 .form-fields .amount-input .ant-input-number-focused { border-color: #1677ff; box-shadow: 0 0 0 2px rgba(22,119,255,.12); }
-.amount-unit-outside { flex: none; color: #536277; font-size: 16px; }
+.amount-unit-outside { flex: none; color: #536277; }
 .form-fields .third-parties { align-items: center; }
 .form-fields .third-parties span { padding-top: 0; }
 .form-fields .third-parties-trigger:hover { border-color: #d9e1eb; }
 .form-fields .third-parties-trigger:focus-visible { outline: none; border-color: #1677ff; box-shadow: 0 0 0 2px rgba(22,119,255,.12); }
 .third-parties-trigger > .anticon { flex-shrink: 0; color: #bfbfbf; font-size: 12px; }
 .form-fields >>> .binary-choice { line-height: 32px; }
-.binary-choice >>> .ant-radio-wrapper,
-.binary-choice >>> .ant-radio-wrapper > span:last-child { font-size: 18px; }
 .binary-choice >>> .ant-radio-wrapper + .ant-radio-wrapper { margin-left: 32px; }
 .form-fields .execution-period .date-pair { width: 100%; }
+.execution-period >>> .execution-date-picker { flex: 1; min-width: 0; width: 0; }
+.execution-period >>> .execution-date-picker .ant-input { width: 100%; }
 .form-fields .rural-field { grid-column: 1; }
 .form-fields .field > .ant-input, .form-fields .date-pair .ant-input, .form-fields .amount-input .ant-input-number { border-color: transparent; background: transparent; box-shadow: none; }
 .form-fields .field > .ant-input:hover, .form-fields .date-pair .ant-input:hover { border-color: #d9e1eb; }
@@ -698,13 +753,11 @@ export default {
 /* 本页与填写弹窗统一输入字号、内边距和单行垂直对齐。 */
 .project-form-page >>> input.ant-input,
 .modal-form >>> input.ant-input,
-.ant-input-search >>> input.ant-input { height: 40px; padding: 0 12px; font-size: 16px; line-height: normal; }
+.ant-input-search >>> input.ant-input { height: 40px; padding: 0 12px; line-height: normal; }
 .project-form-page >>> textarea.ant-input,
-.modal-form >>> textarea.ant-input { padding: 10px 12px; font-size: 16px; line-height: 1.6; }
-.project-form-page >>> .ant-input-number { height: 40px; font-size: 16px; }
-.project-form-page >>> .ant-input-number-input { height: 38px; padding: 0 12px; font-size: 16px; line-height: 38px; }
-.project-form-page >>> .ant-select,
-.modal-form >>> .ant-select { font-size: 16px; }
+.modal-form >>> textarea.ant-input { padding: 10px 12px; line-height: 24px; }
+.project-form-page >>> .ant-input-number { height: 40px; }
+.project-form-page >>> .ant-input-number-input { height: 38px; padding: 0 12px; line-height: 38px; }
 .project-form-page >>> .ant-select-selection--single,
 .modal-form >>> .ant-select-selection--single { height: 40px; }
 .project-form-page >>> .ant-select-selection__rendered,
@@ -713,8 +766,7 @@ export default {
 .project-form-page >>> .ant-select-selection--multiple .ant-select-selection__rendered { min-height: 38px; }
 .project-form-page >>> .ant-select-selection--multiple .ant-select-selection__choice { height: 28px; margin-top: 5px; line-height: 26px; }
 .project-form-page >>> .ant-select-selection--multiple .ant-select-search--inline { height: 38px; margin-top: 0; }
-.project-form-page >>> .ant-select-search__field { font-size: 16px; }
-.field >>> .rich-editable { min-height: 138px; outline: none; overflow-wrap: anywhere; padding: 12px; font-size: 16px; line-height: 1.6; }
+.field >>> .rich-editable { min-height: 138px; outline: none; overflow-wrap: anywhere; padding: 12px; line-height: 24px; }
 .field >>> .rich-image-input { display: none; }
 .field >>> .rich-editable table { width: 100%; margin: 10px 0; border-collapse: collapse; table-layout: fixed; }
 .field >>> .rich-editable td, .field >>> .rich-editable th { min-width: 80px; height: 36px; padding: 6px 8px; border: 1px solid #d9e1eb; vertical-align: top; }
@@ -727,10 +779,10 @@ export default {
 .project-form-page >>> textarea::placeholder,
 .modal-form >>> input::placeholder,
 .modal-form >>> textarea::placeholder,
-.ant-input-search >>> input::placeholder { color: #5b8ff9; font-size: 14px; opacity: 1; }
+.ant-input-search >>> input::placeholder { color: #5b8ff9; opacity: 1; }
 .project-form-page >>> .ant-select-selection__placeholder,
 .modal-form >>> .ant-select-selection__placeholder,
-.empty-hint { color: #5b8ff9; font-size: 14px; }
+.empty-hint { color: #5b8ff9; }
 
 /* 基本信息填写态与查看态对齐：无水平缩进，已填文字使用同一颜色和字重。 */
 .form-fields >>> input.ant-input {
@@ -738,18 +790,6 @@ export default {
   padding-right: 12px;
   color: #27384e;
   font-weight: 500;
-  line-height: 38px;
-}
-.form-fields >>> input.contact-input.ant-input { height: 40px; padding: 0 12px; line-height: normal; }
-.form-fields >>> input.contact-input.ant-input:placeholder-shown { font-size: 14px; }
-.form-fields >>> input.contact-input.ant-input::placeholder { line-height: normal; }
-.form-fields >>> input#application-name.ant-input {
-  padding-top: 8px;
-  padding-bottom: 8px;
-  line-height: 22px;
-}
-.form-fields >>> input#application-name.ant-input:placeholder-shown {
-  font-size: 14px;
 }
 .form-fields >>> textarea.ant-input {
   padding-left: 12px;
@@ -772,7 +812,7 @@ export default {
   color: #27384e;
   font-weight: 500;
 }
-.form-fields .third-parties-trigger { width: 100%; min-height: 40px; padding: 7px 12px; border: 1px solid transparent; border-radius: 4px; background: transparent; color: #27384e; font-family: inherit; font-size: 16px; line-height: 24px; text-align: left; cursor: pointer; font-weight: 500;
+.form-fields .third-parties-trigger { width: 100%; min-height: 40px; padding: 7px 12px; border: 1px solid transparent; border-radius: 4px; background: transparent; color: #27384e; font-family: inherit; line-height: 24px; text-align: left; cursor: pointer; font-weight: 500;
 }
 .form-fields >>> .target-select .ant-select-selection__choice {
   height: 38px;
@@ -789,10 +829,7 @@ export default {
 .form-fields >>> .target-select .ant-select-selection__choice__content::after { content: '、'; }
 .form-fields >>> .target-select .ant-select-selection__choice:nth-last-child(2) .ant-select-selection__choice__content::after { content: ''; }
 .form-fields >>> .target-select .ant-select-selection__choice__remove { display: none; }
-.modal-form >>> .people-select .ant-select-selection__choice__content { max-width: none; overflow: visible; color: #27384e; font-weight: 500; }
-.modal-form >>> .people-select .ant-select-selection__choice__content::after { content: '、'; }
-.modal-form >>> .people-select .ant-select-selection__choice:nth-last-child(2) .ant-select-selection__choice__content::after { content: ''; }
-.modal-form >>> .people-select .ant-select-selection__choice__remove { display: none; }
+.modal-form >>> .people-select .ant-select-selection__choice__content { overflow: hidden; text-overflow: ellipsis; color: #27384e; font-size: var(--edit-input-size); font-weight: 500; }
 .budget-section .detail-section-header { align-items: center; }
 .budget-section .detail-section-header > div { display: flex; align-items: center; min-height: 40px; }
 .budget-section .detail-section-header h2 { margin: 0; }
@@ -814,14 +851,14 @@ export default {
 .row-review-anchor { display: block; width: 100%; }
 .row-review-content { width: 300px; max-width: 60vw; }
 .row-review-content > div { display: flex; align-items: flex-start; gap: 10px; }
-.row-review-content .anticon { flex: none; margin-top: 3px; color: #faad14; }
-.row-review-content p { flex: 1; min-width: 0; margin: 0 0 14px; line-height: 1.6; overflow-wrap: anywhere; white-space: pre-wrap; }
+.row-review-content .anticon { flex: none; display: inline-flex; align-items: center; justify-content: center; height: 24px; margin-top: 0; color: #faad14; font-size: 16px; }
+.row-review-content p { flex: 1; min-width: 0; margin: 0 0 14px; font-size: 16px; line-height: 24px; overflow-wrap: anywhere; white-space: pre-wrap; }
 .row-review-content .ant-btn { display: block; margin-left: auto; }
 .area-picker { display: grid; width: 470px; max-width: 100%; gap: 16px; margin: 0 auto; padding: 0; }
-.area-picker-row { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 18px; align-items: center; }
-.area-picker-row label { display: flex; min-height: 32px; align-items: center; justify-content: flex-end; color: #27384e; text-align: right; white-space: nowrap; }
+
+
 .area-picker-row .ant-select { width: 100%; }
-.area-picker > .form-error { margin: -4px 0 0 158px; }
+
 .team-section .detail-section-header > div { display: block; min-height: 0; }
 .team-section .detail-section-header h2 { margin: 0 0 4px; }
 .team-entry-table .team-col-index { width: 70px; }
@@ -832,57 +869,53 @@ export default {
 .team-entry-table th:last-child, .team-entry-table .team-actions { padding-right: 12px; padding-left: 12px; }
 .team-entry-table .team-actions { white-space: nowrap; }
 .team-entry-table .team-actions .ant-btn { height: auto; padding: 0 7px; }
-.team-picker .area-picker-row { grid-template-columns: 90px minmax(0, 1fr); align-items: start; }
-.team-picker .area-picker-row label { padding-top: 5px; line-height: 22px; }
+
 .team-picker .ant-input { width: 100%; }
-.team-picker > .form-error { margin-left: 108px; }
+
+
+
 .output-empty-add { cursor: pointer; border-radius: 8px; }
 .output-empty-add >>> .ant-empty-description { color: #5b8ff9; }
 .output-empty-add:focus-visible { outline: 2px solid #1677ff; outline-offset: 4px; }
 .output-modal-form { width: 470px; max-width: 100%; gap: 16px; margin: 0 auto; padding: 0; }
-.output-modal-form .modal-field { grid-template-columns: 90px minmax(0, 1fr); gap: 18px; align-items: start; }
-.output-modal-form .modal-field label { padding-top: 5px; line-height: 22px; }
+
 .output-modal-form .modal-field.activity-divider { padding-top: 16px; border-top: 1px dashed #d9e1eb; }
 .output-modal-form >>> input.ant-input,
-.output-modal-form >>> textarea.ant-input,
-.output-modal-form >>> .ant-select { font-size: 14px; }
-.output-modal-form >>> input.ant-input,
-.output-modal-form >>> .ant-select-selection--single { height: 32px; }
-.output-modal-form >>> .ant-select-selection--single .ant-select-selection__rendered { line-height: 30px; }
+.output-modal-form >>> .ant-select-selection--single { height: 40px; }
+.output-modal-form >>> .ant-select-selection--single .ant-select-selection__rendered { line-height: 38px; }
 .output-modal-form >>> .ant-select-selection--multiple,
-.output-modal-form >>> .ant-select-selection--multiple .ant-select-selection__rendered { min-height: 32px; }
-.output-modal-form >>> .ant-select-selection--multiple .ant-select-search--inline { height: 30px; }
+.output-modal-form >>> .ant-select-selection--multiple .ant-select-selection__rendered { min-height: 40px; }
+.output-modal-form >>> .ant-select-selection--multiple .ant-select-search--inline { height: 38px; }
 .output-modal-form >>> input::placeholder,
 .output-modal-form >>> textarea::placeholder,
-.output-modal-form >>> .ant-select-selection__placeholder { color: #bfbfbf; }
+.output-modal-form >>> .ant-select-selection__placeholder { color: #5b8ff9; }
 .compact-modal-form { width: 470px; max-width: 100%; gap: 16px; margin: 0 auto; padding: 0; }
-.compact-modal-form .modal-field { grid-template-columns: 90px minmax(0, 1fr); gap: 18px; align-items: start; }
-.compact-modal-form .modal-field label { padding-top: 5px; line-height: 22px; }
+
 .compact-modal-form >>> input.ant-input,
-.compact-modal-form >>> textarea.ant-input,
-.compact-modal-form >>> .ant-select { font-size: 14px; }
-.compact-modal-form >>> input.ant-input,
-.compact-modal-form >>> .ant-select-selection--single { height: 32px; }
-.compact-modal-form >>> .ant-select-selection--single .ant-select-selection__rendered { line-height: 30px; }
+.compact-modal-form >>> .ant-select-selection--single { height: 40px; }
+.compact-modal-form >>> .ant-select-selection--single .ant-select-selection__rendered { line-height: 38px; }
 .compact-modal-form >>> input::placeholder,
 .compact-modal-form >>> textarea::placeholder,
-.compact-modal-form >>> .ant-select-selection__placeholder { color: #5b8ff9; font-size: 14px; opacity: 1; }
+.compact-modal-form >>> .ant-select-selection__placeholder { color: #5b8ff9; opacity: 1; }
 .area-standard-modal-form { width: 470px; max-width: 100%; gap: 16px; margin: 0 auto; padding: 0; }
-.area-standard-modal-form .modal-field { grid-template-columns: 140px minmax(0, 1fr); gap: 18px; align-items: center; }
-.area-standard-modal-form .modal-field label { display: flex; min-height: 32px; align-items: center; justify-content: flex-end; line-height: 1.6; white-space: nowrap; }
+
+
+
+
+.modal-form .modal-field.has-field-error { row-gap: 6px; }
+.modal-field > .modal-field-error { grid-column: 2; margin: 0; }
 .area-standard-modal-form >>> input.ant-input,
-.area-standard-modal-form >>> textarea.ant-input,
-.area-standard-modal-form >>> .ant-select { font-size: 14px; }
-.area-standard-modal-form >>> input.ant-input,
-.area-standard-modal-form >>> .ant-select-selection--single { height: 32px; }
-.area-standard-modal-form >>> .ant-select-selection--single .ant-select-selection__rendered { line-height: 30px; }
+.area-standard-modal-form >>> .ant-select-selection--single { height: 40px; }
+.area-standard-modal-form >>> .ant-select-selection--single .ant-select-selection__rendered { line-height: 38px; }
 .area-standard-modal-form >>> input::placeholder,
 .area-standard-modal-form >>> textarea::placeholder,
-.area-standard-modal-form >>> .ant-select-selection__placeholder { color: #5b8ff9; font-size: 14px; opacity: 1; }
+.area-standard-modal-form >>> .ant-select-selection__placeholder { color: #5b8ff9; opacity: 1; }
 .activity-period-inputs { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 10px; }
 .activity-period-inputs .ant-input { min-width: 0; }
-.activity-period-inputs span { color: #718095; }
+.activity-period-inputs >>> .ant-calendar-picker { min-width: 0; width: 100%; }
+.activity-period-inputs > span:not(.ant-calendar-picker) { color: #718095; }
 .outputs-body { display: block; }
+.form-output .output-standard > div { min-height: calc(1.55em + 8px); display: flex; flex-direction: column; justify-content: center; }
 .form-output + .form-output { padding-top: 0; border-top: 0; }
 .form-output .row-actions .ant-btn + .ant-btn { margin-left: 0; }
 .form-output > .output-title .row-actions .danger-link > span { color: #ff4d4f !important; }
@@ -905,46 +938,49 @@ export default {
 .form-output > .output-title .row-actions .danger-link { color: #ff4d4f !important; }
 .form-output >>> .row-actions .ant-btn > span { padding: 0; border-radius: 0; color: inherit !important; background: transparent; font-weight: 400 !important; }
 .field >>> .rich-editor.rich-review-has-comment .rich-editable { background: #fff1f0; }
+/* 普通录入弹窗共用标签列，长标签在 140px 内换行。 */
+.area-picker,
+.modal-form { display: grid; width: 470px; max-width: 100%; margin: 0 auto; padding: 0; grid-template-columns: max-content minmax(0, 1fr); gap: 16px 18px; }
+.area-picker .area-picker-row,
+.modal-form .modal-field { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; column-gap: 18px; row-gap: 0; align-items: start; padding-right: 0; padding-left: 0; }
+.area-picker .area-picker-row > label,
+.modal-form .modal-field > label { display: block; box-sizing: border-box; min-width: 0; max-width: 140px; min-height: 40px; margin: 0; padding-top: 9px; color: #27384e; text-align: right; line-height: 22px; white-space: normal; overflow-wrap: anywhere; }
+.area-picker .area-picker-row > :not(label),
+.modal-form .modal-field > :not(label) { min-width: 0; }
+.area-picker > .form-error { grid-column: 2; margin: -4px 0 0; }
 /* 录入弹窗独立声明样式，避免挂载到 body 后丢失页面祖先样式。 */
 .team-picker, .attachment-picker { padding: 0; }
-.attachment-picker .area-picker-row { grid-template-columns: 90px minmax(0, 1fr); align-items: start; }
-.attachment-picker .area-picker-row label { padding-top: 5px; line-height: 22px; }
+
 .area-picker >>> input.ant-input,
-.area-picker >>> textarea.ant-input,
-.area-picker >>> .ant-select,
-.modal-form >>> .ant-select-search__field,
-.modal-form >>> .ant-select-selection__choice__content { font-size: 14px; }
-.area-picker >>> input.ant-input,
-.area-picker >>> .ant-select-selection--single { height: 32px; }
-.area-picker >>> .ant-select-selection__rendered { line-height: 30px; }
-.area-picker >>> textarea.ant-input { padding: 4px 11px; line-height: 1.5; }
+.area-picker >>> .ant-select-selection--single { height: 40px; }
+.area-picker >>> .ant-select-selection__rendered { line-height: 38px; }
+.area-picker >>> textarea.ant-input { height: auto; padding: 4px 11px; line-height: 24px; }
 .area-picker >>> input::placeholder,
 .area-picker >>> textarea::placeholder,
-.area-picker >>> .ant-select-selection__placeholder { color: #5b8ff9; font-size: 14px; opacity: 1; }
-.modal-form >>> textarea.ant-input { padding: 4px 11px; font-size: 14px; line-height: 1.5; }
-.modal-form >>> .ant-select-auto-complete .ant-input { padding: 0 12px; height: 32px; font-size: 14px; }
-.modal-form >>> .ant-select-selection--multiple { min-height: 32px; }
-.modal-form >>> .ant-select-selection--multiple .ant-select-selection__rendered { min-height: 30px; line-height: 30px; }
-.modal-form >>> .ant-select-selection--multiple .ant-select-search--inline { height: 30px; }
+.area-picker >>> .ant-select-selection__placeholder { color: #5b8ff9; opacity: 1; }
+.modal-form >>> textarea.ant-input { height: auto; padding: 4px 11px; line-height: 24px; }
+.modal-form >>> .ant-select-auto-complete .ant-input { padding: 0 12px; height: 40px; }
+.modal-form >>> .ant-select-selection--multiple { min-height: 40px; }
+.modal-form >>> .ant-select-selection--multiple .ant-select-selection__rendered { min-height: 38px; line-height: 38px; }
+.modal-form >>> .ant-select-selection--multiple .ant-select-search--inline { height: 38px; }
 .modal-form >>> .ant-select-selection__placeholder,
 .modal-form >>> input::placeholder,
-.modal-form >>> textarea::placeholder { color: #5b8ff9; font-size: 14px; opacity: 1; }
+.modal-form >>> textarea::placeholder { color: #5b8ff9; opacity: 1; }
 .output-modal-form >>> .ant-select-selection__placeholder,
 .output-modal-form >>> input::placeholder,
-.output-modal-form >>> textarea::placeholder { color: #bfbfbf; }
+.output-modal-form >>> textarea::placeholder { color: #5b8ff9; }
 .output-review-trigger { cursor: pointer; }
 .output-review-trigger:hover { background-color: #ffe7e5 !important; }
 .output-review-trigger:focus-visible { outline: 2px solid #ff7875; outline-offset: -2px; }
 .form-fields.green-home-basic-fields .amount-fields > .field:first-child { grid-column: auto; }
 .form-fields >>> textarea.organization-overview-input { height: auto; min-height: 62px; }
-.organization-member-picker >>> input.ant-input { box-sizing: border-box; height: 32px; padding: 0 11px; line-height: 30px; font-size: 14px; }
-.organization-member-picker >>> input.ant-input::placeholder { line-height: 30px; font-size: 14px; }
+.organization-member-picker >>> input.ant-input { box-sizing: border-box; height: 40px; padding: 0 11px; line-height: 38px; }
 .organization-members-table .team-actions { white-space: nowrap; }
 .organization-members-table .team-actions .ant-btn { height: auto; padding: 0 7px; }
 .organization-members-table .organization-work-type-col { width: 150px; }
 .organization-members-table th:last-child, .organization-members-table .team-actions { text-align: center; }
 .organization-members-table th:first-child, .organization-members-table td:first-child { text-align: center; }
-.field >>> .rich-editable:empty::before { content: attr(data-placeholder); white-space: pre-wrap; color: #5b8ff9; font-size: 14px; pointer-events: none; }
+.field >>> .rich-editable:empty::before { content: attr(data-placeholder); white-space: pre-wrap; color: #5b8ff9; pointer-events: none; }
 .green-home-risk-table col:nth-child(2) { width: 72px; }
 .green-home-risk-table th:nth-child(2), .green-home-risk-table td:nth-child(2) { text-align: center; }
 
@@ -961,7 +997,7 @@ export default {
 .project-module-content .organization-overview-field,
 .grass-growth-fields > .field:first-child { min-height: 0; padding-top: 0; align-content: start; }
 .project-module-content .organization-overview-field > label,
-.grass-growth-fields > .field > label { font-size: 10pt; font-weight: 500; line-height: 1.6; }
+.grass-growth-fields > .field > label { font-weight: 500; line-height: 1.6; }
 .project-module-content >>> .budget-sheet-list { padding: 0; }
 .project-module-content .attachment-list,
 .project-module-content .attachment-empty-add,
@@ -972,19 +1008,20 @@ export default {
 .project-module-content >>> .budget-sheet-row:first-child { padding-top: 0; min-height: 60px; align-items: start; }
 .project-module-content .form-attachment-list > div:first-child { padding-top: 0; align-items: start; }
 .project-module-content .add-more-attachment { width: 100%; margin: 16px 0 0; }
-/* 活动执行人员多选：输入、提示及标签共用居中行高，允许自然换行。 */
-.modal-form >>> .people-select .ant-select-selection--multiple { min-height: 52px; padding: 0; }
-.modal-form >>> .people-select .ant-select-selection--multiple .ant-select-selection__rendered { box-sizing: border-box; min-height: 50px; line-height: 21px; margin: 0 11px; padding: 4px 0; }
-.modal-form >>> .people-select .ant-select-selection__rendered > ul { display: flex; flex-wrap: wrap; align-items: flex-start; min-height: 42px; margin: 0; }
-.modal-form >>> .people-select .ant-select-selection--multiple .ant-select-selection__placeholder { top: 4px; height: 21px; margin: 0; line-height: 21px; left: 0; }
-.modal-form >>> .people-select .ant-select-selection__choice { margin: 0; padding: 0; border: 0; background: transparent; height: 21px; line-height: 21px; }
-.modal-form >>> .people-select .ant-select-search--inline { height: 21px; margin-top: 0; margin-bottom: 0; }
-.modal-form >>> .people-select .ant-select-search__field { height: 21px; padding-top: 0; padding-bottom: 0; line-height: 21px; }
+/* 活动执行人员保持单行，已选姓名用顿号连接。 */
+.modal-form >>> .people-select .ant-select-selection--multiple { height: 40px; min-height: 40px; padding: 0; }
+.modal-form >>> .people-select .ant-select-selection--multiple .ant-select-selection__rendered { box-sizing: border-box; height: 38px; min-height: 38px; line-height: 24px; margin: 0 30px 0 11px; padding: 7px 0; }
+.modal-form >>> .people-select .ant-select-selection__rendered > ul { display: flex; flex-wrap: nowrap; align-items: center; height: 24px; min-height: 24px; margin: 0; }
+.modal-form >>> .people-select .ant-select-selection--multiple .ant-select-selection__placeholder { top: 7px; height: 24px; margin: 0; line-height: 24px; left: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.modal-form >>> .people-select .ant-select-selection__choice { flex-shrink: 1; min-width: 0; max-width: calc(100% - 4px); height: 24px; margin: 0; padding: 0; border: 0; background: transparent; line-height: 24px; }
+.modal-form >>> .people-select .ant-select-arrow { top: 50%; margin-top: 0; transform: translateY(-50%); }
+.modal-form >>> .people-select .ant-select-search--inline { flex: 1; min-width: 4px; height: 24px; margin: 0; }
+.modal-form >>> .people-select .ant-select-search__field { max-width: 100%; height: 24px; padding-top: 0; padding-bottom: 0; line-height: 24px; }
 .modal-form >>> .people-select .ant-select-selection__rendered::after, .modal-form >>> .people-select .ant-select-selection__rendered > ul::before, .modal-form >>> .people-select .ant-select-selection__rendered > ul::after { display: none; content: none; }
 .grass-decision-table th:last-child, .grass-decision-table td:last-child { text-align: center; }
-.grass-decision-table >>> input.grass-decision-input.ant-input { height: 32px; padding: 0; border-color: transparent; border-radius: 0; background: transparent; box-shadow: none; font-size: 10pt; }
+.grass-decision-table >>> input.grass-decision-input.ant-input { height: 40px; padding: 0; border-color: transparent; border-radius: 0; background: transparent; box-shadow: none; }
 .grass-decision-table >>> input.grass-decision-input.ant-input:focus { padding: 0 11px; border-color: #40a9ff; box-shadow: 0 0 0 2px rgba(24,144,255,.2); }
-.grass-decision-table >>> input.grass-decision-input::placeholder { color: #5b8ff9; font-size: 14px; opacity: 1; }
+.grass-decision-table >>> input.grass-decision-input::placeholder { color: #5b8ff9; opacity: 1; }
 .grass-fundraising-table th:first-child, .grass-fundraising-table td:first-child,
 .grass-fundraising-table th:nth-child(3), .grass-fundraising-table td:nth-child(3),
 .grass-fundraising-table th:nth-child(4), .grass-fundraising-table td:nth-child(4),
@@ -992,17 +1029,19 @@ export default {
 .grass-fundraising-table .team-actions { white-space: nowrap; }
 .grass-fundraising-table .team-actions .ant-btn { padding: 0 7px; }
 .grass-fundraising-table >>> .ant-input-number { width: 100%; }
-.third-picker { display: grid; width: 470px; max-width: 100%; margin: 0 auto; padding: 0; gap: 16px; font-size: 14px; }
+.third-picker { display: grid; width: 470px; max-width: 100%; margin: 0 auto; padding: 0; gap: 16px; }
 .third-picker > .ant-input-search { width: 100%; margin-top: 32px; }
 .third-picker .third-results > div:last-child { border-bottom: 0; padding-bottom: 0; }
-.third-picker >>> input.ant-input { height: 32px; padding: 0 11px; font-size: 14px; }
-.third-picker >>> input.ant-input::placeholder { color: #5b8ff9; font-size: 14px; opacity: 1; }
-.third-picker >>> .ant-input-search-button, .third-picker .ant-btn { height: 32px; font-size: 14px; box-shadow: 0 2px 0 rgba(0,0,0,.043); }
+.third-picker >>> input.ant-input { height: 40px; padding: 0 11px; }
+.third-picker >>> input.ant-input::placeholder { color: #5b8ff9; opacity: 1; }
+.third-picker >>> .ant-input-search-button, .third-picker .ant-btn { height: 40px; box-shadow: 0 2px 0 rgba(0,0,0,.043); }
 .third-selection-wrap { margin: 0; border-radius: 4px; }
 .third-selection-table { min-width: 0; table-layout: fixed; }
 .third-selection-table td:first-child { white-space: normal; overflow-wrap: anywhere; }
+.third-selection-table td:first-child:not(.third-selection-empty),
+.third-picker .third-results > div > span { font-size: 16px; }
 .third-selection-table th { height: 40px; padding: 9px 12px; line-height: 20px; }
-.third-selection-table td { height: 40px; padding: 9px 12px; line-height: 20px; vertical-align: middle; }
+.third-selection-table td { height: 48px; padding: 9px 12px; line-height: 20px; vertical-align: middle; }
 .third-selection-table th:last-child, .third-selection-table td:last-child { text-align: center; }
 .third-delete-text { padding: 0; border: 0; background: transparent; color: #ff4d4f; font: inherit; line-height: 20px; cursor: pointer; }
 .third-delete-text:hover { color: #ff7875; }
@@ -1018,13 +1057,16 @@ export default {
 </style>
 
 <style>
+.project-review-comment { --review-comment-font-size: 16px; --review-comment-line-height: 24px; --review-comment-icon-size: 16px; --review-comment-icon-offset: 0px; }
+.project-review-comment .review-comment-bubble .anticon { flex: none; display: inline-flex; align-items: center; justify-content: center; height: 24px; }
+.project-execution-calendar .ant-calendar { box-shadow: 0 8px 24px rgba(24,37,60,.2), 0 2px 6px rgba(24,37,60,.12); }
 .risk-target-tree-dropdown .ant-select-tree li { white-space: normal; }
 .risk-target-tree-dropdown .ant-select-tree-node-content-wrapper { height: auto; min-height: 24px; white-space: normal; vertical-align: top; }
-.risk-target-tree-dropdown .ant-select-tree-title { white-space: normal; overflow-wrap: anywhere; line-height: 1.6; }
+.risk-target-tree-dropdown .ant-select-tree-title { white-space: normal; overflow-wrap: anywhere; line-height: 24px; }
 </style>
 <style scoped>
 /* Keep these rules after the shared compact modal control heights. */
-.risk-target-input >>> .risk-target-tree .ant-select-selection--single { height: auto; min-height: 32px; }
-.risk-target-input >>> .risk-target-tree .ant-select-selection--single .ant-select-selection__rendered { min-height: 30px; line-height: 22px; padding: 4px 0; }
+.risk-target-input >>> .risk-target-tree .ant-select-selection--single { height: auto; min-height: 40px; }
+.risk-target-input >>> .risk-target-tree .ant-select-selection--single .ant-select-selection__rendered { min-height: 38px; line-height: 24px; padding: 7px 0; }
 .risk-target-input >>> .risk-target-tree .ant-select-selection-selected-value { float: none; width: 100%; white-space: normal; overflow: visible; overflow-wrap: anywhere; text-overflow: clip; }
 </style>

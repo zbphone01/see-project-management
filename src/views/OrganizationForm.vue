@@ -1,5 +1,5 @@
 <template>
-  <section v-if="draft" class="organization-form-page">
+  <section v-if="draft" class="standard-edit-scope organization-form-page">
     <div class="detail-back-row"><a-button class="detail-back" @click="goBack"><a-icon type="arrow-left" /> 返回</a-button></div>
     <div v-if="errors.length" class="form-errors" role="alert"><strong>请完善以下内容后再提交</strong><ul><li v-for="error in errors" :key="error">{{ error }}</li></ul></div>
     <section v-for="group in visibleGroups" :key="group.key" class="panel">
@@ -9,14 +9,14 @@
           <label :for="'organization-' + field.key"><review-comment-label :comment="fieldComment(field)">{{ field.label }}</review-comment-label></label>
           <span v-if="field.kind === 'readonly' || (isChangeMode && field.key === 'inviterDepartment') || inherited(field) || (!isEdit && draft.nameChecked && field.key === 'name')" class="basic-field-value">{{ draft.fields[field.key] || '—' }}</span>
           <template v-else-if="field.kind === 'name'"><div class="inline-controls"><a-input :id="'organization-' + field.key" v-model="draft.fields.name" placeholder="请填写机构名称" @change="draft.nameChecked = false" /><a-button @click="queryName">查询</a-button></div><small v-if="draft.nameChecked">{{ draft.parentOrganizationId ? '已沿用注册机构信息，请填写二级组织名称' : '机构名称已确认（本地演示查询）' }}</small></template>
-          <a-select v-else-if="field.kind === 'select'" :id="'organization-' + field.key" :value="draft.fields[field.key] || undefined" placeholder="请选择" @change="changeSelect(field, $event)"><a-select-option v-for="option in field.options" :key="option" :value="option">{{ option }}</a-select-option></a-select>
-          <div v-else-if="field.kind === 'credit'" class="inline-controls"><a-input :id="'organization-' + field.key" v-model="draft.fields.creditCode" placeholder="请填写统一社会信用代码" /><a-select v-model="draft.fields.creditRegion" aria-label="统一社会信用代码所属地区"><a-select-option value="国内">国内</a-select-option><a-select-option value="国外">国外</a-select-option></a-select></div>
+          <a-select dropdown-class-name="standard-edit-dropdown" v-else-if="field.kind === 'select'" :id="'organization-' + field.key" :value="draft.fields[field.key] || undefined" placeholder="请选择" @change="changeSelect(field, $event)"><a-select-option v-for="option in field.options" :key="option" :value="option">{{ option }}</a-select-option></a-select>
+          <div v-else-if="field.kind === 'credit'" class="inline-controls"><a-input :id="'organization-' + field.key" v-model="draft.fields.creditCode" placeholder="请填写统一社会信用代码" /><a-select dropdown-class-name="standard-edit-dropdown" v-model="draft.fields.creditRegion" aria-label="统一社会信用代码所属地区"><a-select-option value="国内">国内</a-select-option><a-select-option value="国外">国外</a-select-option></a-select></div>
           <div v-else-if="field.kind === 'range'" class="inline-controls"><input v-model="draft.fields.validStart" type="date" aria-label="有效期限开始日期"><span>至</span><input v-model="draft.fields.validEnd" type="date" aria-label="有效期限结束日期"></div>
           <span v-else-if="field.kind === 'date' && restricted && qualificationDateDisabled(field.key)" class="basic-field-value">—</span>
           <input v-else-if="field.kind === 'date'" :id="'organization-' + field.key" v-model="draft.fields[field.key]" type="date" :aria-label="field.label" :disabled="qualificationDateDisabled(field.key)">
           <div v-else-if="field.key === 'otherLegalRoles'" class="legal-role-control"><a-checkbox :checked="draft.fields.otherLegalRoles === '是'" @change="draft.fields.otherLegalRoles = $event.target.checked ? '是' : '否'">是</a-checkbox><a-input v-if="draft.fields.otherLegalRoles === '是'" v-model="draft.fields.otherLegalOrganizations" placeholder="请填写机构名称" aria-label="担任法人其他机构名称" /><span v-else class="legal-role-hint">勾选是后填写</span></div>
           <div v-else-if="field.kind === 'qualification-date'" class="legal-role-control"><template v-if="restricted"><span class="basic-field-value">否</span></template><template v-else><a-checkbox :checked="draft.fields[field.key] === '是'" @change="draft.fields[field.key] = $event.target.checked ? '是' : '否'">是</a-checkbox><input v-if="draft.fields[field.key] === '是'" v-model="draft.fields[field.dateKey]" type="date" :aria-label="field.label"><span v-else class="legal-role-hint">勾选是后填写时间</span></template></div>
-          <template v-else-if="['binary', 'qualification'].includes(field.kind)"><span v-if="field.kind === 'qualification' && restricted" class="basic-field-value">否</span><a-select v-else :id="'organization-' + field.key" v-model="draft.fields[field.key]" placeholder="请选择"><a-select-option value="是">是</a-select-option><a-select-option value="否">否</a-select-option></a-select></template>
+          <template v-else-if="['binary', 'qualification'].includes(field.kind)"><span v-if="field.kind === 'qualification' && restricted" class="basic-field-value">否</span><a-select dropdown-class-name="standard-edit-dropdown" v-else :id="'organization-' + field.key" v-model="draft.fields[field.key]" placeholder="请选择"><a-select-option value="是">是</a-select-option><a-select-option value="否">否</a-select-option></a-select></template>
           <a-textarea v-else-if="field.kind === 'textarea'" :id="'organization-' + field.key" v-model="draft.fields[field.key]" :rows="2" :placeholder="field.key === 'registeredAddress' ? '请填写登记证书的“住所”地址' : field.key === 'businessScope' ? '请填写登记证书的内容' : '请填写' + field.label" />
           <template v-else-if="field.kind === 'address'"><a-textarea :id="'organization-' + field.key" v-model="draft.fields.officeAddress" :rows="2" placeholder="请填写现办公地址" /><a-input v-model="draft.fields.postalCode" placeholder="请填写邮政编码" aria-label="邮政编码" /></template>
           <div v-else-if="field.kind === 'avatar'" class="avatar-editor"><div v-if="draft.fields.avatar" class="avatar-item"><button type="button" class="avatar-image-button" aria-label="预览机构头像" @click="avatarPreview = true"><img :src="draft.fields.avatar" alt="机构头像" /></button><div class="avatar-mask"><button type="button" class="avatar-delete" aria-label="删除机构头像" @click.stop="draft.fields.avatar = ''; avatarPreview = false"><a-icon type="delete" /> 删除</button></div></div><a-upload v-else accept="image/png,image/jpeg,image/webp" :multiple="false" :disabled="readingAvatar" :show-upload-list="false" :before-upload="selectAvatar"><button type="button" class="avatar-upload" :disabled="readingAvatar" aria-label="上传机构头像"><a-icon :type="readingAvatar ? 'loading' : 'plus'" /><span>{{ readingAvatar ? '上传中' : '上传' }}</span></button></a-upload><a-upload v-if="draft.fields.avatar" accept="image/png,image/jpeg,image/webp" :multiple="false" :disabled="readingAvatar" :show-upload-list="false" :before-upload="selectAvatar"><a-button type="link" :disabled="readingAvatar">更换头像</a-button></a-upload></div>
@@ -52,13 +52,13 @@
     <footer v-if="showFullForm" class="form-footer"><span><a-icon type="info-circle" /> {{ dirty ? '填写内容尚未保存' : '可随时存为草稿' }}</span><div><a-button @click="goBack">取消</a-button><a-button icon="save" :disabled="busy" @click="save(false)">存为草稿</a-button><a-button type="primary" :disabled="busy" @click="save(true)">提交申请</a-button></div></footer>
     <avatar-crop-modal ref="avatarCrop" @busy="readingAvatar = $event" @confirm="draft.fields.avatar = $event" />
     <a-modal v-model="avatarPreview" title="机构头像" :width="650" :mask-closable="false" :footer="null"><img v-if="draft.fields.avatar" class="avatar-preview" :src="draft.fields.avatar" alt="机构头像" /></a-modal>
-    <a-modal v-model="memberVisible" :title="editingMemberId ? '编辑成员' : '添加成员'" :width="550" class="standard-form-modal" :mask-closable="false">
+    <a-modal v-model="memberVisible" :title="editingMemberId ? '编辑成员' : '添加成员'" :width="550" wrap-class-name="standard-form-modal standard-edit-scope standard-edit-modal" :mask-closable="false">
       <div class="member-dialog"><div class="dialog-row"><label for="member-name">姓名</label><a-input id="member-name" v-model="memberDraft.name" placeholder="填写姓名" /></div><div class="dialog-row"><label for="member-identity">身份证号</label><a-input id="member-identity" v-model="memberDraft.identityNumber" placeholder="填写身份证号" /></div><div v-for="(company, index) in memberDraft.companies" :key="company.id" class="dialog-row"><label :for="'company-' + company.id">关联公司</label><div class="company-fields"><a-input :id="'company-' + company.id" v-model="company.name" placeholder="填写公司名称" /><a-input v-model="company.code" placeholder="填写该公司统一信用代码" :aria-label="'第' + (index + 1) + '家关联公司的统一信用代码'" /><a-button v-if="memberDraft.companies.length > 1" type="link" @click="memberDraft.companies.splice(index, 1)">删除关联公司</a-button></div></div><a-button type="dashed" @click="memberDraft.companies.push(newCompany())">增加关联公司</a-button><p v-if="dialogError" class="form-error" role="alert">{{ dialogError }}</p></div><template slot="footer"><div class="dialog-actions"><a-button @click="memberVisible = false">关闭</a-button><a-button type="primary" @click="saveMember">{{ editingMemberId ? '保存' : '添加' }}</a-button></div></template>
     </a-modal>
-    <a-modal v-model="uploadVisible" :title="'上传' + (uploadSection ? uploadSection.title : '附件')" :width="550" class="standard-form-modal" :mask-closable="false" :closable="!uploading" :keyboard="!uploading" @afterClose="resetUpload">
+    <a-modal v-model="uploadVisible" :title="'上传' + (uploadSection ? uploadSection.title : '附件')" :width="550" wrap-class-name="standard-form-modal standard-edit-scope standard-edit-modal" :mask-closable="false" :closable="!uploading" :keyboard="!uploading" @afterClose="resetUpload">
       <div class="member-dialog">
-        <div v-if="uploadSection && hasYear(uploadSection.key)" class="dialog-row"><label for="upload-year">报告年份</label><a-select id="upload-year" v-model="uploadDraft.year" :disabled="uploading" placeholder="请选择"><a-select-option v-for="year in reportYears" :key="year" :value="year">{{ year }}年</a-select-option></a-select></div>
-        <div v-if="uploadSection && uploadSection.key === 'civilReports'" class="dialog-row"><label for="upload-civil">上报民政</label><a-select id="upload-civil" v-model="uploadDraft.civilStatus" :disabled="uploading" placeholder="请选择"><a-select-option value="已上报">已上报</a-select-option><a-select-option value="未上报">未上报</a-select-option></a-select></div>
+        <div v-if="uploadSection && hasYear(uploadSection.key)" class="dialog-row"><label for="upload-year">报告年份</label><a-select dropdown-class-name="standard-edit-dropdown" id="upload-year" v-model="uploadDraft.year" :disabled="uploading" placeholder="请选择"><a-select-option v-for="year in reportYears" :key="year" :value="year">{{ year }}年</a-select-option></a-select></div>
+        <div v-if="uploadSection && uploadSection.key === 'civilReports'" class="dialog-row"><label for="upload-civil">上报民政</label><a-select dropdown-class-name="standard-edit-dropdown" id="upload-civil" v-model="uploadDraft.civilStatus" :disabled="uploading" placeholder="请选择"><a-select-option value="已上报">已上报</a-select-option><a-select-option value="未上报">未上报</a-select-option></a-select></div>
         <div class="dialog-row"><label>{{ uploadSection && uploadSection.key === 'certificates' ? '登记证书' : uploadSection && uploadSection.key === 'otherAttachments' ? '附件文件' : '报告文件' }}</label><a-upload :file-list="selectedFiles" :before-upload="selectFile" :remove="clearSelectedFile" :disabled="uploading" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"><a-button icon="upload" :disabled="uploading">点击上传</a-button></a-upload></div>
         <p v-if="uploadError" class="form-error" role="alert">{{ uploadError }}</p>
       </div>
@@ -190,8 +190,8 @@ export default {
 .organization-form-page { display: grid; gap: 20px; min-width: 0; }
 .organization-form-page > .panel { overflow: hidden; }
 .registration-query-bar { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 18px 24px; border: 1px solid #e6ebf2; border-radius: 12px; background: rgba(255,255,255,.98); box-shadow: 0 -4px 22px rgba(23,56,92,.07); }
-.registration-query-bar .ant-input { min-width: 0; flex: 1; height: 40px; padding: 0 12px; font-size: 16px; }
-.registration-query-bar .ant-input::placeholder { color: #5b8ff9; font-size: 14px; opacity: 1; }
+.registration-query-bar .ant-input { min-width: 0; flex: 1; height: 40px; padding: 0 12px; }
+.registration-query-bar .ant-input::placeholder { color: #5b8ff9; opacity: 1; }
 .registration-query-bar .ant-btn { flex: none; min-width: 100px; height: 40px; }
 .organization-fields { padding: 0 22px 22px; }
 .organization-field { min-width: 0; min-height: 76px; padding: 17px 18px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid #edf1f5; }
@@ -200,20 +200,18 @@ export default {
 .basic-field-value { color: #27384e; font-weight: 500; line-height: 1.6; overflow-wrap: anywhere; }
 .organization-field > .ant-input, .organization-field > .ant-select >>> .ant-select-selection--single { min-height: 40px; }
 .organization-field > .ant-select >>> .ant-select-selection__rendered { line-height: 38px; }
-.organization-field > .ant-input { padding: 8px 12px; }
-.organization-field >>> input.ant-input, .organization-field >>> textarea.ant-input, .organization-field >>> .ant-select, .organization-field input[type="date"] { font-size: 16px; }
-.member-dialog >>> input.ant-input, .member-dialog >>> .ant-select { font-size: 14px; }
+.organization-field > .ant-input {  }
 .legal-role-control { display: flex; align-items: center; gap: 16px; min-height: 40px; }
-.legal-role-control > .ant-checkbox-wrapper { flex: none; font-size: 16px; }
+.legal-role-control > .ant-checkbox-wrapper { flex: none; }
 .legal-role-control > input[type="date"] { flex: 1; width: 0; }
 .legal-role-control > .ant-input { flex: 1; min-width: 0; height: 40px; }
-.legal-role-hint { color: #718095; font-size: 14px; }
+.legal-role-hint { color: #718095; }
 .inline-controls { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .inline-controls > .ant-input { flex: 1; min-width: 0; height: 40px; }
 .inline-controls > .ant-select { width: 100px; flex: none; }
 .inline-controls > .ant-select >>> .ant-select-selection--single { height: 40px; }
 .inline-controls > .ant-select >>> .ant-select-selection__rendered { line-height: 38px; }
-input[type="date"] { min-width: 0; width: 100%; height: 40px; border: 1px solid transparent; border-radius: 4px; padding: 8px 12px; color: #27384e; }
+input[type="date"] { min-width: 0; width: 100%; height: 40px; border: 1px solid transparent; border-radius: 4px; padding: 0 12px; color: #27384e; }
 .organization-field >>> .ant-input, .organization-field input[type="date"], .organization-field >>> .ant-select-selection { border-color: transparent; background: transparent; box-shadow: none; }
 .organization-field input[type="date"]:disabled { color: #718095; background: #f5f5f5; cursor: not-allowed; }
 .organization-field >>> .ant-input:hover, .organization-field input[type="date"]:not(:disabled):hover, .organization-field >>> .ant-select-selection:hover { border-color: #d9e1eb; }
@@ -239,8 +237,8 @@ input[type="date"] { min-width: 0; width: 100%; height: 40px; border: 1px solid 
 .organization-audit-content .audit-result-details p { white-space: pre-wrap; overflow-wrap: anywhere; }
 .editor-content > .organization-field { min-height: 0; padding: 0; border: 0; }
 .editor-content > .organization-field + .organization-field { margin-top: 32px; }
-.editor-content > .organization-field > label { font-size: 10pt; font-weight: 500; }
-.editor-content h3 { margin: 0 0 8px; font-size: 10pt; font-weight: 500; line-height: 1.6; }
+.editor-content > .organization-field > label { font-weight: 500; }
+.editor-content h3 { margin: 0 0 8px; line-height: 1.6; }
 .organization-fields.overview-fields { padding-bottom: 0; }
 .member-sections { padding-top: 32px; }
 .member-content + .member-content { margin-top: 32px; }
@@ -269,13 +267,13 @@ input[type="date"] { min-width: 0; width: 100%; height: 40px; border: 1px solid 
 .form-footer .ant-btn { min-width: 100px; height: 32px; }
 .member-dialog { width: 470px; max-width: 100%; margin: auto; padding: 0; display: grid; gap: 16px; }
 .dialog-row { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 18px; align-items: start; }
-.dialog-row > label { padding-top: 5px; text-align: right; color: #27384e; line-height: 22px; }
+.dialog-row > label { text-align: right; color: #27384e; }
 .company-fields { display: grid; gap: 8px; }
 .form-error, .form-errors { color: #cf1322; }
 .form-errors { background: #fff1f0; border: 1px solid #ffccc7; border-radius: 8px; padding: 18px 24px; }
 .form-errors ul { margin: 8px 0 0; }
-.organization-field >>> input::placeholder, .organization-field >>> textarea::placeholder { color: #5b8ff9; font-size: 14px; opacity: 1; }
-.organization-field >>> .ant-select-selection__placeholder { color: #5b8ff9; font-size: 14px; }
+.organization-field >>> input::placeholder, .organization-field >>> textarea::placeholder { color: #5b8ff9; opacity: 1; }
+.organization-field >>> .ant-select-selection__placeholder { color: #5b8ff9; }
 .attachment-section .detail-section-header > div { display: flex; min-height: 40px; align-items: center; }
 .attachment-content .attachment-list, .attachment-content .attachment-empty-add { padding: 0; margin: 0; }
 .form-attachment-list > div { grid-template-columns: minmax(0, 1fr) auto auto auto; }
@@ -283,7 +281,7 @@ input[type="date"] { min-width: 0; width: 100%; height: 40px; border: 1px solid 
 .form-attachment-list strong { overflow-wrap: anywhere; }
 .form-attachment-list .ant-btn { padding: 0 6px; }
 .attachment-empty-add { cursor: pointer; border-radius: 8px; }
-.attachment-empty-add >>> .ant-empty-description { color: #5b8ff9; font-size: 14px; }
+.attachment-empty-add >>> .ant-empty-description { color: #5b8ff9; }
 .attachment-empty-add:focus-visible { outline: 2px solid #1677ff; outline-offset: 4px; }
 .add-more-attachment { width: 100%; margin: 16px 0 0; border-color: #91d5ff; border-style: dashed; color: #096dd9 !important; background: #e6f7ff; }
 .add-more-attachment:hover, .add-more-attachment:focus { border-color: #40a9ff; color: #096dd9 !important; background: #fff; }

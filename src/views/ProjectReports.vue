@@ -115,5 +115,5 @@ export default {
 
 .reports-page ::v-deep .applied-table .report-id-column { box-sizing: border-box; width: 110px !important; min-width: 110px !important; max-width: 110px !important; }
 
-.report-project-name { max-width: 100%; min-width: 0; margin-bottom: 5px; color: #18253c; font-size: 16px; text-align: left; white-space: normal; overflow-wrap: anywhere; line-height: 1.5; }
+.report-project-name { max-width: 100%; min-width: 0; margin-bottom: 5px; color: #18253c; text-align: left; white-space: normal; overflow-wrap: anywhere; line-height: 1.5; }
 </style>

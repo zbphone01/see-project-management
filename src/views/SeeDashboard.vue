@@ -163,7 +163,7 @@ export default {
 .see-stat-row:last-child { border-bottom: 0; }
 .see-stat { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .see-stat > span { color: #718095; min-height: 42px; line-height: 21px; display: flex; align-items: center; }
-.see-stat strong { font-size: 18px; line-height: 28px; font-weight: 600; font-variant-numeric: tabular-nums; color: #87d068; }
+.see-stat strong { font-size: 18px; line-height: 28px; font-weight: 700; font-variant-numeric: tabular-nums; color: #87d068; }
 .funded strong { color: #02a7f0; }.joint strong { color: #8080ff; }
 .see-todos .panel-header h2 > i { background: #ff4d4f; }
 .see-shortcuts { display: flex; flex-wrap: wrap; gap: 12px; margin: 0 20px; padding: 22px 0; border-bottom: 1px solid #edf1f5; }
@@ -179,20 +179,20 @@ export default {
 .see-project { display: flex; gap: 16px; align-items: center; min-width: 0; }
 .see-cover { width: 80px; height: 80px; border-radius: 13px; flex: none; overflow: hidden; display: grid; place-items: center; font-size: 28px; }
 .see-cover img { width: 100%; height: 100%; object-fit: cover; }.see-forest { background: #e2f1e6; color: #59966e; }.see-mountain { background: #e4eff2; color: #598693; }.see-report { background: #e8eef8; color: #678cb3; }.see-desert { background: #f4ecd7; color: #a58b4f; }
-.see-project-copy { min-width: 0; flex: 1; }.see-project-copy h3 { margin: 0 0 16px; font-size: 16px; font-weight: 400; color: #18253c; white-space: normal; overflow-wrap: anywhere; line-height: 1.6; }
+.see-project-copy { min-width: 0; flex: 1; }.see-project-copy h3 { margin: 0 0 16px; color: #18253c; white-space: normal; overflow-wrap: anywhere; line-height: 1.6; }
 .see-identifiers { display: flex; flex-wrap: wrap; gap: 8px; }.see-identifiers > span { display: inline; padding: 2px 7px; border-radius: 3px; line-height: 20px; overflow-wrap: anywhere; }.see-identifiers .anticon { margin-right: 5px; }.see-code { color: #62bfe6; background: #effaff; }.see-organization { color: #61bd98; background: #f1fbf5; }
-.see-dashboard .status-chip { border: 1px solid currentColor; font-size: 14px; padding: 0; }.see-dashboard .status-chip.neutral { color: #7f7f7f; background: #f2f2f2; }.see-dashboard .status-chip.pending { color: #fa8c16; background: #fff7e6; }
+.see-dashboard .status-chip { border: 1px solid currentColor; padding: 0; }.see-dashboard .status-chip.neutral { color: #7f7f7f; background: #f2f2f2; }.see-dashboard .status-chip.pending { color: #fa8c16; background: #fff7e6; }
 .see-row-actions { display: grid; justify-items: center; gap: 0; }.see-row-actions button { min-height: 24px; padding: 0 2px; border: 0; background: transparent; color: #1677ff; border-radius: 5px; }.see-row-actions button:hover { background: #f0f7ff; }.see-row-actions .anticon { margin-left: 4px; font-size: 10px; }.see-row-actions .see-reject { color: #ff4d4f; }.see-row-actions .see-agree { color: #70b603; }
 .see-row-actions .see-audit { color: #fa8c16; }.see-row-actions .see-audit:hover,.see-row-actions .see-audit:focus { color: #fa8c16; background: #fff7e6; }
 .see-information { overflow-y: auto; }.see-dialog p { line-height: 1.8; overflow-wrap: anywhere; }.see-dialog time { display: block; margin-bottom: 16px; color: #718095; }
 .see-dashboard .status-chip.revision-active { color: #ff4d4f; background: #fff1f0; }
 .revision-form { width: 470px; max-width: 100%; margin: 0 auto; display: grid; gap: 16px; }
 .revision-field { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 18px; align-items: start; }
-.revision-field label { padding-top: 5px; text-align: right; line-height: 22px; }
-.revision-field >>> .ant-select { width: 100%; font-size: 14px; }
+.revision-field label { text-align: right; }
+.revision-field >>> .ant-select { width: 100%; }
 .revision-field >>> .ant-select-selection--single { height: 32px; }
 .revision-field >>> .ant-select-selection__rendered { line-height: 30px; }
-.revision-field >>> textarea.ant-input { padding: 4px 11px; font-size: 14px; line-height: 1.5; }
-.revision-field >>> textarea::placeholder, .revision-field >>> .ant-select-selection__placeholder { color: #5b8ff9; font-size: 14px; opacity: 1; }
+.revision-field >>> textarea.ant-input { padding: 4px 11px; line-height: 1.5; }
+.revision-field >>> textarea::placeholder, .revision-field >>> .ant-select-selection__placeholder { color: #5b8ff9; opacity: 1; }
 .revision-readonly { color: #27384e; font-weight: 500; line-height: 1.6; padding-top: 5px; }
 </style>

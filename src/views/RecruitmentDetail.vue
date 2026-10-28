@@ -144,7 +144,7 @@ export default {
 .cover-placeholder { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: #718095; }
 .cover-placeholder .anticon { font-size: 36px; color: #18a66a; }
 .recruitment-summary { min-width: 0; }
-.recruitment-summary h1 { margin: 0 0 18px; color: #18253c; font-size: 16px; font-weight: 700; line-height: 1.6; white-space: normal; overflow-wrap: anywhere; }
+.recruitment-summary h1 { margin: 0 0 18px; color: #18253c; line-height: 1.6; white-space: normal; overflow-wrap: anywhere; }
 .recruitment-attributes { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 6px; line-height: 1.4; }
 .recruitment-attribute { max-width: 100%; padding: 3px 8px; border-radius: 4px; white-space: normal; overflow-wrap: anywhere; }
 .type-tag { color: #722ed1; background: #f9f0ff; }
@@ -156,7 +156,7 @@ export default {
 .recruitment-meta p:last-child { margin-bottom: 0; }
 .recruitment-meta .anticon { flex: none; margin-top: 4px; }
 .recruitment-section-heading { display: flex; align-items: center; min-height: 42px; padding: 9px 14px; border-radius: 8px; }
-.recruitment-section-heading h3 { margin: 0; font-size: 16px; font-weight: 700; line-height: 1.5; }
+.recruitment-section-heading h3 { margin: 0; line-height: 1.5; }
 .description-heading { background: #e8f8f0; }
 .description-heading h3 { color: #168b5a; }
 .contact-heading { background: #fff3e8; }

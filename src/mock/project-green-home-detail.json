@@ -309,6 +309,11 @@
     }
   ],
   "budget": {
+    "metadata": {
+      "snapshotVersion": 1,
+      "projectName": "创绿家示例",
+      "tableTitle": "项目预算及执行情况明细表"
+    },
     "tabs": [
       "预算及执行明细表",
       "人力及成本分摊表",

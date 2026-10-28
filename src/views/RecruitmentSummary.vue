@@ -199,7 +199,7 @@ export default {
 .recruitment-search .ant-btn ::v-deep .anticon + span { margin-left: 8px; }
 .recruitment-search .ant-btn .anticon { top: 0; }
 .summary-statistics { min-width: 0; flex: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 20px; color: #506177; line-height: 1.7; }
-.summary-statistics strong { padding: 0 4px; color: #1677ff; font-size: 16px; }
+.summary-statistics strong { padding: 0 4px; color: #1677ff; }
 .summary-statistics .pending-count, .pending-count { color: #fa8c16; }
 .summary-statistics .active-count, .active-count { color: #70b603; }
 .scope-count { color: #718095; }

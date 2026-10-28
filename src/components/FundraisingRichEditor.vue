@@ -78,8 +78,8 @@ export default {
 .rich-toolbar button:nth-child(2) { font-style: italic; }
 .rich-toolbar button:nth-child(3) { text-decoration: underline; }
 .rich-image-input { display: none; }
-.rich-editable { position: relative; min-height: 138px; padding: 12px; color: #27384e; font-size: 16px; line-height: 1.6; outline: none; overflow-wrap: anywhere; }
-.rich-editable.is-empty::before { display: block; content: attr(data-placeholder); color: #5b8ff9; font-size: 14px; white-space: pre-wrap; pointer-events: none; }
+.rich-editable { position: relative; min-height: 138px; padding: 12px; color: #27384e; line-height: var(--edit-input-line-height, 1.6); outline: none; overflow-wrap: anywhere; }
+.rich-editable.is-empty::before { display: block; content: attr(data-placeholder); color: #5b8ff9; white-space: pre-wrap; pointer-events: none; }
 .rich-editable:focus { box-shadow: inset 0 0 0 1px #1677ff; }
 .rich-editable >>> p:last-child { margin-bottom: 0; }
 .rich-editable >>> img { display: block; max-width: min(400px, 100%); max-height: 400px; width: auto; height: auto; margin: 10px 0; border-radius: 6px; object-fit: contain; }

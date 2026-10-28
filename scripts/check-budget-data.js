@@ -12,7 +12,7 @@ const storage = () => {
 const context = { localStorage: storage(), sessionStorage: storage(), clone: value => JSON.parse(JSON.stringify(value)), roundMoney: value => Math.round((Number(value) || 0) * 100) / 100 }
 vm.createContext(context)
 vm.runInContext(read('src/utils/project-budget-data.js').replace(/export /g, ''), context)
-vm.runInContext(read('src/utils/project-budget.js').replace(/^import .*$/mg, '').replace(/^export \{[^\n]+\} from .*$/mg, '').replace(/export /g, '') + '\nthis.api = { normalizeBudget, buildBudgetRows, budgetKey, prepareBudgetContext, readBudgetContext, clearBudgetContext, saveProjectBudget, readBudgetProject, readSavedBudget, saveBudgetSheet, savePersonnelSheet, writeBudgetWorking, readBudgetWorking, validatePersonnel, validateCost };', context)
+vm.runInContext(read('src/utils/project-budget.js').replace(/^import .*$/mg, '').replace(/^export \{[^\n]+\} from .*$/mg, '').replace(/export /g, '') + '\nthis.api = { normalizeBudget, snapshotBudget, budgetDetailParts, validateCostValues, buildBudgetRows, budgetKey, prepareBudgetContext, readBudgetContext, clearBudgetContext, saveProjectBudget, readBudgetProject, readSavedBudget, saveBudgetSheet, savePersonnelSheet, writeBudgetWorking, readBudgetWorking, validatePersonnel, validateCost };', context)
 const a = context.api
 const project = JSON.parse(read('src/mock/project-budget.example.json'))
 const normalized = a.normalizeBudget(project.budget, project)
@@ -52,7 +52,8 @@ assert.equal(a.buildBudgetRows(project, a.readSavedBudget(key))[0].total, 3400)
 assert.equal(final.personnel[0].memberId, 'member-1')
 a.clearBudgetContext(key)
 assert.equal(a.readBudgetContext(key).draft.budget.revision, final.revision, 'direct access must restore saved JSON without a session')
-assert.equal(a.normalizeBudget(final, { ...project, team: [{ ...project.team[0], name: '更新后的姓名' }] }).personnel[0].name, '更新后的姓名')
+assert.equal(a.normalizeBudget(final, { ...project, team: [{ ...project.team[0], name: '更新后的姓名' }] }).personnel[0].name, final.personnel[0].name, 'reading must retain the personnel snapshot')
+assert.equal(a.snapshotBudget(final, { ...project, team: [{ ...project.team[0], name: '更新后的姓名' }] }).personnel[0].name, '更新后的姓名', 'only editing refreshes personnel information')
 assert.throws(() => a.normalizeBudget({ ...normalized, rows: [normalized.rows[0], normalized.rows[0]] }), /ID 重复/)
 assert.throws(() => a.normalizeBudget({ ...normalized, rows: [{ ...normalized.rows[0], quarters: ['不是金额', 0, 0, 0] }] }), /无效数字/)
 assert.throws(() => a.normalizeBudget({ schemaVersion: 99 }), /数据版本/)
@@ -61,7 +62,7 @@ for (const file of ['project-tables.json', 'project-green-home-detail.json', 'pr
   if (!source.budget) continue
   const adapted = a.normalizeBudget(source.budget, source)
   const before = source.budget.rows.filter(row => row.kind === 'detail').length
-  assert.equal(adapted.rows.length + adapted.legacyPersonnel.length, before, file + ': preserve all raw cost records')
+  assert.equal(adapted.rows.length + adapted.legacyPersonnel.length + adapted.legacyPlaceholders.length, before, file + ': preserve all raw cost records')
   assert.equal(JSON.stringify(a.normalizeBudget(adapted, source)), JSON.stringify(adapted), file + ': migration idempotence')
   const view = a.buildBudgetRows(source, adapted)
   const edit = a.buildBudgetRows(source, adapted, true).filter(row => row.kind !== 'action')
@@ -72,10 +73,69 @@ context.localStorage.setItem('see-budget-sheet:' + oldKey, JSON.stringify({ rows
 assert.equal(a.readSavedBudget(oldKey).schemaVersion, 1)
 assert.equal(context.localStorage.getItem('see-project-budget-document-v1:' + oldKey), null, 'reading must not silently rewrite old data')
 context.money = value => Number(value).toFixed(2)
+context.ProjectBudgetTable = {} // 数据检查不挂载 Vue 子组件。
+context.ProjectPersonnelTable = {}
 const script = read('src/components/BudgetPrototype.vue').split('<script>')[1].split('</script>')[0].replace(/^import .*$/mg, '').replace('export default', 'this.viewer =')
 vm.runInContext(script, context)
 const legacy = JSON.parse(read('src/mock/project-tables.json')).budget
 assert.equal(context.viewer.computed.sheet.call({ sharedData: false, budget: legacy }).rows, legacy.rows, 'other budget consumers retain their legacy data')
 const shared = context.viewer.computed.sheet.call({ sharedData: true, normalizedBudget: final, project, budget: final })
 assert.equal(shared.rows[0].total, '3400.00', 'viewer formats the shared raw totals')
-console.log('PASS: canonical JSON, legacy fixtures, ID and scope isolation, revisions, comments, team links, partial saves, shared edit/view totals')
+
+// 相同预算快照不受项目资料后续改名、删活动或人员变动影响。
+const changedProject = { ...project, name: '后续项目名称', organization: '后续机构', outputs: [], team: [] }
+assert.equal(JSON.stringify(a.buildBudgetRows(changedProject, final)), JSON.stringify(a.buildBudgetRows({}, final)))
+assert.equal(a.normalizeBudget(final, changedProject).metadata.projectName, final.metadata.projectName)
+assert.equal(a.snapshotBudget(final, changedProject).metadata.projectName, '后续项目名称')
+const noCost = a.snapshotBudget({ rows: [], personnel: [] }, project)
+const noCostRows = a.buildBudgetRows({}, noCost)
+assert(noCostRows.some(row => row.kind === 'activity' && row.key === 'activity:activity-1'))
+assert(!noCostRows.some(row => row.cost), 'empty activities must not manufacture budget details')
+assert(a.validateCostValues({ price: 0, quantity: 1 }))
+assert(a.validateCostValues({ price: -1, quantity: 1 }))
+assert(a.validateCostValues({ price: 1, quantity: 1.234 }))
+assert(a.validateCostValues({ price: 0.000000001, quantity: 1 }))
+assert.equal(a.validateCostValues({ price: 0.01, quantity: 1.25 }), '')
+const savedBeforeInvalid = context.localStorage.getItem('see-project-budget-document-v1:' + key)
+assert.throws(() => a.saveProjectBudget(key, { ...project, budget: { ...final, rows: [{ ...final.rows[0], price: 0 }] } }), /预算无法保存/)
+assert.equal(context.localStorage.getItem('see-project-budget-document-v1:' + key), savedBeforeInvalid)
+const legacyDetail = { description: '100.00元*4.50只\n\n第一段说明\n第二段说明' }
+const legacyBefore = JSON.stringify(legacyDetail)
+const parts = a.budgetDetailParts(legacyDetail)
+assert.equal(parts.quantity, 4.5)
+assert.equal(parts.unit, '只')
+assert.equal(parts.description, '第一段说明\n第二段说明')
+assert.equal(JSON.stringify(legacyDetail), legacyBefore, 'presentation must not rewrite legacy records')
+assert.equal(a.budgetDetailParts({ cost: { price: null, quantity: 2 }, description: '缺少原始单价' }).text, '缺少原始单价')
+// 直接验证列宽计算：全部金额列保留最小宽度并随大额值增宽，不涉及视觉测试。
+context.document = { body: {}, documentElement: {}, createElement: () => ({ getContext: () => ({ measureText: text => ({ width: text.length * 9 }) }) }) }
+context.window = { getComputedStyle: () => ({ fontFamily: 'Arial', getPropertyValue: () => '13px' }) }
+const tableScript = read('src/components/ProjectBudgetTable.vue').split('<script>')[1].split('</script>')[0].replace(/^import .*$/mg, '').replace(/export function /g, 'function ').replace('export default', 'this.table =')
+vm.runInContext(tableScript + '\nthis.measureWidths = measureBudgetWidths;', context)
+const amountColumns = [4, 5, 6, 7, 8, 9, 12, 13]
+const largeRow = { quarters: [999999999, 999999999, 999999999, 999999999], total: 3999999996, adjustment: -999999999, adjustedBudget: 999999999, executed: 999999999 }
+const minimums = vm.runInContext('budgetWidths', context)
+const grown = context.measureWidths([largeRow])
+amountColumns.forEach(index => assert(grown[index] > minimums[index], 'large amount expands column ' + index))
+const small = context.measureWidths([{ quarters: [0, 0, 0, 0], total: 0 }])
+amountColumns.forEach(index => assert.equal(small[index], minimums[index]))
+assert.equal(context.table.methods.quantity(4.5), '4.50')
+assert.equal(context.table.methods.quantity(4), '4.00')
+// ZZ-1764740258 独立示例必须与编辑校验一致，并与申请 SEE 金额相等。
+const demo = a.normalizeBudget(JSON.parse(read('src/mock/project-1764740258-budget.json')))
+const demoProject = { start: '2024-12-01', end: '2026-02-28' }
+demo.rows.forEach(row => assert.equal(a.validateCost(row), '', row.name))
+demo.personnel.forEach(row => assert.equal(a.validatePersonnel(row, demoProject), '', row.name))
+assert.equal(a.validatePersonnel({ ...demo.personnel[0], remark: '分摊计算说明' }, demoProject), '备注只能为专职或兼职')
+assert.throws(() => a.savePersonnelSheet(key, { draft: project }, [{ ...demo.personnel[0], remark: '其他' }]), /备注只能为专职或兼职/)
+assert.throws(() => a.saveProjectBudget(key, { ...project, budget: { ...final, personnel: [{ ...final.personnel[0], remark: '其他' }] } }), /备注只能为专职或兼职/)
+const demoRows = a.buildBudgetRows({}, demo)
+assert.equal(demoRows[0].total, 200000)
+const requested = Number(JSON.parse(read('src/mock/project-tables.json')).basic.requested.split(' ')[0].replace(/,/g, ''))
+assert.equal(demoRows[0].total, requested, 'demo budget equals the requested SEE funding')
+assert.equal(JSON.stringify(demoRows[0].quarters), JSON.stringify([50000, 50000, 50000, 50000]))
+assert(demoRows.some(row => row.key === 'activity:activity-3-1' && row.total === 0))
+assert(!demo.rows.some(row => row.activityId === 'activity-3-1'))
+assert.equal(demo.metadata.projectCode, 'ZZ-1764740258')
+assert.equal(JSON.stringify(a.normalizeBudget(demo)), JSON.stringify(demo))
+console.log('PASS: snapshots, JSON round trips, legacy preservation, independent viewing, positive prices, two-decimal quantities, empty activities, all monetary widths, ZZ-1764740258 valid budget, revisions and partial saves')

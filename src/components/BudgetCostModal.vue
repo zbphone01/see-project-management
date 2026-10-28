@@ -1,21 +1,21 @@
 <template>
-  <a-modal :visible="visible" :title="title" :width="550" :mask-closable="false" class="budget-cost-modal" @cancel="close">
-    <div class="cost-form">
-      <template v-if="kind === 'activity'"><label>产出活动</label><div class="cost-context">{{ activityName }}</div></template>
+  <a-modal :visible="visible" :title="title" :width="550" :mask-closable="false" wrap-class-name="budget-cost-modal standard-form-modal standard-edit-scope standard-edit-modal" :body-style="{ maxHeight: '65vh', overflowY: 'auto' }" @cancel="close">
+    <div class="cost-form budget-modal-form">
+      <template v-if="kind === 'activity'"><label class="budget-readonly-label">产出活动</label><div class="budget-readonly-value">{{ activityName }}</div></template>
       <label for="cost-subject">预算科目</label><div>
-        <a-select v-if="kind === 'support'" id="cost-subject" v-model="subject" placeholder="请选择" style="width:100%"><a-select-option v-for="item in subjects" :key="item">{{ item }}</a-select-option></a-select>
+        <a-select dropdown-class-name="standard-edit-dropdown" v-if="kind === 'support'" id="cost-subject" v-model="subject" placeholder="请选择" style="width:100%"><a-select-option v-for="item in subjects" :key="item">{{ item }}</a-select-option></a-select>
         <a-input v-else id="cost-subject" v-model="form.name" :max-length="200" placeholder="填写活动的预算具体内容" />
         <a-input v-if="kind === 'support' && subject === '其他'" v-model="form.name" class="cost-other" :max-length="200" placeholder="选择其他时填写" aria-label="其他预算科目" />
       </div>
-      <label for="cost-type">费用类型</label><a-select id="cost-type" v-model="form.type" placeholder="请选择" style="width:100%"><a-select-option v-for="item in types" :key="item">{{ item }}</a-select-option></a-select>
+      <label for="cost-type">费用类型</label><a-select dropdown-class-name="standard-edit-dropdown" id="cost-type" v-model="form.type" placeholder="请选择" style="width:100%"><a-select-option v-for="item in types" :key="item">{{ item }}</a-select-option></a-select>
       <label>预算明细</label><div class="cost-detail">
-        <div class="cost-pair"><a-input-number v-model="form.price" :min="0" :max="1000000000" :precision="2" placeholder="明细单价" aria-label="明细单价" /><span>元 ×</span><a-input-number v-model="form.quantity" :min="0" :max="1000000000" :precision="2" placeholder="明细数量" aria-label="明细数量" /></div>
+        <div class="cost-pair"><a-input-number v-model="form.price" :min="0.01" :max="1000000000" :precision="2" :step="0.01" placeholder="明细单价" aria-label="明细单价" /><span>元 ×</span><a-input-number v-model="form.quantity" :min="0.01" :max="1000000000" :precision="2" :step="0.01" placeholder="明细数量" aria-label="明细数量" /></div>
         <a-input v-model="form.unit" :max-length="20" placeholder="明细数量的单位量词，如：只，非必填" aria-label="量词" />
         <a-textarea v-model="form.description" :rows="3" :max-length="3000" placeholder="请对预算项明细单价和数量进行详细说明" aria-label="明细说明" aria-required="true" />
       </div>
-      <label>预算明细合计</label><div class="cost-calculated">{{ money(detailAmount) }} 元</div>
+      <label class="budget-readonly-label">预算明细合计</label><div class="budget-readonly-value">{{ money(detailAmount) }} 元</div>
       <label>分期预算</label><div class="cost-quarters"><div v-for="(label, index) in quarterLabels" :key="label"><span>{{ label }}</span><a-input-number v-model="form.quarters[index]" :min="0" :max="1000000000" :precision="2" :placeholder="label + '金额'" :aria-label="label + '金额'" /><span>元</span></div></div>
-      <label>分期预算合计</label><div class="cost-calculated">{{ money(quarterAmount) }} 元</div>
+      <label class="budget-readonly-label">分期预算合计</label><div class="budget-readonly-value">{{ money(quarterAmount) }} 元</div>
       <a-alert v-if="error" class="cost-error" type="error" show-icon :message="error" />
     </div>
     <template slot="footer"><a-button v-if="form.id" type="danger" class="cost-delete" @click="remove">删除</a-button><a-button @click="close">取消</a-button><a-button type="primary" @click="submit">{{ form.id ? '保存' : '添加' }}</a-button></template>
@@ -56,14 +56,6 @@ export default {
 </script>
 
 <style>
-.budget-cost-modal .ant-modal-header, .budget-cost-modal .ant-modal-footer { height: 55px; box-sizing: border-box; display: flex; align-items: center; }
-.budget-cost-modal .ant-modal-header { padding: 0 24px; }
-.budget-cost-modal .ant-modal-close-x { height: 55px; line-height: 55px; }
-.budget-cost-modal .ant-modal-footer { justify-content: flex-end; padding: 0 24px; }
-.budget-cost-modal .ant-modal-body { padding: 32px 40px; }
-.budget-cost-modal .cost-form { display: grid; grid-template-columns: 90px minmax(0, 1fr); column-gap: 18px; row-gap: 16px; }
-.budget-cost-modal .cost-form > label { text-align: right; line-height: 22px; padding-top: 5px; color: #18253c; }
-.budget-cost-modal .cost-context { padding-top: 5px; line-height: 22px; overflow-wrap: anywhere; }
 .budget-cost-modal .cost-detail { display: grid; gap: 10px; }
 .budget-cost-modal .cost-pair { display: flex; gap: 6px; align-items: center; }
 .budget-cost-modal .cost-pair > span { white-space: nowrap; }
@@ -72,9 +64,6 @@ export default {
 .budget-cost-modal .cost-quarters > div { display: flex; align-items: center; gap: 8px; }
 .budget-cost-modal .cost-quarters .ant-input-number { flex: 1; min-width: 0; }
 .budget-cost-modal .cost-other { margin-top: 10px; }
-.budget-cost-modal .cost-calculated { line-height: 32px; color: #18253c; }
 .budget-cost-modal .cost-error { grid-column: 1 / -1; }
 .budget-cost-modal .cost-delete { margin-right: auto; }
-.budget-cost-modal input, .budget-cost-modal textarea { font-size: 14px; }
-.budget-cost-modal input::placeholder, .budget-cost-modal textarea::placeholder, .budget-cost-modal .ant-select-selection__placeholder { color: #5b8ff9; font-size: 14px; opacity: 1; }
 </style>

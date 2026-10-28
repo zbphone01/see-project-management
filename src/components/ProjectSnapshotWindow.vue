@@ -53,7 +53,6 @@ export default {
 .snapshot-window { width: min(1180px, calc(100vw - 80px)); height: 50vh; display: flex; flex-direction: column; overflow: hidden; pointer-events: auto; border: 1px solid #e6ebf2; border-radius: 16px; background: #f4f7fb; box-shadow: 0 16px 48px rgba(23, 56, 92, .2); }
 .snapshot-header { flex-shrink: 0; min-height: 60px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 20px; border-bottom: 1px solid #e6ebf2; background: #fff; color: #18253c; cursor: move; touch-action: none; user-select: none; }
 .snapshot-title { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; min-width: 0; }
-.snapshot-header strong { font-size: 16px; font-weight: 700; }
 .snapshot-close { border: 0; background: transparent; box-shadow: none; }
 .snapshot-body { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 20px; }
 </style>

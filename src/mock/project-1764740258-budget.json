@@ -1,0 +1,226 @@
+{
+  "schemaVersion": 1,
+  "revision": 0,
+  "editStatus": "completed",
+  "personnelStatus": "completed",
+  "updatedAt": "",
+  "personnelUpdatedAt": "",
+  "rows": [
+    {
+      "id": "zz0258-support-rent",
+      "kind": "support",
+      "name": "办公室房租",
+      "type": "办公运行费",
+      "price": 500,
+      "quantity": 12,
+      "unit": "个月",
+      "description": "本项目分摊办公室租金，每月500元，共12个月。",
+      "quarters": [
+        1500,
+        1500,
+        1500,
+        1500
+      ],
+      "outputId": null,
+      "activityId": null,
+      "adjustment": null,
+      "adjustedBudget": null,
+      "executed": null,
+      "adjustmentDetail": null,
+      "code": "1-支撑"
+    },
+    {
+      "id": "zz0258-cost-travel",
+      "kind": "activity",
+      "outputId": "output-1",
+      "activityId": "activity-1-1",
+      "name": "入户宣讲交通费",
+      "type": "交通差旅费",
+      "price": 500,
+      "quantity": 40,
+      "unit": "车次",
+      "description": "入户宣讲往返交通，每车次500元，共40车次。",
+      "quarters": [
+        5000,
+        5000,
+        5000,
+        5000
+      ],
+      "adjustment": null,
+      "adjustedBudget": null,
+      "executed": null,
+      "adjustmentDetail": null,
+      "code": "1.1.1"
+    },
+    {
+      "id": "zz0258-cost-service",
+      "kind": "activity",
+      "outputId": "output-1",
+      "activityId": "activity-1-1",
+      "name": "入户宣讲劳务费",
+      "type": "劳务费",
+      "price": 200,
+      "quantity": 100,
+      "unit": "人次",
+      "description": "社区宣讲及入户指导劳务，每人次200元，共100人次。",
+      "quarters": [
+        5000,
+        5000,
+        5000,
+        5000
+      ],
+      "adjustment": null,
+      "adjustedBudget": null,
+      "executed": null,
+      "adjustmentDetail": null,
+      "code": "1.1.2"
+    },
+    {
+      "id": "zz0258-cost-supplies",
+      "kind": "activity",
+      "outputId": "output-1",
+      "activityId": "activity-1-2",
+      "name": "零废弃生活物资",
+      "type": "物资费",
+      "price": 400,
+      "quantity": 100,
+      "unit": "套",
+      "description": "可重复使用生活物资，每套400元，共100套，分批发放并登记。",
+      "quarters": [
+        10000,
+        10000,
+        10000,
+        10000
+      ],
+      "adjustment": null,
+      "adjustedBudget": null,
+      "executed": null,
+      "adjustmentDetail": null,
+      "code": "1.2.1"
+    },
+    {
+      "id": "zz0258-cost-recycling",
+      "kind": "activity",
+      "outputId": "output-2",
+      "activityId": "activity-2-1",
+      "name": "分类回收设施",
+      "type": "物资费",
+      "price": 1000,
+      "quantity": 42,
+      "unit": "套",
+      "description": "分类收集与回收设施，每套1000元，共42套，按阶段配置。",
+      "quarters": [
+        10500,
+        10500,
+        10500,
+        10500
+      ],
+      "adjustment": null,
+      "adjustedBudget": null,
+      "executed": null,
+      "adjustmentDetail": null,
+      "code": "2.1.1"
+    }
+  ],
+  "personnel": [
+    {
+      "id": "zz0258-personnel-team-1",
+      "memberId": "team-1",
+      "name": "胡刚",
+      "position": "专家",
+      "responsibilities": "负责项目统筹、社区活动技术指导、数据审核和成果总结。",
+      "nature": "项目人员",
+      "monthly": 4000,
+      "months": 12,
+      "ratio": 50,
+      "quarters": [
+        12000,
+        12000,
+        12000,
+        12000
+      ],
+      "remark": "兼职",
+      "adjustment": null,
+      "adjustedBudget": null,
+      "executed": null,
+      "adjustmentDetail": null
+    },
+    {
+      "id": "zz0258-personnel-team-2",
+      "memberId": "team-2",
+      "name": "张慧敏",
+      "position": "正式员工",
+      "responsibilities": "负责入户宣讲、物资发放、分类回收跟踪和活动台账。",
+      "nature": "项目人员",
+      "monthly": 2000,
+      "months": 12,
+      "ratio": 40,
+      "quarters": [
+        6000,
+        6000,
+        6000,
+        6000
+      ],
+      "remark": "专职",
+      "adjustment": null,
+      "adjustedBudget": null,
+      "executed": null,
+      "adjustmentDetail": null
+    }
+  ],
+  "groups": [
+    {
+      "id": "output-1",
+      "code": "产出1",
+      "name": "建立 20 户零废弃家庭",
+      "activities": [
+        {
+          "id": "activity-1-1",
+          "code": "产出活动1.1",
+          "name": "协会工作人员入户宣讲零废弃生活方式"
+        },
+        {
+          "id": "activity-1-2",
+          "code": "产出活动1.2",
+          "name": "发放零废弃物资"
+        }
+      ]
+    },
+    {
+      "id": "output-2",
+      "code": "产出2",
+      "name": "垃圾减塑和减量——推动高原牧民家庭建立垃圾分类、称重记录与资源循环利用机制，结合入户指导、可重复使用物资发放和季度跟踪评估，持续减少一次性塑料使用及不可回收垃圾产生，形成可向周边社区推广的零废弃生活实践",
+      "activities": [
+        {
+          "id": "activity-2-1",
+          "code": "产出活动2.1",
+          "name": "垃圾回收再利用"
+        }
+      ]
+    },
+    {
+      "id": "output-3",
+      "code": "产出3",
+      "name": "形成社区零废弃实践经验并开展周边推广",
+      "activities": [
+        {
+          "id": "activity-3-1",
+          "code": "产出活动3.1",
+          "name": "整理项目经验并开展社区分享"
+        }
+      ]
+    }
+  ],
+  "legacyPersonnel": [],
+  "legacyPlaceholders": [],
+  "metadata": {
+    "projectName": "青藏高原草地生态监测与牧民能力建设",
+    "tableTitle": "项目预算及执行情况明细表",
+    "organization": "青海省绿色发起人生态保护中心",
+    "period": "2024-12-01 至 2026-02-28",
+    "partners": "无",
+    "executionCutoff": "无",
+    "snapshotVersion": 1,
+    "projectCode": "ZZ-1764740258"
+  }
+}

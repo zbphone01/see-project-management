@@ -1,5 +1,5 @@
-import { normalizeBudget, buildBudgetRows, budgetQuarterTotal, budgetPersonnelAmount } from './project-budget-data'
-export { normalizeBudget, buildBudgetRows } from './project-budget-data'
+import { normalizeBudget, snapshotBudget, buildBudgetRows, budgetQuarterTotal, budgetPersonnelAmount } from './project-budget-data'
+export { normalizeBudget, snapshotBudget, buildBudgetRows, budgetDetailParts } from './project-budget-data'
 import { clone, roundMoney } from '../mock/project-drafts'
 
 export const budgetWidths = [90, 120, 210, 80, 80, 80, 80, 80, 100, 100, 60, 210, 100, 100, 60]
@@ -11,9 +11,10 @@ export const canViewBudget = budget => budgetStatus(budget) !== '待编辑'
 export const rowTotal = budgetQuarterTotal
 export const detailTotal = row => roundMoney(Number(row.price) * Number(row.quantity))
 export const budgetKey = route => [route.params.id, (!route.query.detailType || route.query.detailType === 'default') ? 'project' : route.query.detailType, route.query.fresh === '1' ? 'fresh' : 'existing', route.query.example === 'filled' ? 'filled' : 'default'].join(':')
-export function prepareBudgetContext (route, draft, donationProject, savedSnapshot) {
+export function prepareBudgetContext (route, draft, donationProject, savedSnapshot, editable = true) {
   const key = budgetKey(route)
-  sessionStorage.setItem('see-budget-context:' + key, JSON.stringify({ draft: { ...clone(draft), budget: normalizeBudget(draft.budget, draft) }, donationProject, savedSnapshot, returnTo: { name: 'project-form', params: { id: route.params.id }, query: { ...route.query, budgetReturn: '1' } } }))
+  const budget = editable ? snapshotBudget(draft.budget, draft, donationProject) : normalizeBudget(draft.budget)
+  sessionStorage.setItem('see-budget-context:' + key, JSON.stringify({ draft: { ...clone(draft), budget }, donationProject, savedSnapshot, returnTo: { name: 'project-form', params: { id: route.params.id }, query: { ...route.query, budgetReturn: '1' } } }))
   clearBudgetWorking(key)
   return key
 }
@@ -37,7 +38,7 @@ export function readBudgetProject (key) {
   if (!raw) return null
   const document = JSON.parse(raw)
   if (document.schemaVersion !== 1 || document.key !== key || !document.project || String(document.project.id) !== key.split(':')[0]) throw new Error('项目预算文档与项目不匹配')
-  return { ...document.project, budget: normalizeBudget(document.project.budget, document.project) }
+  return { ...document.project, budget: normalizeBudget(document.project.budget) }
 }
 export function readSavedBudget (key) {
   const project = readBudgetProject(key)
@@ -46,12 +47,14 @@ export function readSavedBudget (key) {
   if (!raw) return null
   const budget = JSON.parse(raw)
   if (!Array.isArray(budget.rows) || !Array.isArray(budget.personnel)) throw new Error('预算数据无法读取')
-  const context = readBudgetContext(key)
-  return normalizeBudget(budget, context ? context.draft : {})
+  return normalizeBudget(budget)
 }
 export function saveProjectBudget (key, project) {
   if (String(project.id) !== key.split(':')[0]) throw new Error('项目 ID 不匹配')
-  const payload = { ...clone(project), budget: normalizeBudget(project.budget, project), reviewComments: clone(project.reviewComments || {}) }
+  const payload = { ...clone(project), budget: normalizeBudget(project.budget), reviewComments: clone(project.reviewComments || {}) }
+  const invalid = payload.budget.rows.map(validateCostValues).find(Boolean)
+  if (invalid) throw new Error('预算无法保存：' + invalid)
+  if (payload.budget.personnel.some(row => row.remark !== null && row.remark !== undefined && row.remark !== '' && !['专职', '兼职'].includes(row.remark))) throw new Error('预算无法保存：人力成本备注只能为专职或兼职')
   const current = readBudgetProject(key)
   if (current && current.budget.revision !== payload.budget.revision) throw new Error('预算已在其他页面更新，请刷新后重新编辑')
   payload.budget.revision++
@@ -62,11 +65,22 @@ export function saveBudgetSheet (key, budget, status) {
   const context = readBudgetContext(key)
   const project = context ? context.draft : readBudgetProject(key)
   if (!project) throw new Error('缺少项目预算上下文')
-  const saved = normalizeBudget({ ...clone(budget), editStatus: status, updatedAt: new Date().toISOString() }, project)
+  const donationProject = context && context.donationProject !== undefined ? context.donationProject : budget.metadata && budget.metadata.tableTitle === '北京市企业家环保基金会联合公益项目预算表'
+  const saved = snapshotBudget({ ...clone(budget), editStatus: status, updatedAt: new Date().toISOString() }, project, !!donationProject)
   return saveProjectBudget(key, { ...project, budget: saved })
 }
 export function emptyBudget (budget, project = {}) {
   return normalizeBudget(budget || {}, project)
+}
+export function validateCostValues (row) {
+  for (const field of ['price', 'quantity']) {
+    const value = row[field]
+    if (value === null || value === undefined || String(value).trim() === '') continue
+    const number = Number(value), label = field === 'price' ? '单价' : '数量'
+    if (!Number.isFinite(number) || number <= 0 || number > 1000000000) return '请填写大于 0 且不超过 10 亿的' + label
+    if (Number(number.toFixed(2)) !== number) return label + '最多支持两位小数'
+  }
+  return ''
 }
 export function validateCost (row) {
   if (!String(row.name || '').trim()) return '请填写预算科目'
@@ -75,6 +89,8 @@ export function validateCost (row) {
   if (!Number.isFinite(Number(row.price)) || Number(row.price) <= 0 || Number(row.price) > 1000000000) return '请填写大于 0 且不超过 10 亿元的单价'
   if (row.quantity === null || row.quantity === undefined || String(row.quantity).trim() === '') return '请填写预算项明细数量'
   if (!Number.isFinite(Number(row.quantity)) || Number(row.quantity) <= 0 || Number(row.quantity) > 1000000000) return '请填写有效的数量'
+  const numberError = validateCostValues(row)
+  if (numberError) return numberError
   if (!String(row.description || '').trim()) return '请填写明细'
   if (!Array.isArray(row.quarters) || row.quarters.length !== 4 || row.quarters.some(value => value === null || value === '' || !Number.isFinite(Number(value)) || Number(value) < 0 || Number(value) > 1000000000)) return '请填写四期预算金额，不需预算的期数填写 0'
   if (detailTotal(row) > 1000000000) return '预算明细合计不能超过 10 亿元'
@@ -107,6 +123,7 @@ export function validatePersonnel (row, draft) {
   if (personnelBudgetMissing(row)) return '请填写完整人员预算，所有录入项均需填写'
   if (!row.id || !String(row.name || '').trim()) return '人员资料不完整，请先完善执行团队'
   if (!['项目人员', '行政管理人员'].includes(row.nature)) return '请选择人员性质：项目人员或行政管理人员'
+  if (!['专职', '兼职'].includes(row.remark)) return '备注只能为专职或兼职'
   for (const field of ['monthly', 'months', 'ratio']) {
     if (row[field] === null || row[field] === '' || !Number.isFinite(Number(row[field])) || Number(row[field]) < 0) return '请填写有效的月成本、月份数和人力占比'
   }
@@ -130,6 +147,7 @@ export function writeBudgetWorking (key, value) {
 }
 export function clearBudgetWorking (key) { sessionStorage.removeItem('see-budget-working:' + key) }
 export function savePersonnelSheet (key, context, personnel) {
+  if (personnel.some(row => !['专职', '兼职'].includes(row.remark))) throw new Error('备注只能为专职或兼职')
   const base = readSavedBudget(key) || emptyBudget(context.draft.budget, context.draft)
   const saved = saveBudgetSheet(key, { ...base, personnel: clone(personnel), legacyPersonnel: [], personnelStatus: 'completed', personnelUpdatedAt: new Date().toISOString() }, base.editStatus === 'completed' ? 'editing' : base.editStatus)
   const working = readBudgetWorking(key)

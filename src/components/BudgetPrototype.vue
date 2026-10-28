@@ -3,7 +3,8 @@
     <a-tabs v-model="activeTab" :animated="false">
       <a-tab-pane v-for="(title, index) in visibleTabs" :key="String(index)" :tab="title">
         <div v-if="index === 0" class="budget-sheet-scroll" tabindex="0" :aria-label="(donationProject ? donationBudgetTitle : '预算及执行明细表') + '，可左右滚动'">
-          <table class="budget-sheet">
+          <project-budget-table v-if="editorTable && sharedData" :metadata="normalizedBudget.metadata" :rows="detailRows" :widths="detailWidths" :donation-project="donationProject" :audit="audit" black-amounts show-execution />
+          <table v-else class="budget-sheet">
             <colgroup><col v-for="(width, i) in sheet.widths" :key="i" :style="{ width: width + 'px' }" /></colgroup>
             <thead>
               <tr><th colspan="15" class="sheet-project">{{ projectName }}</th></tr>
@@ -30,12 +31,7 @@
           </table>
         </div>
         <div v-else-if="index === 1 && sharedData && normalizedBudget.personnel.length" class="budget-sheet-scroll" tabindex="0" aria-label="人力成本分摊表，可左右滚动">
-          <table class="budget-sheet personnel-sheet">
-            <colgroup><col v-for="(width, i) in personnelWidths" :key="i" :style="{ width: width + 'px' }" /></colgroup>
-            <thead><tr><th colspan="12">{{ projectName }}</th></tr><tr class="sheet-columns"><th colspan="12">项目执行团队人力成本分摊表</th></tr><tr class="sheet-columns"><th v-for="label in personnelColumns" :key="label" :class="{ 'sheet-description': label === '在本项目中工作内容' }">{{ label }}</th></tr></thead>
-            <tbody><tr v-for="row in normalizedBudget.personnel" :key="row.id"><td>{{ row.name }}</td><td>{{ row.position }}</td><td>{{ row.nature || '—' }}</td><td class="sheet-description">{{ row.responsibilities }}</td><td>{{ optionalMoney(row.executed) }}</td><td>{{ row.ratio === null ? '—' : row.ratio + '%' }}</td><td>{{ money(row.monthly) }}</td><td>{{ row.months }}</td><td>{{ money(personnelAmount(row)) }}</td><td>{{ optionalMoney(row.adjustment) }}</td><td>{{ optionalMoney(row.adjustedBudget) }}</td><td>{{ row.remark || '—' }}</td></tr>
-            <tr class="sheet-row-group"><th colspan="4">总计</th><td>/</td><td>/</td><td>/</td><td>/</td><td>{{ money(personnelSum) }}</td><td>/</td><td>/</td><td>/</td></tr></tbody>
-          </table>
+          <project-personnel-table :rows="normalizedBudget.personnel" :project-name="normalizedBudget.metadata.projectName" black-amounts show-execution />
         </div>
         <a-empty v-else class="budget-tab-empty" :description="title + '暂无示例数据'" />
       </a-tab-pane>
@@ -44,11 +40,16 @@
 </template>
 
 <script>
-import { normalizeBudget, buildBudgetRows, budgetWidths, budgetColumns, budgetStatus, personnelAmount } from '../utils/project-budget'
-import { money, roundMoney } from '../mock/project-drafts'
+import ProjectBudgetTable, { measureBudgetWidths } from './ProjectBudgetTable.vue'
+import ProjectPersonnelTable from './ProjectPersonnelTable.vue'
+import { normalizeBudget, buildBudgetRows, budgetWidths, budgetColumns, budgetStatus } from '../utils/project-budget'
+import { money } from '../mock/project-drafts'
 export default {
   name: 'BudgetPrototype',
+  components: { ProjectBudgetTable, ProjectPersonnelTable },
   props: {
+    editorTable: { type: Boolean, default: false },
+    audit: { type: Boolean, default: false },
     sharedData: { type: Boolean, default: false },
     project: { type: Object, default: () => ({}) },
     donationProject: { type: Boolean, default: false },
@@ -56,29 +57,30 @@ export default {
     projectName: { type: String, default: '项目名称' },
     budget: { type: Object, required: true }
   },
-  data () { return { activeTab: '0', donationBudgetTitle: '北京市企业家环保基金会联合公益项目预算表', personnelWidths: [120, 100, 100, 400, 110, 100, 100, 100, 110, 110, 110, 90], personnelColumns: ['姓名', '职务', '人员性质', '在本项目中工作内容', '执行额', '本项目人力占比（%）', '本项目承担月人力成本', '本项目承担月份数', '本项目承担人力成本总额', '预算调整金额', '调整后预算', '备注'] } },
+  data () { return { activeTab: '0', donationBudgetTitle: '北京市企业家环保基金会联合公益项目预算表' } },
   computed: {
-    normalizedBudget () { return normalizeBudget(this.budget, this.project) },
-    personnelSum () { return roundMoney(this.normalizedBudget.personnel.reduce((sum, row) => sum + personnelAmount(row), 0)) },
+    detailRows () { return buildBudgetRows({}, this.normalizedBudget) },
+    detailWidths () { return measureBudgetWidths(this.detailRows) },
+    normalizedBudget () { return normalizeBudget(this.budget) },
     visibleTabs () { if (!this.sharedData) return this.donationProject ? [this.donationBudgetTitle] : this.budget.tabs; return this.donationProject ? [this.donationBudgetTitle] : ['预算及执行明细表', '人力成本分摊表', '预算及执行汇总表', '费用类型分析表', '预算调整历史'] },
     sheet () {
       if (!this.sharedData) return { ...this.budget, status: '（待审）' }
-      const budget = this.normalizedBudget, project = this.project, metadata = budget.metadata
+      const budget = this.normalizedBudget, metadata = budget.metadata
       return {
         widths: budgetWidths, columns: budgetColumns,
-        organization: project.organization || metadata.organization || '未填写',
-        period: project.start && project.end ? project.start + ' 至 ' + project.end : metadata.period || '未填写',
-        partners: Array.isArray(project.thirdParties) ? project.thirdParties.join('、') || '无' : metadata.partners || '无',
+        organization: metadata.organization || '未填写',
+        period: metadata.period || '未填写',
+        partners: metadata.partners || '无',
         executionCutoff: metadata.executionCutoff || '无', status: budgetStatus(budget),
-        rows: buildBudgetRows(project, budget).map(row => ({ ...row,
-          detail: row.cost && row.cost.price !== null && row.cost.quantity !== null ? money(row.cost.price) + '元 × ' + row.cost.quantity + row.cost.unit + (row.cost.description ? '\n\n' + row.cost.description : '') : row.description || '',
+        rows: buildBudgetRows({}, budget).map(row => ({ ...row,
+          detail: row.cost && row.cost.price !== null && row.cost.quantity !== null ? money(row.cost.price) + '元 × ' + Number(row.cost.quantity).toFixed(2) + row.cost.unit + (row.cost.description ? '\n\n' + row.cost.description : '') : row.description || '',
           quarters: row.quarters.map(money), total: money(row.total),
           adjustment: row.adjustment === null ? null : money(row.adjustment), adjustedBudget: row.adjustedBudget === null ? null : money(row.adjustedBudget), executed: row.executed === null ? null : money(row.executed)
         }))
       }
     }
   },
-  methods: { money, personnelAmount, optionalMoney (value) { return value === null || value === undefined ? '/' : money(value) } }
+  methods: { money }
 }
 </script>
 
@@ -105,6 +107,5 @@ export default {
 .budget-sheet .sheet-executed { background: #e5ffff; }
 .budget-sheet .sheet-ratio { background: #fff3e2; }
 .sheet-row-total .sheet-budget-total, .sheet-row-total .sheet-executed, .sheet-row-total .sheet-ratio { background: inherit; }
-.personnel-sheet { width: 1550px; min-width: 1550px; }
 .budget-tab-empty { padding: 50px 0; }
 </style>

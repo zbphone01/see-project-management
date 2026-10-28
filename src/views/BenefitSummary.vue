@@ -80,7 +80,7 @@ export default {
 .benefit-update .ant-btn { height: 32px; }
 .benefit-tables { padding: 0 0 20px; display: grid; gap: 32px; min-width: 0; }
 .benefit-table-wrap { min-width: 0; overflow-x: auto; }
-.benefit-table-heading { margin: 0; padding: 0 20px 16px; color: #18253c; font-size: 16px; font-weight: 700; line-height: 1.6; }
+.benefit-table-heading { margin: 0; padding: 0 20px 16px; color: #18253c; line-height: 1.6; }
 .benefit-table { width: 100%; min-width: 1140px; table-layout: fixed; border-collapse: collapse; color: #35455a; }
 .benefit-table th { height: 54px; color: #506177; font-weight: 700; background: #f7f9fc; }
 .benefit-table th, .benefit-table td { padding: 14px 12px; border-bottom: 1px solid #e8edf3; line-height: 1.6; white-space: normal; overflow-wrap: anywhere; }

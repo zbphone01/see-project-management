@@ -157,14 +157,14 @@ export default {
 .attachment-list strong, .attachment-list span { overflow-wrap: anywhere; }
 .attachment-empty { margin: 0; padding: 24px 4px; color: #718095; }
 .report-confirmation-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; }
-.report-confirmation-heading label { color: #40536a; font-weight: 400; }
+.report-confirmation-heading label { color: #40536a; }
 .report-confirmation-heading .ant-btn { padding: 0; height: 32px; }
 .description-item, .rich-text-field, .detail-table td, .history-content { overflow-wrap: anywhere; white-space: pre-wrap; }
 .description-item[role="button"], .review-row-trigger { cursor: pointer; }
 .description-item[role="button"]:hover, .detail-table .review-row-trigger:hover > td { background: #f8fbff; }
 [role="button"]:focus-visible { outline: 2px solid #ff7875; outline-offset: -2px; }
 .organization-audit-warning >>> .ant-modal-body { padding: 36px 28px 28px; }
-.warning-heading { display: flex; gap: 12px; align-items: center; font-size: 16px; }
+.warning-heading { display: flex; gap: 12px; align-items: center; }
 .warning-heading .anticon { color: #ff4d4f; font-size: 22px; }
 .organization-audit-warning p { margin: 16px 0 24px 34px; color: #718095; line-height: 1.7; }
 .warning-actions { display: flex; justify-content: flex-end; }
