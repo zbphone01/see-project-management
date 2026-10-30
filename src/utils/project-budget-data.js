@@ -20,16 +20,21 @@ export function normalizeBudget (value = {}, project = {}) {
   if (value.rows !== undefined && !Array.isArray(value.rows)) throw new Error('费用明细格式无效')
   if (value.personnel !== undefined && !Array.isArray(value.personnel)) throw new Error('人力明细格式无效')
   const source = copyBudgetData(value)
+  const adjustmentDetailsByRow = { ...((source.metadata || {}).adjustmentDetailsByRow || {}) }
   const groups = [], rows = [], legacyPersonnel = [], legacyPlaceholders = []
   let output = null, activity = null
   ;(source.rows || []).forEach(row => {
-    if (row.kind === 'total') return
+    if (row.kind === 'total') {
+      if (row.adjustmentDetail != null) adjustmentDetailsByRow.total = row.adjustmentDetail
+      return
+    }
     if (row.kind === 'group') {
       if (String(row.code).indexOf('产出') === 0) {
         const matches = (project.outputs || []).filter(item => item.name === row.name)
         const linked = matches.length === 1 ? matches[0] : null
         output = { id: linked ? linked.id : row.id, name: row.name, activities: [] }; activity = null; groups.push(output)
       } else { output = null; activity = null }
+      if (row.adjustmentDetail != null) adjustmentDetailsByRow[output ? 'output:' + output.id : String(row.code).indexOf('2-人力') === 0 ? 'personnel' : 'support'] = row.adjustmentDetail
       return
     }
     if (row.kind === 'activity' && row.price === undefined && String(row.code || '').indexOf('产出活动') === 0) {
@@ -38,10 +43,11 @@ export function normalizeBudget (value = {}, project = {}) {
         const matches = linked.filter(item => item.name === row.name)
         activity = { id: matches.length === 1 ? matches[0].id : row.id, name: row.name }
         output.activities.push(activity)
+        if (row.adjustmentDetail != null) adjustmentDetailsByRow['activity:' + activity.id] = row.adjustmentDetail
       }
       return
     }
-    const item = { ...row, quarters: quarters(row) }
+    const item = { adjustmentDetail: null, ...row, quarters: quarters(row) }
     if (!item.id) throw new Error('费用明细缺少稳定 ID')
     // 旧示例用“无”费用行表示无预算活动，保留原记录但不再作为费用明细展示。
     if (row.kind === 'detail' && row.name === '无' && (row.detail || row.description) === '无' && row.type === '/' && item.quarters.every(value => !value) && ['price', 'quantity', 'adjustment', 'adjustedBudget', 'executed'].every(field => budgetNumber(row[field]) === null || budgetNumber(row[field]) === 0)) {
@@ -54,6 +60,7 @@ export function normalizeBudget (value = {}, project = {}) {
       item.outputId = row.outputId || (output && output.id) || null
       item.activityId = row.activityId || (activity && activity.id) || null
       if (String(row.code).indexOf('2-人力') === 0) {
+        if (row.adjustmentDetail != null) adjustmentDetailsByRow['personnel-detail'] = row.adjustmentDetail
         ;['price', 'quantity', 'adjustment', 'adjustedBudget', 'executed'].forEach(field => { item[field] = budgetNumber(row[field]) })
         delete item.total; delete item.detail; delete item.adjustmentRatio; delete item.executionRatio
         legacyPersonnel.push(item); return
@@ -63,17 +70,17 @@ export function normalizeBudget (value = {}, project = {}) {
     if (!['support', 'activity'].includes(item.kind)) item.kind = 'activity'
     item.unit = row.unit || ''; item.description = item.description || row.detail || ''
     item.outputId = item.outputId || null; item.activityId = item.activityId || null
-    // 展示合计和百分比仅由原始数值派生，不保存第二份可写金额。
+    // 合计和两种百分比均由原始金额派生，持久化时不保留冗余结果。
     delete item.total; delete item.detail; delete item.adjustmentRatio; delete item.executionRatio
     rows.push(item)
   })
   const personnel = (source.personnel || []).map(row => {
     if (!row.id) throw new Error('人员明细缺少稳定 ID')
     const memberId = row.memberId || row.id
-    const item = { ...row, memberId, quarters: quarters(row) }
+    const item = { adjustmentDetail: null, ...row, memberId, quarters: quarters(row) }
     ;['monthly', 'months', 'ratio', 'adjustment', 'adjustedBudget', 'executed'].forEach(field => { item[field] = budgetNumber(row[field]) })
     item.nature = row.nature || null; item.remark = row.remark || null
-    delete item.total
+    delete item.total; delete item.adjustmentRatio; delete item.executionRatio
     return item
   })
   for (const list of [rows, personnel]) {
@@ -87,9 +94,9 @@ export function normalizeBudget (value = {}, project = {}) {
     updatedAt: source.updatedAt || '', personnelUpdatedAt: source.personnelUpdatedAt || '',
     rows, personnel,
     groups: groups.length ? groups : source.groups || [],
-    legacyPersonnel: legacyPersonnel.length ? legacyPersonnel : source.legacyPersonnel || [],
-    legacyPlaceholders: (source.legacyPlaceholders || []).concat(legacyPlaceholders),
-    metadata: { projectName: source.projectName || '', tableTitle: source.tableTitle || '', organization: source.organization || '', period: source.period || '', partners: source.partners || '', executionCutoff: source.executionCutoff || '', ...(source.metadata || {}) }
+    legacyPersonnel: legacyPersonnel.length ? legacyPersonnel : (source.legacyPersonnel || []).map(row => { const item = { adjustmentDetail: null, adjustedBudget: null, ...row }; delete item.total; delete item.adjustmentRatio; delete item.executionRatio; return item }),
+    legacyPlaceholders: (source.legacyPlaceholders || []).concat(legacyPlaceholders).map(row => { const item = { ...row }; delete item.total; delete item.adjustmentRatio; delete item.executionRatio; return item }),
+    metadata: { projectName: source.projectName || '', tableTitle: source.tableTitle || '', organization: source.organization || '', period: source.period || '', partners: source.partners || '', executionCutoff: source.executionCutoff || '', ...(source.metadata || {}), adjustmentDetailsByRow }
   }
 }
 // 仅编辑入口/保存调用：把表格所需的项目资料写成预算自己的快照。

@@ -302,6 +302,7 @@ button { cursor: pointer; }
 .attachment-list { padding: var(--detail-inner-padding, 4px 22px 22px); }
 .attachment-list > div { min-height: 72px; padding: 12px 4px; display: grid; grid-template-columns: minmax(0,1fr) auto auto; align-items: center; gap: 12px; border-bottom: 1px solid #edf1f5; }
 .attachment-list > div:last-child { border-bottom: 0; }
+.donation-attachment-list > div:first-child { min-height: 0; }
 .attachment-list > div > div { min-width: 0; display: grid; gap: 5px; }
 .attachment-list > div > div span { color: #8390a2; }
 .audit-timeline { padding: var(--detail-inner-padding, 30px 34px 8px); }

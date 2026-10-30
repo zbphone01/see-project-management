@@ -93,9 +93,10 @@ export default {
     resetFilters () { this.filters = emptyFilters(); this.queryReports() },
     changePage (pagination) { this.page = pagination.pageSize !== this.pageSize ? 1 : pagination.current; this.pageSize = pagination.pageSize },
     showDemo (action, report) {
-      if (action === '编辑示例') { this.$router.push({ name: 'report-form', params: { id: String(report.projectId) }, query: { type: 'progress', example: report.reportCode } }); return }
+      const type = report.reportType === '结项报告' || report.reportType === '结项' ? 'completion' : 'progress'
+      if (action === '编辑示例') { this.$router.push({ name: 'report-form', params: { id: String(report.projectId) }, query: { type, example: report.reportCode } }); return }
       if (action === '审核' || action === '查看进展报告' || action === '查看报告') {
-        this.$router.push({ name: 'report-detail', params: { id: report.reportCode }, query: action === '审核' ? { mode: 'audit' } : {} })
+        this.$router.push({ name: 'report-detail', params: { id: report.reportCode }, query: action === '审核' ? { mode: 'audit', type } : { type } })
         return
       }
       this.$message.info(`${action}：${report.reportCode}（演示入口，尚未接入业务功能）`)

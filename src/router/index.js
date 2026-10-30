@@ -1,3 +1,4 @@
+import reportExamples from '../mock/report-examples'
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import { appliedProjects } from '../mock/projects'
@@ -50,10 +51,10 @@ const router = new VueRouter({
     { path: '/projects/payment-applications', name: 'payment-applications', component: () => import('../views/PaymentApplications.vue') },
     { path: '/projects/reports', name: 'project-reports', component: () => import('../views/ProjectReports.vue') },
     { path: '/projects/reports/:id', name: 'report-detail', component: () => import('../views/ReportDetail.vue'),
-      props: route => ({ reportId: route.params.id, mode: route.query.mode === 'audit' ? 'audit' : 'view' })
+      props: route => ({ reportId: route.params.id, mode: route.query.mode === 'audit' ? 'audit' : 'view', type: ['progress', 'completion'].includes(route.query.type) ? route.query.type : '' })
     },
     { path: '/projects/:id/report/edit', name: 'report-form', component: () => import('../views/ReportForm.vue'),
-      props: route => ({ projectId: route.params.id, type: route.query.type === 'completion' ? 'completion' : 'progress' })
+      props: route => ({ projectId: route.params.id, type: ['progress', 'completion'].includes(route.query.type) ? route.query.type : ((reportExamples.find(report => report.id === route.query.example) || {}).type === '结项报告' ? 'completion' : 'progress') })
     },
     { path: '/projects/:id/budget', name: 'project-budget-form', component: () => import('../views/ProjectBudgetForm.vue') },
     { path: '/projects/:id/personnel', name: 'project-personnel-form', component: () => import('../views/ProjectPersonnelForm.vue') },

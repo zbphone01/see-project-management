@@ -1,6 +1,7 @@
 import reportExamples from './report-examples'
+import { createReportBudget } from '../utils/report-budget'
 
-const storageKey = (projectId, type) => `see-report-draft-example-v4-${projectId}-${type}`
+const storageKey = (projectId, type, draftId) => `see-report-draft-example-v4-${projectId}-${type}${draftId ? '-' + draftId : ''}`
 const reviewedExampleKey = reportId => `see-reviewed-report-draft-example-${reportId}`
 const clone = value => JSON.parse(JSON.stringify(value))
 const today = () => {
@@ -74,13 +75,16 @@ const createReportDraft = (projectId, type) => {
   }
 }
 
-export function loadReportDraft (projectId, type) {
+export function loadReportDraft (projectId, type, draftId) {
   const defaults = createReportDraft(projectId, type)
-  const raw = localStorage.getItem(storageKey(projectId, type))
+  if (String(projectId) === '1') { defaults.budget = createReportBudget(defaults); defaults.executed = 0 }
+  if (draftId) defaults.draftId = draftId
+  const raw = localStorage.getItem(storageKey(projectId, type, draftId))
   if (!raw) return defaults
   try {
     const saved = JSON.parse(raw)
     const merged = { ...defaults, ...saved, auditHistory: Array.isArray(saved.auditHistory) ? saved.auditHistory : defaults.auditHistory, outputs: Array.isArray(saved.outputs) ? saved.outputs : defaults.outputs, attachments: Array.isArray(saved.attachments) ? saved.attachments : [], benefits: Array.isArray(saved.benefits) ? saved.benefits : defaults.benefits, budget: saved.budget || defaults.budget, reviewComments: { ...defaults.reviewComments, ...(saved.reviewComments || {}) } }
+    if (String(projectId) === '1' && !merged.budget.schemaVersion && !(merged.budget.rows || []).length && !(merged.budget.personnel || []).length && !merged.budget.updatedAt && !merged.budget.personnelUpdatedAt) { merged.budget = defaults.budget; merged.executed = 0 }
     merged.beneficiaryAid = defaults.beneficiaryAid
     if (!merged.filledAt) merged.filledAt = defaults.filledAt
     if (typeof merged.contact === 'string' && merged.contact.includes('*')) merged.contact = defaults.contact
@@ -146,7 +150,7 @@ export function loadReviewedReportExample (projectId, reportId = 'P-001006') {
 
 export function saveReportDraft (draft) {
   const savedAt = new Date().toLocaleString('zh-CN', { hour12: false })
-  const key = draft.exampleReportId ? reviewedExampleKey(draft.exampleReportId) : storageKey(draft.projectId, draft.type === '结项报告' ? 'completion' : 'progress')
+  const key = draft.exampleReportId ? reviewedExampleKey(draft.exampleReportId) : storageKey(draft.projectId, draft.type === '结项报告' ? 'completion' : 'progress', draft.draftId)
   localStorage.setItem(key, JSON.stringify({ ...draft, savedAt }))
   return savedAt
 }

@@ -26,7 +26,7 @@ export function createGrassDraft (fresh = false) {
     coachingSelection: [], coachingOther: '', coachingOtherSelected: false,
     reviewComments: data.reviewComments, auditHistory: data.auditHistory,
     outputs: data.outputs, risks: data.risks,
-    budget: { ...data.budget, rows: data.budget.rows.filter(row => row.kind === 'detail').map(row => ({ ...row, quarters: row.quarters.map(Number) })), personnel: [] }
+    budget: clone(data.budget)
   }
   organization.businessLogic = rich(organization.businessLogic)
   organization.coreProjects = rich(organization.coreProjects)

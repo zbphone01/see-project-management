@@ -26,7 +26,7 @@ export function createGreenHomeDraft (fresh = false) {
     organizationMembers: organization.members,
     reviewComments: data.reviewComments, auditHistory: data.auditHistory,
     outputs: data.outputs, risks: data.risks,
-    budget: { ...data.budget, rows: data.budget.rows.filter(row => row.kind === 'detail').map(row => ({ ...row, quarters: row.quarters.map(Number) })), personnel: [] }
+    budget: clone(data.budget)
   }
   organization.entrepreneurshipOverview = String(organization.entrepreneurshipOverview || '')
   const keys = { background: ['environmentalProblem', 'problemCauses', 'existingEfforts'], plan: ['vision', 'publicBenefitModel'] }

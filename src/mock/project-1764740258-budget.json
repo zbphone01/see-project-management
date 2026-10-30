@@ -7,6 +7,7 @@
   "personnelUpdatedAt": "",
   "rows": [
     {
+      "adjustmentDetail": null,
       "id": "zz0258-support-rent",
       "kind": "support",
       "name": "办公室房租",
@@ -26,10 +27,10 @@
       "adjustment": null,
       "adjustedBudget": null,
       "executed": null,
-      "adjustmentDetail": null,
       "code": "1-支撑"
     },
     {
+      "adjustmentDetail": null,
       "id": "zz0258-cost-travel",
       "kind": "activity",
       "outputId": "output-1",
@@ -49,10 +50,10 @@
       "adjustment": null,
       "adjustedBudget": null,
       "executed": null,
-      "adjustmentDetail": null,
       "code": "1.1.1"
     },
     {
+      "adjustmentDetail": null,
       "id": "zz0258-cost-service",
       "kind": "activity",
       "outputId": "output-1",
@@ -72,10 +73,10 @@
       "adjustment": null,
       "adjustedBudget": null,
       "executed": null,
-      "adjustmentDetail": null,
       "code": "1.1.2"
     },
     {
+      "adjustmentDetail": null,
       "id": "zz0258-cost-supplies",
       "kind": "activity",
       "outputId": "output-1",
@@ -95,10 +96,10 @@
       "adjustment": null,
       "adjustedBudget": null,
       "executed": null,
-      "adjustmentDetail": null,
       "code": "1.2.1"
     },
     {
+      "adjustmentDetail": null,
       "id": "zz0258-cost-recycling",
       "kind": "activity",
       "outputId": "output-2",
@@ -118,12 +119,12 @@
       "adjustment": null,
       "adjustedBudget": null,
       "executed": null,
-      "adjustmentDetail": null,
       "code": "2.1.1"
     }
   ],
   "personnel": [
     {
+      "adjustmentDetail": null,
       "id": "zz0258-personnel-team-1",
       "memberId": "team-1",
       "name": "胡刚",
@@ -142,10 +143,10 @@
       "remark": "兼职",
       "adjustment": null,
       "adjustedBudget": null,
-      "executed": null,
-      "adjustmentDetail": null
+      "executed": null
     },
     {
+      "adjustmentDetail": null,
       "id": "zz0258-personnel-team-2",
       "memberId": "team-2",
       "name": "张慧敏",
@@ -164,8 +165,7 @@
       "remark": "专职",
       "adjustment": null,
       "adjustedBudget": null,
-      "executed": null,
-      "adjustmentDetail": null
+      "executed": null
     }
   ],
   "groups": [
@@ -221,6 +221,7 @@
     "partners": "无",
     "executionCutoff": "无",
     "snapshotVersion": 1,
-    "projectCode": "ZZ-1764740258"
+    "projectCode": "ZZ-1764740258",
+    "adjustmentDetailsByRow": {}
   }
 }

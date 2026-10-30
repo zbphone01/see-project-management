@@ -1,0 +1,141 @@
+{
+  "schemaVersion": 1,
+  "revision": 0,
+  "editStatus": "pending",
+  "personnelStatus": "pending",
+  "updatedAt": "",
+  "personnelUpdatedAt": "",
+  "rows": [
+    {
+      "adjustmentDetail": null,
+      "id": "report-staff",
+      "kind": "support",
+      "code": "1.1",
+      "name": "项目协调与数据管理",
+      "type": "人力成本",
+      "quarters": [
+        30000,
+        30000,
+        30000,
+        30000
+      ],
+      "adjustment": null,
+      "adjustedBudget": 120000,
+      "executed": 44000,
+      "description": "项目协调、监测数据整理及资料归档",
+      "outputId": null,
+      "activityId": null,
+      "price": null,
+      "quantity": null,
+      "unit": ""
+    },
+    {
+      "adjustmentDetail": null,
+      "id": "report-equipment",
+      "kind": "activity",
+      "code": "1.1.1",
+      "name": "监测设备与巡护物资",
+      "type": "设备及材料",
+      "quarters": [
+        35000,
+        35000,
+        45000,
+        45000
+      ],
+      "adjustment": null,
+      "adjustedBudget": 160000,
+      "executed": 78000,
+      "description": "红外相机、存储设备及样线巡护物资",
+      "outputId": "report-output-1",
+      "activityId": "report-activity-1",
+      "price": null,
+      "quantity": null,
+      "unit": ""
+    },
+    {
+      "adjustmentDetail": null,
+      "id": "report-travel",
+      "kind": "activity",
+      "code": "1.1.2",
+      "name": "监测巡护差旅",
+      "type": "交通差旅费",
+      "quarters": [
+        25000,
+        25000,
+        25000,
+        25000
+      ],
+      "adjustment": null,
+      "adjustedBudget": 100000,
+      "executed": 32000,
+      "description": "重点栖息地巡检、样线调查及社区走访",
+      "outputId": "report-output-1",
+      "activityId": "report-activity-1",
+      "price": null,
+      "quantity": null,
+      "unit": ""
+    },
+    {
+      "adjustmentDetail": null,
+      "id": "report-training",
+      "kind": "activity",
+      "code": "2.1.1",
+      "name": "社区培训与巡护支持",
+      "type": "活动费用",
+      "quarters": [
+        30000,
+        30000,
+        30000,
+        30000
+      ],
+      "adjustment": null,
+      "adjustedBudget": 120000,
+      "executed": 40000,
+      "description": "社区培训组织、巡护物资发放及现场实践",
+      "outputId": "report-output-2",
+      "activityId": "report-activity-2",
+      "price": null,
+      "quantity": null,
+      "unit": ""
+    }
+  ],
+  "personnel": [],
+  "groups": [
+    {
+      "id": "report-output-1",
+      "code": "产出1",
+      "name": "建立大熊猫栖息地监测与巡护体系",
+      "activities": [
+        {
+          "id": "report-activity-1",
+          "code": "产出活动1.1",
+          "name": "开展红外相机监测与样线巡护"
+        }
+      ]
+    },
+    {
+      "id": "report-output-2",
+      "code": "产出2",
+      "name": "提升社区参与栖息地保护与可持续管护的能力",
+      "activities": [
+        {
+          "id": "report-activity-2",
+          "code": "产出活动2.1",
+          "name": "组织社区培训与保护实践活动"
+        }
+      ]
+    }
+  ],
+  "legacyPersonnel": [],
+  "legacyPlaceholders": [],
+  "metadata": {
+    "projectName": "加速绿色低碳铝采购实践项目—溢价评估与分配机制研究、再生铝上下游及区域协作模式研究与开发",
+    "tableTitle": "项目预算及执行情况明细表",
+    "organization": "荥经县野生动植物保护协会",
+    "period": "2025年01月01日 至 2026年08月31日",
+    "partners": "无",
+    "executionCutoff": "2026年06月03日",
+    "snapshotVersion": 1,
+    "adjustmentDetailsByRow": {}
+  }
+}

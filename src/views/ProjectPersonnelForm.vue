@@ -62,8 +62,8 @@ export default {
 }
 </script>
 <style scoped>
-.personnel-page { min-width: 1592px; display: grid; gap: 20px; padding-bottom: 18px; }
-.personnel-panel { padding: 0 20px; }
+.personnel-page { min-width: 1600px; display: grid; gap: 20px; padding-bottom: 18px; }
+.personnel-panel { padding: 0 24px; }
 header { display: flex; justify-content: space-between; align-items: center; gap: 20px; min-height: 90px; padding: 20px 0; }
 h1 { margin: 0 0 8px; overflow-wrap: anywhere; }
 header span { color: #718095; }

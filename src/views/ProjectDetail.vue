@@ -188,12 +188,12 @@
 
         <section id="detail-budget" class="panel detail-section">
           <div class="detail-section-header"><span class="detail-section-icon gold"><a-icon type="fund" /></span><div><h2>在线预算表</h2><p>项目预算及执行情况概览</p></div></div><div class="detail-module-content">
-          <budget-prototype embedded shared-data editor-table :audit="mode === 'audit'" :donation-project="isDonationProject" :budget="displayBudget" />
+          <budget-review :audit="mode === 'audit'" :donation-project="isDonationProject" :budget="displayBudget" />
         </div></section>
 
         <section v-if="!snapshotEntry && !isGreenHomeExample" id="detail-attachments" class="panel detail-section">
           <div class="detail-section-header"><span class="detail-section-icon blue"><a-icon type="paper-clip" /></span><div><h2>附件</h2><p>项目相关附件，如有需要请下载留存</p></div></div><div class="detail-module-content">
-          <div class="attachment-list"><div v-for="file in detailAttachments" :key="file.id"><div><strong>{{ file.name }}</strong><span>{{ file.type }} · {{ file.uploadedAt }}</span></div><a-button type="link" @click="notify('预览' + file.name + '（演示入口）')">预览</a-button><a-button type="link" @click="notify('下载' + file.name + '（演示入口）')">下载</a-button></div></div>
+          <div class="attachment-list" :class="{ 'donation-attachment-list': isDonationProject }"><div v-for="file in detailAttachments" :key="file.id"><div><strong>{{ file.name }}</strong><span>{{ file.type }} · {{ file.uploadedAt }}</span></div><a-button type="link" @click="notify('预览' + file.name + '（演示入口）')">预览</a-button><a-button type="link" @click="notify('下载' + file.name + '（演示入口）')">下载</a-button></div></div>
         </div></section>
 
         <section v-if="!snapshotEntry && detailTableData.auditHistory && detailTableData.auditHistory.length" id="detail-history" class="panel detail-section">
@@ -297,7 +297,7 @@ import grassTableData from '../mock/project-grass-detail.json'
 import monthlyDonationTableData from '../mock/project-monthly-donation-detail.json'
 import oneTimeDonationTableData from '../mock/project-one-time-donation-detail.json'
 import ProjectSnapshotWindow from '../components/ProjectSnapshotWindow.vue'
-import BudgetPrototype from '../components/BudgetPrototype.vue'
+import BudgetReview from '../components/BudgetReview.vue'
 import ReviewCommentLabel from '../components/ReviewCommentLabel.vue'
 
 // 同一容器统一插入真实分隔元素，兼容静态及 v-for 富文本区块。
@@ -640,7 +640,7 @@ export default {
     },
     notify (label) { this.$message.info(label) }
   },
-  components: { ProjectSnapshotWindow, BudgetPrototype, ProjectRichContent, ReviewRowComments },
+  components: { ProjectSnapshotWindow, BudgetReview, ProjectRichContent, ReviewRowComments },
   activated () { this.loadSharedBudget() },
   watch: {
     '$route.fullPath' () { this.loadSharedBudget() },
@@ -696,6 +696,5 @@ export default {
 .detail-module-content .table-subtitle { font-family: inherit; line-height: 1.6; }
 #detail-organization-basic .description-grid > .description-item:first-child,
 .grass-growth-details > .description-item:first-child { min-height: 0; padding-top: 0; align-content: start; }
-.review-row-summary { display: inline; }
 .review-row-summary > span { margin-left: 6px; color: #cf1322; }
 </style>

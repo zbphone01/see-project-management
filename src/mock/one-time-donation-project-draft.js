@@ -42,7 +42,7 @@ export function createOneTimeDonationDraft (fresh = false, type = 'one-time-dona
     ]),
     reviewComments: data.reviewComments || { targets: '请补充各项目目标板块对应的成果指标及衡量方式。', overview: '请补充项目受益范围和社区参与方式。', 'areas.areas-1': '请核实实施区域与活动地点的一致性。', 'outputs.output-1': '请明确产出的数量、完成时间和验收依据。', 'activities.activity-2-1': '请补充活动实施安排及执行人员分工。' },
     auditHistory: data.auditHistory || [],
-    budget: { ...data.budget, rows: data.budget.rows.filter(row => row.kind === 'detail').map(row => ({ ...row, quarters: row.quarters.map(Number) })), personnel: [] },
+    budget: clone(data.budget),
     // 示例仅有文件元数据，不能伪造可下载文件；真实上传继续使用 IndexedDB。
     attachments: data.attachments.map(file => ({ ...file, category: file.type, time: file.uploadedAt, example: true }))
   }

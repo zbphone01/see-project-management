@@ -27,7 +27,7 @@
       </div>
 
       <div v-else class="form-fields description-grid one-time-donation-fields">
-        <div v-for="field in donationBasicFields" :key="field.key" class="field" :class="[field.full ? 'full' : '', field.readonly ? {} : reviewClass(field.key), { 'project-name-item': isMonthlyDonation && field.key === 'name' }]">
+        <div v-for="field in donationBasicFields" :key="field.key" class="field" :class="[field.full ? 'full' : '', field.readonly ? {} : reviewClass(field.key), { 'project-name-item': isMonthlyDonation && field.key === 'name', 'execution-period': !!field.start }]">
           <label><review-comment-label overlay-class-name="project-review-comment" :comment="field.readonly ? '' : reviewComment(field.key)">{{ field.label }}</review-comment-label></label>
           <strong v-if="isMonthlyDonation && field.key === 'name'" class="basic-field-value">{{ draft.name || '—' }}</strong>
           <span v-else-if="isDonationProject && !isMonthlyDonation && field.key === 'frameworkAgreementNumber'" class="donation-field-hint">项目审核通过后由SEE填写</span>
@@ -80,7 +80,7 @@
         <a-button class="add-activity" type="dashed" icon="plus" @click="openActivity(index)">增加活动</a-button></article><a-button v-if="draft.outputs.length" class="add-output" type="dashed" icon="plus" @click="openOutput()">增加产出</a-button></div>
     </div></section>
 
-    <section v-if="!isDonationProject" class="panel form-section"><div class="detail-section-header"><span class="detail-section-icon red"><a-icon type="safety-certificate" /></span><div><h2>项目管理计划</h2><p v-if="hasManagementReviewComments">请检查并修改标红的项目信息，点击行任意位置可查看具体审核意见</p></div></div><div class="project-module-content"><div v-for="section in tableSections.filter(section => isOrganizationProject ? section.key === 'risks' : ['stakeholders', 'risks', 'monitoring'].includes(section.key))" :key="section.key" class="management-section"><div class="field organization-table-heading"><label>{{ section.title }}</label></div><div class="detail-table-wrap management-table-wrap"><table class="detail-table management-entry-table" :class="{ 'green-home-risk-table': section.key === 'risks' }"><colgroup><col class="management-col-index" /><col v-for="field in section.fields" :key="field.key" /><col class="management-col-actions" /></colgroup><thead><tr><th>序号</th><th v-for="field in section.fields" :key="field.key">{{ section.key === 'risks' && field.key === 'likelihood' ? '可能性' : field.label }}</th><th>操作</th></tr></thead><tbody><tr v-for="(row, index) in draft[section.key]" :key="row.id" :class="rowReviewClass(section.key, row)" :role="rowReviewComment(section.key, row) ? 'button' : undefined" :tabindex="rowReviewComment(section.key, row) ? 0 : undefined" @click="openRowReview(section.key, row)" @keydown.enter.prevent="openRowReview(section.key, row)" @keydown.space.prevent="openRowReview(section.key, row)"><td><a-popover v-if="rowReviewComment(section.key, row)" :visible="rowReviewKey === section.key + '.' + row.id" trigger="click" placement="topLeft" @visibleChange="visible => changeRowReviewVisibility(section.key, row, visible)"><template slot="content"><div class="row-review-content"><div><a-icon type="exclamation-circle" theme="filled" /><p>{{ rowReviewComment(section.key, row) }}</p></div><a-button size="small" type="primary" @click.stop="rowReviewKey = ''">关闭</a-button></div></template><span class="row-review-anchor">{{ index + 1 }}</span></a-popover><template v-else>{{ index + 1 }}</template></td><td v-for="field in section.fields" :key="field.key" :class="reviewClass(section.key + '.' + row.id + '.' + field.key)"><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment(section.key + '.' + row.id + '.' + field.key)">{{ section.key === 'risks' && field.key === 'affectedActivities' ? riskTargetLabel(row) : row[field.key] }}</review-comment-label></td><td class="management-actions" @click.stop @keydown.stop><a-button type="link" @click="openRow(section.key, index)">编辑</a-button><a-button type="link" class="danger-link" @click="removeRow(section.key, index)">删除</a-button></td></tr><tr class="management-entry-row"><td>{{ draft[section.key].length + 1 }}</td><td v-for="field in section.fields" :key="field.key"></td><td class="management-actions"><a-button type="link" @click="openRow(section.key)">新增</a-button></td></tr></tbody></table></div></div></div></section>
+    <section v-if="!isDonationProject" class="panel form-section"><div class="detail-section-header"><span class="detail-section-icon red"><a-icon type="safety-certificate" /></span><div><h2>项目管理计划</h2><p v-if="hasManagementReviewComments">请检查并修改标红的项目信息，点击行任意位置可查看具体审核意见</p></div></div><div class="project-module-content"><div v-for="section in tableSections.filter(section => isOrganizationProject ? section.key === 'risks' : ['stakeholders', 'risks', 'monitoring'].includes(section.key))" :key="section.key" class="management-section"><div class="field organization-table-heading"><label>{{ section.title }}</label></div><div class="detail-table-wrap management-table-wrap"><table class="detail-table management-entry-table" :class="{ 'stakeholder-table': section.key === 'stakeholders', 'risk-table': section.key === 'risks', 'monitoring-table': section.key === 'monitoring' }"><colgroup><col class="management-col-index" /><col v-for="field in section.fields" :key="field.key" :class="{ 'stakeholder-col-party': section.key === 'stakeholders' && field.key === 'party', 'stakeholder-col-interest': section.key === 'stakeholders' && field.key === 'interest', 'stakeholder-col-impact': section.key === 'stakeholders' && field.key === 'impact', 'management-risk-level-col': section.key === 'risks' && field.key === 'likelihood' }" /><col class="management-col-actions" /></colgroup><thead><tr><th>序号</th><th v-for="field in section.fields" :key="field.key">{{ section.key === 'risks' && field.key === 'likelihood' ? '可能性' : field.label }}</th><th>操作</th></tr></thead><tbody><tr v-for="(row, index) in draft[section.key]" :key="row.id" :class="rowReviewClass(section.key, row)" :role="rowReviewComment(section.key, row) ? 'button' : undefined" :tabindex="rowReviewComment(section.key, row) ? 0 : undefined" @click="openRowReview(section.key, row)" @keydown.enter.prevent="openRowReview(section.key, row)" @keydown.space.prevent="openRowReview(section.key, row)"><td><a-popover v-if="rowReviewComment(section.key, row)" :visible="rowReviewKey === section.key + '.' + row.id" trigger="click" placement="topLeft" @visibleChange="visible => changeRowReviewVisibility(section.key, row, visible)"><template slot="content"><div class="row-review-content"><div><a-icon type="exclamation-circle" theme="filled" /><p>{{ rowReviewComment(section.key, row) }}</p></div><a-button size="small" type="primary" @click.stop="rowReviewKey = ''">关闭</a-button></div></template><span class="row-review-anchor">{{ index + 1 }}</span></a-popover><template v-else>{{ index + 1 }}</template></td><td v-for="field in section.fields" :key="field.key" :class="reviewClass(section.key + '.' + row.id + '.' + field.key)"><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment(section.key + '.' + row.id + '.' + field.key)"><span v-if="section.key === 'stakeholders' && field.key === 'impact'" :class="{ 'positive-tag': row.impact === '积极', 'negative-tag': row.impact === '消极' }">{{ row.impact }}</span><template v-else>{{ section.key === 'risks' && field.key === 'affectedActivities' ? riskTargetLabel(row) : row[field.key] }}</template></review-comment-label></td><td class="management-actions" @click.stop @keydown.stop><a-button type="link" @click="openRow(section.key, index)">编辑</a-button><a-button type="link" class="danger-link" @click="removeRow(section.key, index)">删除</a-button></td></tr><tr class="management-entry-row"><td>{{ draft[section.key].length + 1 }}</td><td v-for="field in section.fields" :key="field.key"></td><td class="management-actions"><a-button type="link" @click="openRow(section.key)">新增</a-button></td></tr></tbody></table></div></div></div></section>
 
         <section id="form-budget" class="panel form-section budget-section"><div class="detail-section-header"><span class="detail-section-icon gold"><a-icon type="fund" /></span><div><h2>{{ isDonationProject ? '在线预算表' : '预算表' }}</h2></div></div><div class="project-module-content"><project-budget-editor :donation-project="isDonationProject" :hide-cost-type-analysis="isOrganizationProject" v-model="draft.budget" :project-name="draft.name" @open="openBudget" /></div></section>
 
@@ -97,14 +97,14 @@
 
     <footer class="form-footer"><span><a-icon type="info-circle" /> {{ dirty ? '填写内容尚未保存' : draft.savedAt ? '草稿内容已保留' : '请填写项目信息，可随时存为草稿' }}</span><div><a-button @click="goBack">取消</a-button><a-button icon="save" :disabled="uploading > 0" @click="save">存为草稿</a-button><a-button type="primary" :class="{ 'revision-progress-submit': revisionMode === 'with-progress' }" :disabled="uploading > 0" @click="submit">{{ submitLabel }}</a-button></div></footer>
 
-    <a-modal v-model="modal.visible" wrap-class-name="standard-form-modal standard-edit-scope standard-edit-modal" :title="modal.title" :width="modal.kind === 'team' || modal.kind === 'organizationMembers' || modal.kind === 'output' || modal.kind === 'activity' || modal.kind === 'stakeholders' || modal.kind === 'monitoring' || modal.kind === 'risks' ? 550 : 620" :mask-closable="false" :body-style="{ maxHeight: '65vh', overflowY: 'auto' }">
+    <a-modal v-model="modal.visible" wrap-class-name="standard-form-modal standard-edit-scope standard-edit-modal" :title="modal.title" :width="modal.kind === 'team' || modal.kind === 'organizationMembers' || modal.kind === 'output' || modal.kind === 'activity' || modal.kind === 'stakeholders' || modal.kind === 'monitoring' || modal.kind === 'risks' ? 550 : 620" :mask-closable="false" :keyboard="false" :body-style="{ maxHeight: '65vh', overflowY: 'auto' }">
       <div v-if="modal.kind === 'team' || modal.kind === 'organizationMembers'" class="area-picker team-picker" :class="{ 'organization-member-picker': modal.kind === 'organizationMembers' }"><div v-for="field in modal.fields" :key="field.key" class="area-picker-row"><label :for="'dialog-team-' + field.key">{{ field.label }}</label><a-select dropdown-class-name="standard-edit-dropdown" v-if="field.options" :id="'dialog-team-' + field.key" v-model="modal.value[field.key]" placeholder="请选择"><a-select-option v-for="option in field.options" :key="option">{{ option }}</a-select-option></a-select><a-textarea v-else-if="field.type === 'textarea'" :id="'dialog-team-' + field.key" v-model="modal.value[field.key]" :rows="3" :placeholder="'请填写' + field.label" /><a-input v-else :id="'dialog-team-' + field.key" v-model="modal.value[field.key]" :placeholder="'请填写' + field.label" /></div><p v-if="modal.error" class="form-error" role="alert">{{ modal.error }}</p></div>
       <div v-else class="modal-form" :class="{ 'output-modal-form': modal.kind === 'output', 'compact-modal-form': modal.kind === 'stakeholders' || modal.kind === 'monitoring', 'area-standard-modal-form': modal.kind === 'risks' || modal.kind === 'activity' || modal.kind === 'areas' }"><div v-for="field in modal.fields" v-if="field.key !== 'end'" :key="field.key" class="modal-field" :class="{ 'activity-divider': field.key === 'name' && modal.kind === 'output', 'activity-modal-field': modal.kind === 'activity', 'has-field-error': ['output', 'activity'].includes(modal.kind) && !!modalFieldErrors[field.key] }"><label :for="'dialog-' + field.key">{{ field.key === 'start' ? '开展时间' : field.label }}</label>
         <div v-if="modal.kind === 'risks' && field.key === 'affectedActivities'" class="risk-target-input">
           <a-tree-select id="dialog-affectedActivities" v-model="riskTargetSelection" class="risk-target-tree" :tree-data="riskTargetTree" :dropdown-match-select-width="true" tree-default-expand-all :show-search="false" dropdown-class-name="standard-edit-dropdown risk-target-tree-dropdown" :dropdown-style="{ maxHeight: '320px', overflowY: 'auto', overflowX: 'hidden' }" placeholder="请选择" @change="changeRiskTarget" />
           <a-textarea v-if="riskTargetSelection === 'other'" v-model="modal.value.affectedActivities" :rows="3" aria-label="自定义风险影响的目标或活动" placeholder="请填写风险影响的目标或活动" />
         </div>
-        <a-select dropdown-class-name="standard-edit-dropdown" v-else-if="field.key === 'people'" :id="'dialog-' + field.key" v-model="modal.value[field.key]" class="people-select" :show-arrow="true" :max-tag-count="0" :max-tag-placeholder="(modal.value[field.key] || []).join('、')" :mode="isOrganizationProject && !isGrass ? 'tags' : 'multiple'" :token-separators="isOrganizationProject && !isGrass ? ['、', ',', '，'] : undefined" :disabled="!(isOrganizationProject && !isGrass) && !teamMemberOptions.length" :placeholder="isOrganizationProject && !isGrass ? '请输入活动执行人员姓名，按回车确认' : teamMemberOptions.length ? '请选择活动执行人员' : '请先添加执行团队成员'"><a-select-option v-for="name in teamMemberOptions" :key="name" :value="name">{{ name }}</a-select-option></a-select>
+        <a-select dropdown-class-name="standard-edit-dropdown" v-else-if="field.key === 'people'" :id="'dialog-' + field.key" v-model="modal.value[field.key]" class="people-select" :show-arrow="true" :max-tag-count="0" :max-tag-placeholder="(modal.value[field.key] || []).join('、')" mode="multiple" :disabled="!teamMemberOptions.length" :placeholder="activityPeoplePlaceholder"><a-select-option v-for="name in teamMemberOptions" :key="name" :value="name">{{ name }}</a-select-option></a-select>
         <a-select dropdown-class-name="standard-edit-dropdown" v-else-if="field.options" :id="'dialog-' + field.key" v-model="modal.value[field.key]" placeholder="请选择"><a-select-option v-for="option in field.options" :key="option">{{ option }}</a-select-option></a-select>
         <project-month-range v-else-if="field.key === 'start'" :start.sync="modal.value.start" :end.sync="modal.value.end" />
         <a-auto-complete dropdown-class-name="standard-edit-dropdown" v-else-if="field.key === 'province'" :id="'dialog-' + field.key" v-model="modal.value[field.key]" :data-source="provinces" :filter-option="filterOption" placeholder="请选择或输入省 / 直辖市" @change="resetRegion" />
@@ -114,16 +114,16 @@
       <p v-if="['output', 'activity'].includes(modal.kind) && modalFieldErrors[field.key]" class="form-error modal-field-error" role="alert">{{ modalFieldErrors[field.key] }}</p></div></div><p v-if="modal.error && !['team', 'organizationMembers', 'output', 'activity'].includes(modal.kind)" class="form-error" role="alert">{{ modal.error }}</p><template slot="footer"><a-button @click="modal.visible = false">{{ modal.kind === 'team' || (modal.kind === 'organizationMembers' && modal.index < 0) ? '关闭' : '取消' }}</a-button><a-button type="primary" @click="confirmModal">{{ modal.kind === 'team' || modal.kind === 'organizationMembers' ? (modal.index < 0 ? '添加' : '保存') : '确定' }}</a-button></template>
     </a-modal>
 
-    <a-modal v-model="areaVisible" wrap-class-name="standard-form-modal standard-edit-scope standard-edit-modal" title="项目实施区域" :width="550" :mask-closable="false" ok-text="确定" cancel-text="关闭" @ok="confirmArea"><div class="area-picker"><div class="area-picker-row"><label>省 / 直辖市</label><a-select dropdown-class-name="standard-edit-dropdown" v-model="areaSelection.province" placeholder="请选择" @change="changeAreaProvince"><a-select-option v-for="option in regionOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option></a-select></div><div class="area-picker-row"><label>地级市 / 直辖市区</label><a-select dropdown-class-name="standard-edit-dropdown" v-model="areaSelection.city" :disabled="!areaSelection.province" placeholder="请选择" @change="changeAreaCity"><a-select-option v-for="option in areaCityOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option></a-select></div><div class="area-picker-row"><label>县 / 行政区</label><a-select dropdown-class-name="standard-edit-dropdown" v-model="areaSelection.district" :disabled="!areaSelection.city" placeholder="请选择"><a-select-option v-for="option in areaDistrictOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option></a-select></div><p v-if="areaError" class="form-error" role="alert">{{ areaError }}</p></div></a-modal>
+    <a-modal v-model="areaVisible" wrap-class-name="standard-form-modal standard-edit-scope standard-edit-modal" title="项目实施区域" :width="550" :mask-closable="false" :keyboard="false" ok-text="确定" cancel-text="关闭" @ok="confirmArea"><div class="area-picker"><div class="area-picker-row"><label>省 / 直辖市</label><a-select dropdown-class-name="standard-edit-dropdown" v-model="areaSelection.province" placeholder="请选择" @change="changeAreaProvince"><a-select-option v-for="option in regionOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option></a-select></div><div class="area-picker-row"><label>地级市 / 直辖市区</label><a-select dropdown-class-name="standard-edit-dropdown" v-model="areaSelection.city" :disabled="!areaSelection.province" placeholder="请选择" @change="changeAreaCity"><a-select-option v-for="option in areaCityOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option></a-select></div><div class="area-picker-row"><label>县 / 行政区</label><a-select dropdown-class-name="standard-edit-dropdown" v-model="areaSelection.district" :disabled="!areaSelection.city" placeholder="请选择"><a-select-option v-for="option in areaDistrictOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option></a-select></div><p v-if="areaError" class="form-error" role="alert">{{ areaError }}</p></div></a-modal>
 
-    <a-modal v-model="thirdVisible" title="编辑第三方名单" wrap-class-name="standard-form-modal standard-edit-scope standard-edit-modal" :width="550" :mask-closable="false" :body-style="{ maxHeight: '65vh', overflowY: 'auto' }" @ok="confirmThirdParties" ok-text="确定" cancel-text="取消">
+    <a-modal v-model="thirdVisible" title="编辑第三方名单" wrap-class-name="standard-form-modal standard-edit-scope standard-edit-modal" :width="550" :mask-closable="false" :keyboard="false" :body-style="{ maxHeight: '65vh', overflowY: 'auto' }" @ok="confirmThirdParties" ok-text="确定" cancel-text="取消">
       <div class="third-picker">
         <div class="detail-table-wrap third-selection-wrap"><table class="detail-table third-selection-table"><colgroup><col /><col style="width:65px" /></colgroup><thead><tr><th>第三方</th><th>操作</th></tr></thead><tbody><tr v-for="(name, index) in thirdDraft" :key="name"><td>{{ name }}</td><td><button type="button" class="third-delete-text" :aria-label="'删除' + name" @click="thirdDraft.splice(index, 1)">删除</button></td></tr><tr v-if="!thirdDraft.length"><td colspan="2" class="third-selection-empty">可搜索并添加第三方</td></tr></tbody></table></div>
         <a-input-search v-model="thirdQuery" aria-label="搜索第三方机构" placeholder="请输入机构名称" enter-button="搜索" @search="thirdSearch = thirdQuery.trim()" />
         <div v-if="thirdSearch" class="third-results"><div v-for="name in thirdResults" :key="name"><span>{{ name }}</span><button type="button" class="third-add-text" :disabled="thirdDraft.includes(name)" :aria-label="'添加' + name" @click="thirdDraft.push(name)">添加</button></div></div>
       </div>
     </a-modal>
-    <a-modal v-model="attachmentVisible" wrap-class-name="standard-form-modal standard-edit-scope standard-edit-modal" title="添加附件" :width="550" :mask-closable="false" :confirm-loading="uploading > 0" ok-text="上传" cancel-text="取消" @ok="confirmAttachment" @afterClose="resetAttachmentPicker"><div class="area-picker attachment-picker"><div class="area-picker-row"><label for="attachment-category">附件类型</label><a-select dropdown-class-name="standard-edit-dropdown" id="attachment-category" v-model="attachmentDraft.category" placeholder="请选择附件类型"><a-select-option v-for="category in attachmentCategories" :key="category" :value="category">{{ category }}</a-select-option></a-select></div><div class="area-picker-row"><label>选择文件</label><div class="attachment-file-picker"><a-upload :before-upload="selectAttachment" :show-upload-list="false" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"><a-button icon="upload">选择文件</a-button></a-upload><span v-if="attachmentDraft.file">{{ attachmentDraft.file.name }}</span></div></div><p v-if="attachmentDraft.error" class="form-error" role="alert">{{ attachmentDraft.error }}</p></div></a-modal>
+    <a-modal v-model="attachmentVisible" wrap-class-name="standard-form-modal standard-edit-scope standard-edit-modal" title="添加附件" :width="550" :mask-closable="false" :keyboard="false" :confirm-loading="uploading > 0" ok-text="上传" cancel-text="取消" @ok="confirmAttachment" @afterClose="resetAttachmentPicker"><div class="area-picker attachment-picker"><div class="area-picker-row"><label for="attachment-category">附件类型</label><a-select dropdown-class-name="standard-edit-dropdown" id="attachment-category" v-model="attachmentDraft.category" placeholder="请选择附件类型"><a-select-option v-for="category in attachmentCategories" :key="category" :value="category">{{ category }}</a-select-option></a-select></div><div class="area-picker-row"><label>选择文件</label><div class="attachment-file-picker"><a-upload :before-upload="selectAttachment" :show-upload-list="false" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"><a-button icon="upload">选择文件</a-button></a-upload><span v-if="attachmentDraft.file">{{ attachmentDraft.file.name }}</span></div></div><p v-if="attachmentDraft.error" class="form-error" role="alert">{{ attachmentDraft.error }}</p></div></a-modal>
     <a-modal v-model="previewVisible" :title="previewName" :width="960" :mask-closable="false" :footer="null" @afterClose="clearPreview"><img v-if="previewType === 'image'" :src="previewUrl" :alt="previewName" class="attachment-preview-image" /><iframe v-else-if="previewType === 'pdf'" :src="previewUrl" :title="previewName" class="attachment-preview-pdf"></iframe><p v-else>此格式请下载后使用对应办公软件查看。</p></a-modal>
   </section>
 </template>
@@ -153,12 +153,41 @@ function cleanRichText (html) {
   })
   return source.innerHTML
 }
+// Compare JSON draft fields without allocating a full JSON string on every keystroke.
+function sameDraftValue (value, saved) {
+  if (value === saved) return true
+  if (!value || !saved || typeof value !== 'object' || typeof saved !== 'object') return false
+  if (Array.isArray(value) !== Array.isArray(saved)) return false
+  const keys = Object.keys(value)
+  const savedKeys = Object.keys(saved)
+  return keys.length === savedKeys.length && keys.every(key => Object.prototype.hasOwnProperty.call(saved, key) && sameDraftValue(value[key], saved[key]))
+}
 const RichEditor = {
   props: ['value', 'label', 'placeholder'],
+  data () { return { composing: false, lastEmittedValue: null, lastInputHtml: null } },
   mounted () { this.$refs.editor.innerHTML = cleanRichText(this.value || '') },
-  watch: { value (value) { if (this.$refs.editor.innerHTML !== value) this.$refs.editor.innerHTML = cleanRichText(value || '') } },
+  watch: {
+    value (value) {
+      if (this.composing || value === this.lastEmittedValue) return
+      const editor = this.$refs.editor
+      if (editor.innerHTML !== (value || '')) editor.innerHTML = cleanRichText(value || '')
+      this.lastInputHtml = null
+      this.lastEmittedValue = null
+    }
+  },
   methods: {
-    update () { const editor = this.$refs.editor; this.$emit('input', editor.textContent.trim() || editor.querySelector('table,img') ? cleanRichText(editor.innerHTML) : '') },
+    update (event) {
+      if (this.composing || (event && event.isComposing)) return
+      const editor = this.$refs.editor
+      const html = editor.innerHTML
+      if (html === this.lastInputHtml) return
+      this.lastInputHtml = html
+      const value = editor.textContent.trim() || editor.querySelector('table,img') ? cleanRichText(html) : ''
+      this.lastEmittedValue = value
+      if (value !== this.value) this.$emit('input', value)
+    },
+    compositionStart () { this.composing = true },
+    compositionEnd () { this.composing = false; this.update() },
     command (command) { this.$refs.editor.focus(); document.execCommand(command, false, null); this.update() },
     paste (event) {
       event.preventDefault()
@@ -201,7 +230,7 @@ const RichEditor = {
     const actions = [['bold', 'B', '加粗'], ['italic', 'I', '斜体'], ['underline', 'U', '下划线'], ['insertUnorderedList', '• 列表', '无序列表'], ['insertOrderedList', '1. 列表', '有序列表'], ['removeFormat', '清除格式', '清除格式']]
     const toolbar = actions.map(([command, text, label]) => h('button', { attrs: { type: 'button', title: label, 'aria-label': this.label + '：' + label }, on: { mousedown: event => event.preventDefault(), click: () => this.command(command) } }, text))
     toolbar.push(h('button', { attrs: { type: 'button', title: '插入图片', 'aria-label': this.label + '：插入图片' }, on: { mousedown: event => event.preventDefault(), click: this.chooseImage } }, '图片'))
-    return h('div', { class: 'rich-editor' }, [h('div', { class: 'rich-toolbar' }, toolbar), h('input', { ref: 'imageInput', class: 'rich-image-input', attrs: { type: 'file', accept: 'image/png,image/jpeg,image/gif,image/webp', 'aria-label': this.label + '：选择图片' }, on: { change: this.insertImage } }), h('div', { ref: 'editor', class: 'rich-editable', attrs: { contenteditable: 'true', role: 'textbox', 'aria-label': this.label, 'aria-multiline': 'true', 'data-placeholder': this.placeholder || ('请填写' + this.label) }, on: { input: this.update, paste: this.paste, drop: event => event.preventDefault() } })])
+    return h('div', { class: 'rich-editor' }, [h('div', { class: 'rich-toolbar' }, toolbar), h('input', { ref: 'imageInput', class: 'rich-image-input', attrs: { type: 'file', accept: 'image/png,image/jpeg,image/gif,image/webp', 'aria-label': this.label + '：选择图片' }, on: { change: this.insertImage } }), h('div', { ref: 'editor', class: 'rich-editable', attrs: { contenteditable: 'true', role: 'textbox', 'aria-label': this.label, 'aria-multiline': 'true', 'data-placeholder': this.placeholder || ('请填写' + this.label) }, on: { input: this.update, compositionstart: this.compositionStart, compositionend: this.compositionEnd, paste: this.paste, drop: event => event.preventDefault() } })])
   }
 }
 // 普通项目与次捐共用的基础控件，仅负责展示和回传输入。
@@ -398,7 +427,8 @@ export default {
     fundraisingTotal () { return this.isGrass ? this.draft.organizationBasicInfo.fundraising.rows.reduce((sum, row) => roundMoney(sum + Number(row.amount || 0)), 0) : 0 },
     hasOrganizationReviewComments () { return this.organizationFields.some(field => !!this.reviewComment('organizationBasicInfo.' + field.key)) || this.hasReviewCommentsFor('organizationMembers') || (this.isGrass && (this.organizationStaffCounts.some(item => !!this.reviewComment(item.key)) || this.hasReviewCommentsFor('organizationFundraising') || this.hasReviewCommentsFor('highestDecisionMakingBody'))) },
     organizationStaffCounts () { if (this.isGrass) return ['全职', '兼职', '实习生和核心志愿者'].map((type, index) => ({ key: ['fullTimeStaff', 'partTimeStaff', 'internAndVolunteers'][index], label: ['全职领薪（人数）', '兼职领薪（人数）', '实习生和核心志愿者（人数）'][index], count: this.draft.organizationMembers.filter(member => index < 2 ? String(member.workType).indexOf(type) === 0 && member.usesLingxi === '是' : /实习|志愿者/.test(member.workType)).length })); return ['全职', '兼职', '实习'].map((type, index) => ({ label: ['全职领薪（人数）', '兼职领薪（人数）', '实习生（人数）'][index], count: this.draft.organizationMembers.filter(member => index < 2 ? String(member.workType || '').indexOf(type) === 0 && member.usesLingxi === '是' : /实习/.test(member.workType)).length })) },
-    dirty () { return JSON.stringify(this.draft) !== this.savedSnapshot },
+    savedDraft () { return this.savedSnapshot ? JSON.parse(this.savedSnapshot) : null },
+    dirty () { return !sameDraftValue(this.draft, this.savedDraft) },
     fundingSourceText () { const fundraising = String(this.draft.fundraising || '').trim(); return fundraising ? `资助+筹款（${fundraising}）` : '资助' },
     hasBasicReviewComments () { if (this.isDonationProject) return this.donationBasicFields.some(field => !field.readonly && !!this.reviewComment(field.key)); return ['name', 'targets', 'organization', 'thirdParties', 'executionPeriod', 'rural', 'aid', 'beneficiaries', 'publicBenefit', 'total', 'requested', 'matching', 'leader', 'phone', 'organizationCode', 'environmentalFields', 'otherLocalFunding', 'email', 'mailingAddress'].filter(key => this.isGrass || !['email', 'mailingAddress'].includes(key)).some(key => !!this.reviewComment(key)) },
     hasAdditionalReviewComments () { return this.richFields.some(field => !!this.reviewComment(field.key)) },
@@ -411,7 +441,15 @@ export default {
     thirdResults () { const query = this.thirdSearch; if (!query) return []; const matches = this.thirdOptions.filter(name => name.includes(query)); return matches.length ? matches : this.thirdOptions },
     areaCityOptions () { const province = this.regionOptions.find(option => option.value === this.areaSelection.province); return province ? province.children || [] : [] },
     areaDistrictOptions () { const city = this.areaCityOptions.find(option => option.value === this.areaSelection.city); return city ? city.children || [] : [] },
-    teamMemberOptions () { const names = this.draft.team.map(member => String(member.name || '').trim()); if (this.isOrganizationProject) this.draft.organizationMembers.forEach(member => names.push(member.name)); if (this.isOrganizationProject) { this.draft.outputs.forEach(output => output.activities.forEach(activity => names.push(...String(activity.people || '').split(/[、,，]/)))); } return [...new Set(names.map(name => name.trim()).filter(Boolean))] }
+    teamMemberOptions () {
+      const names = (this.draft.team || []).concat(this.draft.organizationMembers || []).map(member => member.name)
+      ;(this.draft.outputs || []).forEach(output => (output.activities || []).forEach(activity => names.push(...String(activity.people || '').split(/[、,，]/))))
+      return [...new Set(names.map(name => String(name || '').trim()).filter(Boolean))]
+    },
+    activityPeoplePlaceholder () {
+      if (this.teamMemberOptions.length) return '请选择已有人员（可多选）'
+      return this.isOrganizationProject ? '请先添加组织人员' : '请先添加执行团队成员'
+    }
   },
   watch: {
     'modal.value': {
@@ -566,12 +604,12 @@ export default {
     openActivity (parent, index = -1) {
       this.modalFieldErrors = {}
       const value = index < 0 ? Object.fromEntries(activityFields.map(field => [field.key, field.key === 'people' ? [] : ''])) : clone(this.draft.outputs[parent].activities[index])
-      value.people = String(value.people || '').split(/[、,，]/).map(name => name.trim()).filter(name => name && ((this.isOrganizationProject && !this.isGrass) || this.teamMemberOptions.includes(name)))
+      value.people = String(value.people || '').split(/[、,，]/).map(name => name.trim()).filter(name => name && this.teamMemberOptions.includes(name))
       this.modal = { visible: true, kind: 'activity', title: index < 0 ? '增加活动' : '编辑活动', fields: activityFields, value, index, parent, error: '' }
     },
     confirmModal () {
       const { value, fields, kind, index, parent } = this.modal
-      if (this.isOrganizationProject && !this.isGrass && Array.isArray(value.people)) value.people = [...new Set(value.people.map(name => String(name).trim()).filter(Boolean))]
+      if (['output', 'activity'].includes(kind) && Array.isArray(value.people)) value.people = [...new Set(value.people.map(name => String(name).trim()).filter(name => this.teamMemberOptions.includes(name)))]
       const missing = fields.filter(field => !field.optional && !String(value[field.key] || '').trim())
       if (['output', 'activity'].includes(kind)) {
         this.modal.error = ''
@@ -699,8 +737,6 @@ export default {
 <style scoped>
 .risk-target-input { display: grid; gap: 8px; min-width: 0; }
 .risk-target-input >>> .ant-select { width: 100%; }
-.risk-target-input >>> .risk-target-tree .ant-select-selection--single { height: auto; min-height: 40px; }
-.risk-target-input >>> .risk-target-tree .ant-select-selection__rendered { line-height: 22px; padding: 4px 0; }
 .risk-target-input >>> .risk-target-tree .ant-select-selection-selected-value { max-width: 100%; white-space: normal; overflow: visible; overflow-wrap: anywhere; text-overflow: clip; padding-right: 20px; }
 
 .form-footer .revision-progress-submit.ant-btn-primary { color: #fff; background: #c280ff; border-color: #c280ff; }
@@ -712,8 +748,8 @@ export default {
 .donation-allocation-prompt > span, .donation-field-hint { color: #718095; line-height: 1.6; }
 .donation-reminder { display: inline-flex; align-items: center; justify-content: center; height: 32px; padding: 0 15px; line-height: 1; color: #fff; background: #1677ff; border-color: #1677ff; box-shadow: 0 2px 0 rgba(0,0,0,.043); }
 .donation-reminder:hover, .donation-reminder:focus { color: #1677ff; background: #fff; border-color: #1677ff; box-shadow: 0 2px 0 rgba(0,0,0,.043); }
-.project-form-page { display: grid; gap: 20px; min-width: 0; color: #18253c; padding-bottom: 18px; }.form-section { overflow: hidden; }.form-section .detail-section-header > .ant-btn { height: 32px; border-radius: 6px; }.form-fields { display: grid; grid-template-columns: 1fr 1fr; }.field { min-width: 0; display: flex; flex-direction: column; gap: 9px; }.field label { font-weight: 500; line-height: 1.6; }.full { grid-column: 1 / -1; }em { color: #ff4d4f; font-style: normal; margin-right: 3px; }.field > .ant-select,.field > .ant-input-number { width: 100%; }.third-parties { display: flex; align-items: flex-start; gap: 12px; min-height: 32px; }.third-parties span { flex: 1; overflow-wrap: anywhere; padding-top: 5px; }.third-parties .ant-btn { padding-right: 0; }.date-pair { display: flex; gap: 12px; align-items: center; }.date-pair .ant-input { min-width: 0; width: 50%; }.date-pair > span:not(.ant-calendar-picker) { color: #718095; }.amount-fields { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; padding: 20px; background: #f8fbff; border-radius: 10px; }.amount-input { position: relative; display: flex; align-items: center; border: 1px solid transparent; border-radius: 4px; }.amount-input:hover { border-color: #d9e1eb; }.amount-input:focus-within { border-color: #1677ff; box-shadow: 0 0 0 2px rgba(22,119,255,.12); }.amount-input .ant-input-number { width: 100%; }.amount-unit { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #536277; line-height: 1; pointer-events: none; }.amount-unit i { visibility: hidden; font-style: normal; }.field small { color: #718095; line-height: 1.6; }.field >>> .rich-editor { border: 1px solid #d9e1eb; border-radius: 6px; overflow: hidden; }.field >>> .rich-toolbar { display: flex; gap: 8px; align-items: center; padding: 8px 12px; background: #fafbfd; border-bottom: 1px solid #e6ebf2; }.field >>> .rich-toolbar button { border: none; border-radius: 4px; padding: 3px 9px; background: transparent; color: #536277; cursor: pointer; }.field >>> .rich-toolbar button:hover { color: #1677ff; background: #eaf3ff; }.field >>> .rich-toolbar button:first-child { font-weight: 800; }.field >>> .rich-toolbar button:nth-child(2) { font-style: italic; }.field >>> .rich-toolbar button:nth-child(3) { text-decoration: underline; }.field >>> .rich-editable:focus { box-shadow: inset 0 0 0 1px #1677ff; }.field >>> .rich-editable p:last-child { margin-bottom: 0; }
-.danger-link { color: #ff4d4f; }.row-actions { display: flex; flex-shrink: 0; }.row-actions .ant-btn { padding: 0 8px; }.form-activity { padding: 18px 20px; margin-bottom: 12px; background: #f8fbff; border: 1px solid #e9eff7; border-radius: 10px; }.form-activity dl { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin: 14px 0; }.form-activity dt { color: #8491a3; margin-bottom: 5px; }.form-activity dd { margin: 0; overflow-wrap: anywhere; }.form-activity p { line-height: 1.8; margin: 0; white-space: pre-line; }.add-activity { width: 100%; color: #1677ff; }.section-description { color: #718095; line-height: 1.8; }.management-entry-table { table-layout: fixed; }.management-entry-table .management-col-index { width: 70px; }.management-entry-table .management-col-actions { width: 130px; }.management-entry-table th:first-child, .management-entry-table td:first-child, .management-entry-table th:last-child, .management-entry-table td:last-child { text-align: center; }.management-entry-table td { white-space: pre-line; overflow-wrap: anywhere; }.management-entry-table .management-entry-row td { vertical-align: middle; background: #fff; }.management-entry-table th:last-child, .management-entry-table .management-actions { padding-right: 12px; padding-left: 12px; }.management-entry-table .management-actions { white-space: nowrap; }.management-entry-table .management-actions .ant-btn { height: auto; padding: 0 7px; }.attachment-section .detail-section-header { align-items: center; }.attachment-section .detail-section-header > div { display: flex; min-height: 40px; align-items: center; }.attachment-section .detail-section-header h2 { margin: 0; }.form-attachment-list > div { grid-template-columns: minmax(0, 1fr) auto auto auto; }.form-attachment-list strong { overflow-wrap: anywhere; }.form-attachment-list .ant-btn { padding: 0 6px; }.attachment-file-picker { min-width: 0; display: flex; align-items: center; gap: 12px; }.attachment-file-picker > span { min-width: 0; color: #536277; overflow-wrap: anywhere; }.attachment-picker > .form-error { margin-left: 108px; }.form-footer { position: sticky; bottom: 0; z-index: 5; border: 1px solid #e6ebf2; border-radius: 12px; background: rgba(255,255,255,.98); box-shadow: 0 -4px 22px rgba(23,56,92,.07); padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }.form-footer > span { color: #718095; }.form-footer > div { display: flex; gap: 12px; }.form-footer .ant-btn { min-width: 100px; }.validation-summary { background: #fff6f5; color: #cf1322; border: 1px solid #ffd3d0; border-radius: 12px; padding: 20px 24px; display: flex; gap: 12px; }.validation-summary .anticon { margin-top: 4px; }.validation-summary ul { padding-left: 18px; margin: 8px 0 0; line-height: 1.8; }.modal-form { display: grid; gap: 20px; padding: 0; }.modal-field { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 16px; align-items: start; }.modal-field label { text-align: right; }.modal-field > .ant-calendar-picker,.modal-field > .ant-select { width: 100%; }.form-error { color: #ff4d4f; margin: 10px 0 0; }.third-results { margin: 0; }.third-results > div { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; padding: 8px 0; border-bottom: 1px solid #edf1f5; }.third-results span { min-width: 0; flex: 1; padding-top: 5px; line-height: 22px; overflow-wrap: anywhere; }.attachment-preview-image { max-width: 100%; display: block; margin: auto; }.attachment-preview-pdf { width: 100%; height: 65vh; border: 0; }
+.project-form-page { display: grid; gap: 20px; min-width: 0; color: #18253c; padding-bottom: 18px; }.form-section { overflow: hidden; }.form-section .detail-section-header > .ant-btn { height: 32px; border-radius: 6px; }.form-fields { display: grid; grid-template-columns: 1fr 1fr; }.field { min-width: 0; display: flex; flex-direction: column; gap: 9px; }.field label { font-weight: 500; line-height: 1.6; }.full { grid-column: 1 / -1; }em { color: #ff4d4f; font-style: normal; margin-right: 3px; }.field > .ant-select,.field > .ant-input-number { width: 100%; }.third-parties { display: flex; align-items: flex-start; gap: 12px; min-height: 32px; }.third-parties span { flex: 1; overflow-wrap: anywhere; padding-top: 5px; }.third-parties .ant-btn { padding-right: 0; }.date-pair { display: flex; gap: 12px; align-items: center; }.date-pair .ant-input { min-width: 0; width: 50%; }.date-pair > span:not(.ant-calendar-picker) { color: #718095; }.amount-fields { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; padding: 20px; background: #f8fbff; border-radius: 10px; }.amount-input { position: relative; display: flex; align-items: center; border: 1px solid transparent; border-radius: 4px; }.amount-input:hover { border-color: #d9e1eb; }.amount-input:focus-within { border-color: #1677ff; box-shadow: 0 0 0 2px rgba(22,119,255,.12); }.amount-input .ant-input-number { width: 100%; }.field small { color: #718095; line-height: 1.6; }.field >>> .rich-editor { border: 1px solid #d9e1eb; border-radius: 6px; overflow: hidden; }.field >>> .rich-toolbar { display: flex; gap: 8px; align-items: center; padding: 8px 12px; background: #fafbfd; border-bottom: 1px solid #e6ebf2; }.field >>> .rich-toolbar button { border: none; border-radius: 4px; padding: 3px 9px; background: transparent; color: #536277; cursor: pointer; }.field >>> .rich-toolbar button:hover { color: #1677ff; background: #eaf3ff; }.field >>> .rich-toolbar button:first-child { font-weight: 800; }.field >>> .rich-toolbar button:nth-child(2) { font-style: italic; }.field >>> .rich-toolbar button:nth-child(3) { text-decoration: underline; }.field >>> .rich-editable:focus { box-shadow: inset 0 0 0 1px #1677ff; }.field >>> .rich-editable p:last-child { margin-bottom: 0; }
+.danger-link { color: #ff4d4f; }.row-actions { display: flex; flex-shrink: 0; }.row-actions .ant-btn { padding: 0 8px; }.form-activity { padding: 18px 20px; margin-bottom: 12px; background: #f8fbff; border: 1px solid #e9eff7; border-radius: 10px; }.form-activity dl { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin: 14px 0; }.form-activity dt { color: #8491a3; margin-bottom: 5px; }.form-activity dd { margin: 0; overflow-wrap: anywhere; }.form-activity p { line-height: 1.8; margin: 0; white-space: pre-line; }.add-activity { width: 100%; color: #1677ff; }.section-description { color: #718095; line-height: 1.8; }.management-entry-table { table-layout: fixed; }.management-entry-table .management-col-index { width: 70px; }.management-entry-table .management-col-actions { width: 130px; }.management-entry-table th:first-child, .management-entry-table td:first-child, .management-entry-table th:last-child, .management-entry-table td:last-child { text-align: center; }.management-entry-table td { overflow-wrap: anywhere; }.management-entry-table .management-entry-row td { vertical-align: middle; background: #fff; }.management-entry-table th:last-child, .management-entry-table .management-actions { padding-right: 12px; padding-left: 12px; }.management-entry-table .management-actions { white-space: nowrap; }.management-entry-table .management-actions .ant-btn { height: auto; padding: 0 7px; }.attachment-section .detail-section-header { align-items: center; }.attachment-section .detail-section-header > div { display: flex; min-height: 40px; align-items: center; }.attachment-section .detail-section-header h2 { margin: 0; }.form-attachment-list > div { grid-template-columns: minmax(0, 1fr) auto auto auto; }.form-attachment-list strong { overflow-wrap: anywhere; }.form-attachment-list .ant-btn { padding: 0 6px; }.attachment-file-picker { min-width: 0; display: flex; align-items: center; gap: 12px; }.attachment-file-picker >>> .ant-upload .ant-btn { height: 40px; }.attachment-file-picker > span { min-width: 0; color: #536277; overflow-wrap: anywhere; }.attachment-picker > .form-error { margin-left: 108px; }.form-footer { position: sticky; bottom: 0; z-index: 5; border: 1px solid #e6ebf2; border-radius: 12px; background: rgba(255,255,255,.98); box-shadow: 0 -4px 22px rgba(23,56,92,.07); padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }.form-footer > span { color: #718095; }.form-footer > div { display: flex; gap: 12px; }.form-footer .ant-btn { min-width: 100px; }.validation-summary { background: #fff6f5; color: #cf1322; border: 1px solid #ffd3d0; border-radius: 12px; padding: 20px 24px; display: flex; gap: 12px; }.validation-summary .anticon { margin-top: 4px; }.validation-summary ul { padding-left: 18px; margin: 8px 0 0; line-height: 1.8; }.modal-form { display: grid; gap: 20px; padding: 0; }.modal-field { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 16px; align-items: start; }.modal-field label { text-align: right; }.modal-field > .ant-calendar-picker,.modal-field > .ant-select { width: 100%; }.form-error { color: #ff4d4f; margin: 10px 0 0; }.third-results { margin: 0; }.third-results > div { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; padding: 8px 0; border-bottom: 1px solid #edf1f5; }.third-results span { min-width: 0; flex: 1; padding-top: 5px; line-height: 22px; overflow-wrap: anywhere; }.attachment-preview-image { max-width: 100%; display: block; margin: auto; }.attachment-preview-pdf { width: 100%; height: 65vh; border: 0; }
 .management-section { display: contents; }
 @media(max-width: 1440px) {.modal-field { grid-template-columns: 120px minmax(0, 1fr); } }
 /* 基本信息沿用详情页的双列列表，长内容独占一行。 */
@@ -737,6 +773,9 @@ export default {
 .form-fields .third-parties-trigger:focus-visible { outline: none; border-color: #1677ff; box-shadow: 0 0 0 2px rgba(22,119,255,.12); }
 .third-parties-trigger > .anticon { flex-shrink: 0; color: #bfbfbf; font-size: 12px; }
 .form-fields >>> .binary-choice { line-height: 32px; }
+.form-fields >>> .binary-choice .ant-radio-wrapper { display: inline-flex; align-items: center; line-height: 24px; }
+.binary-choice >>> .ant-radio { display: block; flex: none; vertical-align: middle; }
+.binary-choice >>> .ant-radio + span { display: block; line-height: 24px; }
 .binary-choice >>> .ant-radio-wrapper + .ant-radio-wrapper { margin-left: 32px; }
 .form-fields .execution-period .date-pair { width: 100%; }
 .execution-period >>> .execution-date-picker { flex: 1; min-width: 0; width: 0; }
@@ -749,21 +788,15 @@ export default {
 .form-fields >>> .ant-select-selection:hover { border-color: #d9e1eb; }
 .form-fields >>> .ant-select-focused .ant-select-selection { border-color: #1677ff; }
 .form-fields .field > .ant-input { padding-left: 12px; padding-right: 12px; }
-.empty-hint { color: #bfbfbf; font-weight: 400; }
+.empty-hint { font-weight: 400; }
 /* 本页与填写弹窗统一输入字号、内边距和单行垂直对齐。 */
 .project-form-page >>> input.ant-input,
 .modal-form >>> input.ant-input,
 .ant-input-search >>> input.ant-input { height: 40px; padding: 0 12px; line-height: normal; }
-.project-form-page >>> textarea.ant-input,
-.modal-form >>> textarea.ant-input { padding: 10px 12px; line-height: 24px; }
-.project-form-page >>> .ant-input-number { height: 40px; }
-.project-form-page >>> .ant-input-number-input { height: 38px; padding: 0 12px; line-height: 38px; }
-.project-form-page >>> .ant-select-selection--single,
-.modal-form >>> .ant-select-selection--single { height: 40px; }
+.project-form-page >>> textarea.ant-input { padding: 10px 12px; line-height: 24px; }
 .project-form-page >>> .ant-select-selection__rendered,
 .modal-form >>> .ant-select-selection__rendered { margin-left: 12px; margin-right: 12px; line-height: 38px; }
 .project-form-page >>> .ant-select-selection--multiple { min-height: 40px; padding-bottom: 0; }
-.project-form-page >>> .ant-select-selection--multiple .ant-select-selection__rendered { min-height: 38px; }
 .project-form-page >>> .ant-select-selection--multiple .ant-select-selection__choice { height: 28px; margin-top: 5px; line-height: 26px; }
 .project-form-page >>> .ant-select-selection--multiple .ant-select-search--inline { height: 38px; margin-top: 0; }
 .field >>> .rich-editable { min-height: 138px; outline: none; overflow-wrap: anywhere; padding: 12px; line-height: 24px; }
@@ -774,15 +807,6 @@ export default {
 .modal-form >>> .ant-select-auto-complete .ant-select-selection__rendered { margin: 0; }
 .ant-input-search >>> .ant-input-search-button { height: 40px; }
 .form-fields >>> textarea.resizable-textarea { height: 40px; min-height: 40px; padding: 7px 12px; line-height: 24px; resize: vertical; overflow: auto; }
-/* 可填写区域的空值提示使用统一的提醒蓝色。 */
-.project-form-page >>> input::placeholder,
-.project-form-page >>> textarea::placeholder,
-.modal-form >>> input::placeholder,
-.modal-form >>> textarea::placeholder,
-.ant-input-search >>> input::placeholder { color: #5b8ff9; opacity: 1; }
-.project-form-page >>> .ant-select-selection__placeholder,
-.modal-form >>> .ant-select-selection__placeholder,
-.empty-hint { color: #5b8ff9; }
 
 /* 基本信息填写态与查看态对齐：无水平缩进，已填文字使用同一颜色和字重。 */
 .form-fields >>> input.ant-input {
@@ -856,7 +880,6 @@ export default {
 .row-review-content .ant-btn { display: block; margin-left: auto; }
 .area-picker { display: grid; width: 470px; max-width: 100%; gap: 16px; margin: 0 auto; padding: 0; }
 
-
 .area-picker-row .ant-select { width: 100%; }
 
 .team-section .detail-section-header > div { display: block; min-height: 0; }
@@ -872,44 +895,17 @@ export default {
 
 .team-picker .ant-input { width: 100%; }
 
-
-
 .output-empty-add { cursor: pointer; border-radius: 8px; }
 .output-empty-add >>> .ant-empty-description { color: #5b8ff9; }
 .output-empty-add:focus-visible { outline: 2px solid #1677ff; outline-offset: 4px; }
-.output-modal-form { width: 470px; max-width: 100%; gap: 16px; margin: 0 auto; padding: 0; }
 
 .output-modal-form .modal-field.activity-divider { padding-top: 16px; border-top: 1px dashed #d9e1eb; }
-.output-modal-form >>> input.ant-input,
-.output-modal-form >>> .ant-select-selection--single { height: 40px; }
-.output-modal-form >>> .ant-select-selection--single .ant-select-selection__rendered { line-height: 38px; }
 .output-modal-form >>> .ant-select-selection--multiple,
 .output-modal-form >>> .ant-select-selection--multiple .ant-select-selection__rendered { min-height: 40px; }
 .output-modal-form >>> .ant-select-selection--multiple .ant-select-search--inline { height: 38px; }
-.output-modal-form >>> input::placeholder,
-.output-modal-form >>> textarea::placeholder,
-.output-modal-form >>> .ant-select-selection__placeholder { color: #5b8ff9; }
-.compact-modal-form { width: 470px; max-width: 100%; gap: 16px; margin: 0 auto; padding: 0; }
-
-.compact-modal-form >>> input.ant-input,
-.compact-modal-form >>> .ant-select-selection--single { height: 40px; }
-.compact-modal-form >>> .ant-select-selection--single .ant-select-selection__rendered { line-height: 38px; }
-.compact-modal-form >>> input::placeholder,
-.compact-modal-form >>> textarea::placeholder,
-.compact-modal-form >>> .ant-select-selection__placeholder { color: #5b8ff9; opacity: 1; }
-.area-standard-modal-form { width: 470px; max-width: 100%; gap: 16px; margin: 0 auto; padding: 0; }
-
-
-
 
 .modal-form .modal-field.has-field-error { row-gap: 6px; }
 .modal-field > .modal-field-error { grid-column: 2; margin: 0; }
-.area-standard-modal-form >>> input.ant-input,
-.area-standard-modal-form >>> .ant-select-selection--single { height: 40px; }
-.area-standard-modal-form >>> .ant-select-selection--single .ant-select-selection__rendered { line-height: 38px; }
-.area-standard-modal-form >>> input::placeholder,
-.area-standard-modal-form >>> textarea::placeholder,
-.area-standard-modal-form >>> .ant-select-selection__placeholder { color: #5b8ff9; opacity: 1; }
 .activity-period-inputs { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 10px; }
 .activity-period-inputs .ant-input { min-width: 0; }
 .activity-period-inputs >>> .ant-calendar-picker { min-width: 0; width: 100%; }
@@ -951,38 +947,23 @@ export default {
 /* 录入弹窗独立声明样式，避免挂载到 body 后丢失页面祖先样式。 */
 .team-picker, .attachment-picker { padding: 0; }
 
-.area-picker >>> input.ant-input,
-.area-picker >>> .ant-select-selection--single { height: 40px; }
-.area-picker >>> .ant-select-selection__rendered { line-height: 38px; }
-.area-picker >>> textarea.ant-input { height: auto; padding: 4px 11px; line-height: 24px; }
-.area-picker >>> input::placeholder,
-.area-picker >>> textarea::placeholder,
-.area-picker >>> .ant-select-selection__placeholder { color: #5b8ff9; opacity: 1; }
-.modal-form >>> textarea.ant-input { height: auto; padding: 4px 11px; line-height: 24px; }
 .modal-form >>> .ant-select-auto-complete .ant-input { padding: 0 12px; height: 40px; }
 .modal-form >>> .ant-select-selection--multiple { min-height: 40px; }
 .modal-form >>> .ant-select-selection--multiple .ant-select-selection__rendered { min-height: 38px; line-height: 38px; }
 .modal-form >>> .ant-select-selection--multiple .ant-select-search--inline { height: 38px; }
-.modal-form >>> .ant-select-selection__placeholder,
-.modal-form >>> input::placeholder,
-.modal-form >>> textarea::placeholder { color: #5b8ff9; opacity: 1; }
-.output-modal-form >>> .ant-select-selection__placeholder,
-.output-modal-form >>> input::placeholder,
-.output-modal-form >>> textarea::placeholder { color: #5b8ff9; }
 .output-review-trigger { cursor: pointer; }
 .output-review-trigger:hover { background-color: #ffe7e5 !important; }
 .output-review-trigger:focus-visible { outline: 2px solid #ff7875; outline-offset: -2px; }
 .form-fields.green-home-basic-fields .amount-fields > .field:first-child { grid-column: auto; }
 .form-fields >>> textarea.organization-overview-input { height: auto; min-height: 62px; }
-.organization-member-picker >>> input.ant-input { box-sizing: border-box; height: 40px; padding: 0 11px; line-height: 38px; }
+.organization-member-picker >>> input.ant-input { box-sizing: border-box; height: 40px; padding: 0 12px; line-height: normal; }
 .organization-members-table .team-actions { white-space: nowrap; }
 .organization-members-table .team-actions .ant-btn { height: auto; padding: 0 7px; }
 .organization-members-table .organization-work-type-col { width: 150px; }
 .organization-members-table th:last-child, .organization-members-table .team-actions { text-align: center; }
 .organization-members-table th:first-child, .organization-members-table td:first-child { text-align: center; }
 .field >>> .rich-editable:empty::before { content: attr(data-placeholder); white-space: pre-wrap; color: #5b8ff9; pointer-events: none; }
-.green-home-risk-table col:nth-child(2) { width: 72px; }
-.green-home-risk-table th:nth-child(2), .green-home-risk-table td:nth-child(2) { text-align: center; }
+.management-entry-table .management-risk-level-col { width: 70px; }
 
 /* 项目编辑模块外围留白统一由内容容器负责。 */
 .project-module-content { padding: 24px; }
@@ -1006,7 +987,7 @@ export default {
 .project-module-content .output-block { margin: 0 0 24px; }
 .project-module-content .add-output { width: 100%; margin: 0; }
 .project-module-content >>> .budget-sheet-row:first-child { padding-top: 0; min-height: 60px; align-items: start; }
-.project-module-content .form-attachment-list > div:first-child { padding-top: 0; align-items: start; }
+.project-module-content .form-attachment-list > div:first-child { min-height: 0; padding-top: 0; align-items: start; }
 .project-module-content .add-more-attachment { width: 100%; margin: 16px 0 0; }
 /* 活动执行人员保持单行，已选姓名用顿号连接。 */
 .modal-form >>> .people-select .ant-select-selection--multiple { height: 40px; min-height: 40px; padding: 0; }

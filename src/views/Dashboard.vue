@@ -216,7 +216,7 @@ export default {
         this.$router.push({ name: 'project-form', params: { id: '5' }, query: { example: 'filled', from: 'dashboard', revisionMode: 'with-progress' } }); return
       }
       if (project.id === 1 && action.label === '提交进展') {
-        this.$router.push({ name: 'report-form', params: { id: project.id }, query: { type: 'progress' } }); return
+        this.$router.push({ name: 'report-form', params: { id: project.id }, query: { type: 'progress', draftId: 'new-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) } }); return
       }
       if (project.id === 1 && action.label === '提交结项') {
         this.$router.push({ name: 'report-form', params: { id: project.id }, query: { type: 'completion' } }); return

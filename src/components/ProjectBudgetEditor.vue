@@ -1,5 +1,5 @@
 <template>
-  <div class="application-budget budget-sheet-list">
+  <div class="application-budget budget-sheet-list" :class="{ 'report-budget-list': reportMode }">
     <div v-for="sheet in visibleSheets" :key="sheet.title" class="budget-sheet-row">
       <div class="budget-sheet-info">
         <strong>{{ sheet.title }}</strong>
@@ -15,6 +15,7 @@ import { budgetStatus, canViewBudget } from '../utils/project-budget'
 export default {
   name: 'ProjectBudgetEditor',
   props: {
+    reportMode: { type: Boolean, default: false },
     donationProject: { type: Boolean, default: false },
     hideCostTypeAnalysis: { type: Boolean, default: false },
     value: { type: Object, required: true },
@@ -33,6 +34,7 @@ export default {
   computed: {
     viewable () { return canViewBudget(this.value) },
     visibleSheets () {
+      if (this.reportMode) return this.sheets.filter(sheet => sheet.title !== '费用类型分析表').map(sheet => ({ ...sheet, actions: sheet.title === '预算及执行汇总表' ? ['查看'] : ['填写执行', '预算调整', '查看'], status: sheet.title === '预算及执行汇总表' ? '自动生成' : (sheet.detail ? (this.value.rows || []).concat(this.value.personnel || [], this.value.legacyPersonnel || []) : this.value.personnel || []).some(row => row.executed != null) ? '已填写执行' : '未填写执行', viewable: true }))
       const sheets = this.donationProject ? [{ title: '北京市企业家环保基金会联合公益项目预算表', actions: ['编辑', '查看'], detail: true }] : this.sheets.filter(sheet => !this.hideCostTypeAnalysis || sheet.title !== '费用类型分析表')
       return sheets.map(sheet => ({ ...sheet, status: sheet.title === '人力成本分摊表' ? (this.value.personnelStatus === 'completed' || this.value.personnelUpdatedAt ? '已保存' : '待编辑') : budgetStatus(this.value), viewable: sheet.title === '人力成本分摊表' ? !!this.value.personnelUpdatedAt : this.viewable }))
     }
@@ -49,6 +51,7 @@ export default {
 <style scoped>
 .budget-sheet-list { padding: 4px 22px 22px; }
 .budget-sheet-row { min-height: 72px; padding: 12px 4px; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 12px; border-bottom: 1px solid #edf1f5; }
+.report-budget-list .budget-sheet-row { grid-template-columns: minmax(0, 1fr) repeat(3, auto); }.report-budget-list .budget-sheet-row:last-child .ant-btn { grid-column: 4; }
 .budget-sheet-row:last-child { border-bottom: 0; }
 .budget-sheet-info { min-width: 0; display: grid; gap: 5px; }
 .budget-sheet-info strong { color: #18253c; font-weight: 600; overflow-wrap: anywhere; }

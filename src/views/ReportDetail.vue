@@ -62,7 +62,7 @@
       <div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="read" /></span><div><h2>其他信息</h2><p v-if="isAudit && report.otherInformation.some(item => reviewComment('otherInformation.' + item.id))">点击信息小标题可添加或编辑审核意见</p></div></div>
       <div class="detail-module-content">
       <detail-rich-content class="rich-content">
-        <section v-for="item in report.otherInformation" :key="item.id" class="rich-text-section"><h3 :class="{ 'review-heading': isAudit }"><button v-if="isAudit" type="button" @click="openReview('otherInformation.' + item.id)">{{ item.title }}</button><template v-else>{{ item.title }}</template></h3><div class="rich-text-field" :class="reportReviewClass('otherInformation.' + item.id)"><p v-for="(paragraph, paragraphIndex) in item.paragraphs" :key="paragraphIndex">{{ paragraph }}</p></div></section>
+        <section v-for="item in report.otherInformation" :key="item.id" class="project-rich-section"><h3 :class="{ 'review-heading': isAudit }"><button v-if="isAudit" type="button" @click="openReview('otherInformation.' + item.id)">{{ item.title }}</button><template v-else>{{ item.title }}</template></h3><div class="rich-text-field" :class="reportReviewClass('otherInformation.' + item.id)"><p v-for="(paragraph, paragraphIndex) in item.paragraphs" :key="paragraphIndex">{{ paragraph }}</p></div></section>
       </detail-rich-content>
       </div>
     </section>
@@ -70,14 +70,14 @@
     <section id="report-communication" class="panel detail-section">
       <div class="detail-section-header"><span class="detail-section-icon cyan"><a-icon type="notification" /></span><div><h2>传播信息</h2><p v-if="isAudit && reviewComment('communication')">点击信息小标题可添加或编辑审核意见</p></div></div>
       <div class="detail-module-content">
-      <detail-rich-content class="rich-content"><section class="rich-text-section"><h3 :class="{ 'review-heading': isAudit }"><button v-if="isAudit" type="button" @click="openReview('communication')">项目传播情况</button><template v-else>项目传播情况</template></h3><div class="rich-text-field" :class="reportReviewClass('communication')"><p>{{ report.communication }}</p></div></section></detail-rich-content>
+      <detail-rich-content class="rich-content"><section class="project-rich-section"><h3 :class="{ 'review-heading': isAudit }"><button v-if="isAudit" type="button" @click="openReview('communication')">项目传播情况</button><template v-else>项目传播情况</template></h3><div class="rich-text-field" :class="reportReviewClass('communication')"><p>{{ report.communication }}</p></div></section></detail-rich-content>
       </div>
     </section>
 
     <section id="report-budget" class="panel detail-section">
       <div class="detail-section-header"><span class="detail-section-icon gold"><a-icon type="fund" /></span><div><h2>在线预算表</h2></div></div>
       <div class="detail-module-content">
-      <budget-prototype embedded :project-name="report.projectName" :budget="reportBudgetTemplate" />
+      <budget-review :audit="isAudit" :project-name="report.projectName" :budget="reportBudgetTemplate" />
       </div>
     </section>
 
@@ -142,14 +142,7 @@
       <template slot="footer"><div class="review-dialog-actions"><a-button v-if="reviewComment(reviewField)" type="danger" @click="deleteReview">删除</a-button><div class="review-dialog-actions-right"><a-button v-if="!reviewComment(reviewField)" @click="reviewVisible = false">取消</a-button><a-button type="primary" @click="saveReview">{{ reviewComment(reviewField) ? '修改' : '确认' }}</a-button></div></div></template>
     </a-modal>
     <a-modal v-model="attachmentDialog.visible" :title="attachmentDialog.action + '附件'" :mask-closable="false" :width="560"><div class="report-attachment-message"><strong>{{ attachmentDialog.name }}</strong><p>当前为前端演示，尚未接入附件服务，暂无可供{{ attachmentDialog.action }}的原始文件。</p></div><template slot="footer"><a-button @click="attachmentDialog.visible = false">关闭</a-button></template></a-modal>
-    <a-modal v-model="budgetDialog.visible" :title="budgetDialog.name" :mask-closable="false" :width="1080" class="report-budget-modal">
-      <div class="report-budget-heading"><strong>{{ report.projectName }}</strong><span>{{ report.organization }} · 金额单位：元</span></div>
-      <div class="detail-table-wrap report-budget-preview">
-        <table v-if="budgetDialog.id === 'detail'" class="detail-table"><thead><tr><th>预算科目</th><th>预算金额</th><th>已执行金额</th><th>执行率</th></tr></thead><tbody><tr v-for="row in report.budgetRows" :key="row.name"><td>{{ row.name }}</td><td>{{ money(row.budgetCents) }}</td><td>{{ money(row.executedCents) }}</td><td>{{ ratio(row.executedCents, row.budgetCents) }}</td></tr><tr class="report-budget-total"><td>合计</td><td>{{ money(report.fundingCents) }}</td><td>{{ money(executedCents) }}</td><td>{{ ratio(executedCents, report.fundingCents) }}</td></tr></tbody></table>
-        <table v-else-if="budgetDialog.id === 'staff'" class="detail-table"><thead><tr><th>岗位</th><th>工作内容</th><th>分摊比例</th><th>已分摊金额</th></tr></thead><tbody><tr v-for="row in report.staffRows" :key="row.role"><td>{{ row.role }}</td><td>{{ row.work }}</td><td>{{ row.share }}</td><td>{{ money(row.cents) }}</td></tr><tr class="report-budget-total"><td colspan="3">合计</td><td>{{ money(report.staffRows.reduce((total, row) => total + row.cents, 0)) }}</td></tr></tbody></table>
-        <table v-else class="detail-table"><thead><tr><th>申请SEE基金会资金</th><th>累计执行金额</th><th>剩余预算</th><th>项目预算总执行率</th></tr></thead><tbody><tr><td>{{ money(report.fundingCents) }}</td><td>{{ money(executedCents) }}</td><td>{{ money(report.fundingCents - executedCents) }}</td><td>{{ ratio(executedCents, report.fundingCents) }}</td></tr></tbody></table>
-      </div><p class="report-budget-demo-note">以上为前端演示数据，正式预算以业务系统记录为准。</p><template slot="footer"><a-button @click="budgetDialog.visible = false">关闭</a-button></template>
-    </a-modal>
+
   </section>
   <section v-else class="panel report-not-found"><a-empty description="未找到对应的进展/结项报告"><a-button type="primary" @click="goBack">返回</a-button></a-empty></section>
 </template>
@@ -158,31 +151,12 @@
 import reports from '../mock/report-examples'
 import { reviewText, rowReviewText } from '../utils/report-review'
 import ReviewCommentLabel from '../components/ReviewCommentLabel.vue'
-import BudgetPrototype from '../components/BudgetPrototype.vue'
-import defaultTableData from '../mock/project-tables.json'
+import BudgetReview from '../components/BudgetReview.vue'
+import reportBudgetTemplate from '../mock/report-budget.example.json'
 import progressReportDetails from '../mock/report-progress-detail.json'
 
 // 本地报告场景与 SEE 工作台的待办项目对应，后续由报告详情接口替换。
 // P-001006：需请款的进展报告；P-001007：无需请款且涉及款物资助的结项报告。
-const reportBudgetTemplate = {
-  ...defaultTableData.budget,
-  organization: reports[0].organization,
-  period: reports[0].projectPeriod,
-  partners: '无',
-  executionCutoff: '2026年06月03日',
-  rows: [
-    { id: 'report-total', kind: 'total', quarters: ['120,000.00', '120,000.00', '130,000.00', '130,000.00'], total: '500,000.00', adjustment: null, adjustmentRatio: null, adjustmentDetail: null, adjustedBudget: '500,000.00', executed: '194,000.00', executionRatio: '38.8%' },
-    { id: 'report-support', kind: 'group', code: '1-支撑', name: '项目支撑费用', quarters: ['30,000.00', '30,000.00', '30,000.00', '30,000.00'], total: '120,000.00', adjustment: null, adjustmentRatio: null, adjustmentDetail: null, adjustedBudget: '120,000.00', executed: '44,000.00', executionRatio: '36.7%' },
-    { id: 'report-staff', kind: 'detail', code: '1.1', name: '项目协调与数据管理', detail: '项目协调、监测数据整理及资料归档', type: '人力成本', quarters: ['30,000.00', '30,000.00', '30,000.00', '30,000.00'], total: '120,000.00', adjustment: null, adjustmentRatio: null, adjustmentDetail: null, adjustedBudget: '120,000.00', executed: '44,000.00', executionRatio: '36.7%' },
-    { id: 'report-output-1', kind: 'group', code: '产出1', name: '建立大熊猫栖息地监测与巡护体系', quarters: ['60,000.00', '60,000.00', '70,000.00', '70,000.00'], total: '260,000.00', adjustment: null, adjustmentRatio: null, adjustmentDetail: null, adjustedBudget: '260,000.00', executed: '110,000.00', executionRatio: '42.3%' },
-    { id: 'report-activity-1', kind: 'activity', code: '产出活动1.1', name: '开展红外相机监测与样线巡护', quarters: ['60,000.00', '60,000.00', '70,000.00', '70,000.00'], total: '260,000.00', adjustment: null, adjustmentRatio: null, adjustmentDetail: null, adjustedBudget: '260,000.00', executed: '110,000.00', executionRatio: '42.3%' },
-    { id: 'report-equipment', kind: 'detail', code: '1.1.1', name: '监测设备与巡护物资', detail: '红外相机、存储设备及样线巡护物资', type: '设备及材料', quarters: ['35,000.00', '35,000.00', '45,000.00', '45,000.00'], total: '160,000.00', adjustment: null, adjustmentRatio: null, adjustmentDetail: null, adjustedBudget: '160,000.00', executed: '78,000.00', executionRatio: '48.8%' },
-    { id: 'report-travel', kind: 'detail', code: '1.1.2', name: '监测巡护差旅', detail: '重点栖息地巡检、样线调查及社区走访', type: '交通差旅费', quarters: ['25,000.00', '25,000.00', '25,000.00', '25,000.00'], total: '100,000.00', adjustment: null, adjustmentRatio: null, adjustmentDetail: null, adjustedBudget: '100,000.00', executed: '32,000.00', executionRatio: '32.0%' },
-    { id: 'report-output-2', kind: 'group', code: '产出2', name: '提升社区参与栖息地保护与可持续管护的能力', quarters: ['30,000.00', '30,000.00', '30,000.00', '30,000.00'], total: '120,000.00', adjustment: null, adjustmentRatio: null, adjustmentDetail: null, adjustedBudget: '120,000.00', executed: '40,000.00', executionRatio: '33.3%' },
-    { id: 'report-activity-2', kind: 'activity', code: '产出活动2.1', name: '组织社区培训与保护实践活动', quarters: ['30,000.00', '30,000.00', '30,000.00', '30,000.00'], total: '120,000.00', adjustment: null, adjustmentRatio: null, adjustmentDetail: null, adjustedBudget: '120,000.00', executed: '40,000.00', executionRatio: '33.3%' },
-    { id: 'report-training', kind: 'detail', code: '2.1.1', name: '社区培训与巡护支持', detail: '社区培训组织、巡护物资发放及现场实践', type: '活动费用', quarters: ['30,000.00', '30,000.00', '30,000.00', '30,000.00'], total: '120,000.00', adjustment: null, adjustmentRatio: null, adjustmentDetail: null, adjustedBudget: '120,000.00', executed: '40,000.00', executionRatio: '33.3%' }
-  ]
-}
 const emptyForm = () => ({ result: undefined, paymentCents: undefined, remark: '' })
 const emptyErrors = () => ({ result: '', payment: '', remark: '' })
 
@@ -193,7 +167,7 @@ const DetailRichContent = {
     const nodes = []
     let count = 0
     ;(context.children || []).forEach(node => {
-      if (node.tag === 'section' && count++) nodes.push(h('div', { class: 'detail-rich-separator', attrs: { 'aria-hidden': 'true' } }, [h('span', { class: 'detail-rich-separator-dot' })]))
+      if (node.tag === 'section' && count++) nodes.push(h('div', { class: 'project-rich-separator', attrs: { 'aria-hidden': 'true' } }, [h('span', { class: 'project-rich-separator-dot' })]))
       nodes.push(node)
     })
     return h('article', context.data, nodes)
@@ -202,25 +176,26 @@ const DetailRichContent = {
 
 export default {
   name: 'ReportDetail',
-  components: { BudgetPrototype, DetailRichContent, ReviewCommentLabel },
-  props: { reportId: { type: String, required: true }, mode: { type: String, default: 'view' } },
+  components: { BudgetReview, DetailRichContent, ReviewCommentLabel },
+  props: { reportId: { type: String, required: true }, mode: { type: String, default: 'view' }, type: { type: String, default: '' } },
   data () { return {
     reports, auditForm: emptyForm(), formErrors: emptyErrors(), paymentOptions: [],
     paymentMismatchVisible: false, aidConfirmationVisible: false, auditPreviewVisible: false,
     reviewVisible: false, reviewField: '', reviewDraft: '', reviewComments: {},
-    budgetDialog: { visible: false, id: '', name: '' }, attachmentDialog: { visible: false, name: '', action: '' }, reportBudgetTemplate,
-    budgetSheets: [{ id: 'detail', name: '预算及执行明细表', confirmed: true }, { id: 'staff', name: '人力成本分摊表', confirmed: true }, { id: 'summary', name: '预算及执行汇总表', confirmed: false }],
+    attachmentDialog: { visible: false, name: '', action: '' }, reportBudgetTemplate,
   } },
   computed: {
-    report () { return this.reports.find(item => item.id === this.reportId) },
+    report () { const source = this.reports.find(item => item.id === this.reportId); return source && ['progress', 'completion'].includes(this.type) ? { ...source, type: this.type === 'completion' ? '结项报告' : '进展报告' } : source },
+    isCompletion () { return this.report && this.report.type === '结项报告' },
     isAudit () { return this.mode === 'audit' },
     executedCents () { return this.report ? this.report.budgetRows.reduce((total, row) => total + row.executedCents, 0) : 0 },
     basicFields () {
       if (!this.report) return []
       const keys = ['projectType', 'strategy', 'issue', 'organization', 'projectPeriod', 'reportPeriod', 'funding', 'executed', 'executionRate', 'request', 'requestRate', 'beneficiaryAid', 'aidCompleted', 'reporter', 'contact', 'filledAt']
+      const visibleField = field => this.isCompletion || !['beneficiaryAid', 'aidCompleted'].includes(field.key)
       const reviewableKeys = ['reportPeriod', 'request', 'reporter', 'contact', 'filledAt']
-      if (this.report.beneficiaryAid) reviewableKeys.push('aidCompleted')
-      if (this.report.id === 'P-001006') return progressReportDetails['P-001006'].basic.fields.map((field, index) => ({ ...field, key: keys[index], reviewable: reviewableKeys.includes(keys[index]), wide: ['funding', 'filledAt'].includes(keys[index]) }))
+      if (this.isCompletion && this.report.beneficiaryAid) reviewableKeys.push('aidCompleted')
+      if (this.report.id === 'P-001006') return progressReportDetails['P-001006'].basic.fields.map((field, index) => ({ ...field, key: keys[index], reviewable: reviewableKeys.includes(keys[index]), wide: ['funding', 'filledAt'].includes(keys[index]) })).filter(visibleField)
       const r = this.report
       return [
         { key: 'projectType', label: '项目类型', value: r.projectType }, { key: 'strategy', label: '项目策略', value: r.strategy },
@@ -234,11 +209,12 @@ export default {
         { key: 'beneficiaryAid', label: '直接或委托其他组织资助给受益人款物', value: r.beneficiaryAid ? '是' : '否' },
         { key: 'aidCompleted', label: '已完成对受益人款物的资助', value: r.beneficiaryAid ? (r.aidCompleted ? '是' : '否') : '不涉及', reviewable: !!r.beneficiaryAid },
         { key: 'reporter', label: '报告人', value: r.reporter, reviewable: true }, { key: 'contact', label: '联系方式', value: r.contact, reviewable: true }, { key: 'filledAt', label: '报告填写日期', value: r.filledAt, reviewable: true, wide: true }
-      ]
+      ].filter(visibleField)
     }
   },
   watch: {
     reportId: { immediate: true, handler () { this.resetReport() } },
+    type () { this.resetReport() },
     mode () { this.closeDialogs() }
   },
   methods: {
@@ -268,13 +244,12 @@ export default {
       }
       this.paymentOptions = amounts.map(value => ({ value, label: value ? '请款 ' + this.money(value) + ' 元' : '无需请款' }))
     },
-    closeDialogs () { this.paymentMismatchVisible = false; this.aidConfirmationVisible = false; this.auditPreviewVisible = false; this.reviewVisible = false; this.budgetDialog.visible = false; this.attachmentDialog.visible = false },
+    closeDialogs () { this.paymentMismatchVisible = false; this.aidConfirmationVisible = false; this.auditPreviewVisible = false; this.reviewVisible = false; this.attachmentDialog.visible = false },
     goBack () {
       if (window.history.length > 1) this.$router.go(-1)
       else this.$router.push({ name: 'project-reports' })
     },
     backToDashboard () { this.$router.push({ name: 'dashboard-see' }) },
-    openBudget (sheet) { this.budgetDialog = { visible: true, id: sheet.id, name: sheet.name } },
     openAttachment (file, action) { this.attachmentDialog = { visible: true, name: file.name, action } },
     outputReviewKey (id) { return `outputs.output-${String(id).replace(/\./g, '-')}` },
     activityReviewKey (id) { return `activities.activity-${String(id).replace(/\./g, '-')}` },
@@ -336,17 +311,12 @@ export default {
 </script>
 
 <style scoped>
-.detail-module-content { padding: 24px; --detail-inner-padding: 0; --detail-inner-margin: 0; }
+
 .description-grid { --detail-inner-padding: 0 22px 22px; }
 .description-item { gap: 8px; }
 .detail-module-content .output-block + .output-block { margin-top: 24px; }
-.attachment-list > div:first-child { padding-top: 0; align-items: start; }
-.rich-content > .rich-text-section { margin: 0; }
-.rich-content > .rich-text-section > h3 { margin: 0 0 12px; }
-.rich-content > .rich-text-section > h3::before, .rich-content > .rich-text-section > h3::after { content: none; }
-.rich-text-field > p:last-child { margin-bottom: 0; }
-.rich-content >>> .detail-rich-separator { position: relative; height: 1px; margin: 40px 0; background: linear-gradient(90deg, #b7dfcf 0%, #e4f2ec 42%, transparent 100%); }
-.rich-content >>> .detail-rich-separator-dot { position: absolute; left: -4px; top: 50%; width: 7px; height: 7px; transform: translateY(-50%); border: 2px solid #fff; border-radius: 50%; background: #18a66a; box-shadow: 0 0 0 2px #ccebdd; }
+.detail-module-content .attachment-list > div:first-child { min-height: 0; }
+
 #report-audit > .detail-module-content { background: #fff; }
 .report-benefits-table { table-layout: fixed; }
 .detail-module-content > .report-empty { padding: 0; margin: 0; }
@@ -396,7 +366,7 @@ export default {
 #report-audit { background: #fff6f6; border-color: #f1dede; }
 #report-audit > .detail-section-header { background: #ffd9d9; border-bottom-color: #efbaba; }
 #report-audit > .detail-section-header .detail-section-icon { color: #cf1322; background: #fff; }
-.report-detail-page .audit-form-grid { column-gap: clamp(48px,8vw,160px); }
+
 .report-detail-page .audit-form-row:last-child { margin-bottom: 0; }
 .report-detail-page .audit-form-actions .ant-btn { box-shadow: 0 2px 0 rgba(0,0,0,.043); }
 .report-error { margin: 0; color: #ff4d4f; line-height: 1.6; }
@@ -419,14 +389,8 @@ export default {
 .report-aid-copy { margin: 8px 0 0 34px; color: #718095; line-height: 1.7; }
 .report-aid-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; }
 .report-aid-actions .ant-btn { min-width: 72px; height: 32px; box-shadow: 0 2px 0 rgba(0,0,0,.043); }
-.report-attachment-message strong, .report-budget-heading strong { display: block; overflow-wrap: anywhere; line-height: 1.7; }
+.report-attachment-message strong { display: block; overflow-wrap: anywhere; line-height: 1.7; }
 .report-attachment-message p { margin: 12px 0 0; color: #718095; line-height: 1.7; }
-.report-budget-heading span { display: block; margin-top: 8px; color: #718095; }
-.report-budget-preview { margin: 20px 0; }
-.report-budget-preview table { table-layout: fixed; }
-.report-budget-preview td { overflow-wrap: anywhere; }
-.report-budget-total { background: #f7f9fc; font-weight: 600; }
-.report-budget-demo-note { margin: 0; color: #718095; }
 .report-empty { padding: 24px; text-align: center; color: #718095; }
 .report-not-found { padding: 72px 24px; }
 .review-dialog-actions-right > .ant-btn + .ant-btn { margin-left: 0; }

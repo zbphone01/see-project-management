@@ -36,6 +36,7 @@
     "personnelUpdatedAt": "2026-10-26T08:00:00.000Z",
     "rows": [
       {
+        "adjustmentDetail": null,
         "id": "cost-1",
         "kind": "activity",
         "outputId": "output-1",
@@ -60,6 +61,7 @@
     ],
     "personnel": [
       {
+        "adjustmentDetail": null,
         "id": "personnel-1",
         "memberId": "member-1",
         "name": "张三",
@@ -104,7 +106,8 @@
       "period": "2026-01-20 至 2026-02-05",
       "partners": "无",
       "executionCutoff": "无",
-      "snapshotVersion": 1
+      "snapshotVersion": 1,
+      "adjustmentDetailsByRow": {}
     }
   },
   "reviewComments": {

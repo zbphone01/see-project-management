@@ -148,7 +148,7 @@ export default {
         return
       }
       if (action === '审核' && project && project.status === '进展待审' && project.reportId) {
-        this.$router.push({ name: 'report-detail', params: { id: project.reportId }, query: { mode: 'audit' } })
+        this.$router.push({ name: 'report-detail', params: { id: project.reportId }, query: { mode: 'audit', type: 'progress' } })
         return
       }
       this.dialog = { visible: true, title: action, project: project ? project.name : '', date: '', content: `“${action}”入口已预留。当前为前端演示，尚未接入对应业务接口，不会提交审批、修改项目或生成业务文件。` }

@@ -1,3 +1,5 @@
+import { saveReportDraft } from '../mock/report-drafts'
+import { reportExecuted } from './report-budget'
 import { normalizeBudget, snapshotBudget, buildBudgetRows, budgetQuarterTotal, budgetPersonnelAmount } from './project-budget-data'
 export { normalizeBudget, snapshotBudget, buildBudgetRows, budgetDetailParts } from './project-budget-data'
 import { clone, roundMoney } from '../mock/project-drafts'
@@ -10,7 +12,7 @@ export const budgetStatus = budget => budget && budget.editStatus === 'completed
 export const canViewBudget = budget => budgetStatus(budget) !== '待编辑'
 export const rowTotal = budgetQuarterTotal
 export const detailTotal = row => roundMoney(Number(row.price) * Number(row.quantity))
-export const budgetKey = route => [route.params.id, (!route.query.detailType || route.query.detailType === 'default') ? 'project' : route.query.detailType, route.query.fresh === '1' ? 'fresh' : 'existing', route.query.example === 'filled' ? 'filled' : 'default'].join(':')
+export const budgetKey = route => route.query.reportBudget ? ['report', route.params.id, route.query.type || 'progress', route.query.draftId || route.query.example || 'default'].join(':') : [route.params.id, (!route.query.detailType || route.query.detailType === 'default') ? 'project' : route.query.detailType, route.query.fresh === '1' ? 'fresh' : 'existing', route.query.example === 'filled' ? 'filled' : 'default'].join(':')
 export function prepareBudgetContext (route, draft, donationProject, savedSnapshot, editable = true) {
   const key = budgetKey(route)
   const budget = editable ? snapshotBudget(draft.budget, draft, donationProject) : normalizeBudget(draft.budget)
@@ -65,6 +67,14 @@ export function saveBudgetSheet (key, budget, status) {
   const context = readBudgetContext(key)
   const project = context ? context.draft : readBudgetProject(key)
   if (!project) throw new Error('缺少项目预算上下文')
+  if (context && context.report) {
+    const saved = normalizeBudget(budget)
+    saved.revision++; saved.updatedAt = new Date().toISOString()
+    context.draft.budget = saved; context.draft.executed = reportExecuted(saved)
+    saveReportDraft(context.draft)
+    sessionStorage.setItem('see-budget-context:' + key, JSON.stringify(context))
+    return saved
+  }
   const donationProject = context && context.donationProject !== undefined ? context.donationProject : budget.metadata && budget.metadata.tableTitle === '北京市企业家环保基金会联合公益项目预算表'
   const saved = snapshotBudget({ ...clone(budget), editStatus: status, updatedAt: new Date().toISOString() }, project, !!donationProject)
   return saveProjectBudget(key, { ...project, budget: saved })
