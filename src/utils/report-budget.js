@@ -1,5 +1,12 @@
 import { normalizeBudget, buildBudgetRows, budgetQuarterTotal, budgetPersonnelAmount } from './project-budget-data'
 
+export function reportBudgetStatus (rows) {
+  const filled = value => value !== null && value !== undefined && String(value).trim() !== '' && Number.isFinite(Number(value))
+  const execution = rows.some(row => filled(row.executed))
+  const adjustment = rows.some(row => filled(row.adjustment))
+  return [execution ? '已填写执行金额' : '', adjustment ? '已调整预算' : ''].filter(Boolean).join(' / ') || '未填写执行金额'
+}
+
 export function createReportBudget (draft) {
   const groups = draft.outputs.map(output => ({ id: output.id, name: output.name, activities: output.activities.map(activity => ({ id: activity.id, name: activity.name })) }))
   const cost = (id, kind, name, type, amount, outputId = null, activityId = null) => ({ id, kind, name, type, price: amount / 4, quantity: 4, unit: '期', description: name + '，按四期实施', quarters: [amount / 4, amount / 4, amount / 4, amount / 4], outputId, activityId, executed: null, adjustment: null, adjustedBudget: null })

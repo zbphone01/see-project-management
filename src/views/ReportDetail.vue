@@ -15,7 +15,7 @@
           <template v-if="isAudit">
             <p>这是待审核的{{ report.type }}，内容在审核通过前不会入库存档。如果报告需要请款，在OA流程完成后报告状态才会更新为“{{ report.type === '结项报告' ? '结项通过' : '进展通过' }}”。</p>
             <p class="ai-initial-review"><strong>AI初审结果</strong></p>
-            <p v-for="item in report.aiInitialReview" :key="item.section" class="ai-initial-review-item"><span>{{ item.section }}：</span>{{ item.content }}</p>
+            <p v-for="item in aiInitialReview" :key="item.section" class="ai-initial-review-item"><span>{{ item.section }}：</span>{{ item.content }}</p>
           </template>
           <template v-else>
             <p>本报告除公开信息外，还可能包含联系人、联系方式、财务票据及受益人资料等敏感信息。</p>
@@ -26,15 +26,19 @@
     </section>
 
     <section id="report-basic" class="panel detail-section">
-      <div class="detail-section-header"><span class="detail-section-icon"><a-icon type="profile" /></span><div><h2>{{ report.type }}{{ report.requestedCents ? '（需要请款）' : '' }}</h2><p v-if="isAudit && basicFields.some(field => field.reviewable && reviewComment(field.key))">点击可修改字段的内容可添加或编辑审核意见</p><div class="detail-basic-meta"><span class="project-code"><a-icon type="flag" /> {{ report.projectCode }}</span><span class="report-code"><a-icon type="file-text" /> {{ report.id }}</span></div></div></div>
+      <div class="detail-section-header"><span class="detail-section-icon"><a-icon type="profile" /></span><div><h2>{{ report.type }}{{ report.requestedCents ? '（需要请款）' : '' }}</h2><p v-if="isAudit && isCompletion && basicFields.some(field => field.reviewable && reviewComment(field.key))">点击可修改字段的内容可添加或编辑审核意见</p><div class="detail-basic-meta"><span class="project-code"><a-icon type="flag" /> {{ report.projectCode }}</span><span class="report-code"><a-icon type="file-text" /> {{ report.id }}</span></div></div></div>
       <div class="description-grid">
         <div class="description-item wide project-name-item"><span>项目名称</span><strong>{{ report.projectName }}</strong></div>
-        <div v-for="field in basicFields" :key="field.key" class="description-item" :class="[field.reviewable ? reportReviewClass(field.key) : {}, { wide: field.wide, 'review-label-trigger': isAudit && field.reviewable }]" v-bind="reviewAttrs(field.reviewable)" v-on="reviewEvents(field.key, field.reviewable)"><span>{{ field.label }}</span><strong>{{ field.value }}</strong></div>
+        <div v-for="field in basicFields" :key="field.key" class="description-item" :class="[field.reviewable ? reportReviewClass(field.key) : {}, { wide: field.wide, 'review-label-trigger': isAudit && field.reviewable }]" v-bind="reviewAttrs(field.reviewable)" v-on="reviewEvents(field.key, field.reviewable)"><span>{{ field.label }}</span><strong :class="{ 'basic-field-multiline': field.multiline }">{{ field.value }}</strong></div>
       </div>
     </section>
 
+    <green-home-report-sections v-if="isOrganizationReport" part="organization" :report="report" :comments="reviewComments" :audit="isAudit" @review="openReview" />
+
+    <green-home-report-sections v-if="isOrganizationReport" :report="report" :comments="reviewComments" :audit="isAudit" @review="openReview" />
+
     <section id="report-progress" class="panel detail-section">
-      <div class="detail-section-header"><span class="detail-section-icon orange"><a-icon type="project" /></span><div><h2>项目执行进展</h2><p v-if="isAudit && report.outputs.some(output => reviewComment(outputReviewKey(output.id)) || output.activities.some(activity => reviewComment(activityReviewKey(activity.id))))">点击蓝色产出或绿色活动的最新进展行可添加或编辑审核意见</p></div></div>
+      <div class="detail-section-header"><span class="detail-section-icon orange"><a-icon type="project" /></span><div><h2>项目执行进展</h2><p v-if="isAudit && isCompletion && report.outputs.some(output => reviewComment(outputReviewKey(output.id)) || output.activities.some(activity => reviewComment(activityReviewKey(activity.id))))">点击蓝色产出或绿色活动的最新进展行可添加或编辑审核意见</p></div></div>
       <div class="detail-module-content">
       <article v-for="output in report.outputs" :key="output.id" class="output-block">
         <div class="output-title"><span>产出 {{ output.id }}</span><strong>{{ output.name }}</strong></div>
@@ -48,7 +52,7 @@
         <section v-for="activity in output.activities" :key="activity.id" class="activity-card">
           <div><span>活动 {{ activity.id }}</span><strong>{{ activity.name }}</strong></div>
           <dl><div><dt>活动时间</dt><dd>{{ activity.period }}</dd></div><div><dt>活动地点</dt><dd>{{ activity.location }}</dd></div><div><dt>执行人员</dt><dd>{{ activity.people }}</dd></div></dl>
-          <h3 class="report-activity-label">活动内容</h3><p>{{ activity.content }}</p>
+          <p>{{ activity.content }}</p>
           <div class="report-progress-records activity-progress-records">
             <h3>活动执行进展</h3>
             <table class="activity-progress-table"><tbody><tr v-for="(entry, index) in activity.progress" :key="entry.date" :class="progressReviewClass(activityReviewKey(activity.id), index === activity.progress.length - 1)" v-bind="reviewAttrs(index === activity.progress.length - 1)" v-on="reviewEvents(activityReviewKey(activity.id), index === activity.progress.length - 1)"><td>{{ entry.date }}</td><td>{{ entry.content }}</td></tr></tbody></table>
@@ -58,26 +62,21 @@
       </div>
     </section>
 
+    <green-home-report-sections v-if="report.detailType === 'grass'" part="community" :report="report" :comments="reviewComments" :audit="isAudit" @review="openReview" />
+
     <section id="report-other" class="panel detail-section">
-      <div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="read" /></span><div><h2>其他信息</h2><p v-if="isAudit && report.otherInformation.some(item => reviewComment('otherInformation.' + item.id))">点击信息小标题可添加或编辑审核意见</p></div></div>
+      <div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="read" /></span><div><h2>其他信息</h2><p v-if="isAudit && isCompletion && visibleOtherInformation.some(item => reviewComment(item.reviewKey))">点击信息小标题可添加或编辑审核意见</p></div></div>
       <div class="detail-module-content">
       <detail-rich-content class="rich-content">
-        <section v-for="item in report.otherInformation" :key="item.id" class="project-rich-section"><h3 :class="{ 'review-heading': isAudit }"><button v-if="isAudit" type="button" @click="openReview('otherInformation.' + item.id)">{{ item.title }}</button><template v-else>{{ item.title }}</template></h3><div class="rich-text-field" :class="reportReviewClass('otherInformation.' + item.id)"><p v-for="(paragraph, paragraphIndex) in item.paragraphs" :key="paragraphIndex">{{ paragraph }}</p></div></section>
+        <section v-for="item in visibleOtherInformation" :key="item.id" class="project-rich-section"><h3 :class="{ 'review-heading': isAudit }"><button v-if="isAudit" type="button" @click="openReview(item.reviewKey)">{{ item.title }}</button><template v-else>{{ item.title }}</template></h3><div class="rich-text-field" :class="reportReviewClass(item.reviewKey)"><p v-for="(paragraph, paragraphIndex) in item.paragraphs" :key="paragraphIndex">{{ paragraph }}</p></div></section>
       </detail-rich-content>
-      </div>
-    </section>
-
-    <section id="report-communication" class="panel detail-section">
-      <div class="detail-section-header"><span class="detail-section-icon cyan"><a-icon type="notification" /></span><div><h2>传播信息</h2><p v-if="isAudit && reviewComment('communication')">点击信息小标题可添加或编辑审核意见</p></div></div>
-      <div class="detail-module-content">
-      <detail-rich-content class="rich-content"><section class="project-rich-section"><h3 :class="{ 'review-heading': isAudit }"><button v-if="isAudit" type="button" @click="openReview('communication')">项目传播情况</button><template v-else>项目传播情况</template></h3><div class="rich-text-field" :class="reportReviewClass('communication')"><p>{{ report.communication }}</p></div></section></detail-rich-content>
       </div>
     </section>
 
     <section id="report-budget" class="panel detail-section">
       <div class="detail-section-header"><span class="detail-section-icon gold"><a-icon type="fund" /></span><div><h2>在线预算表</h2></div></div>
       <div class="detail-module-content">
-      <budget-review :audit="isAudit" :project-name="report.projectName" :budget="reportBudgetTemplate" />
+      <budget-review report-mode :audit="isAudit" :project-name="report.projectName" :budget="report.budget || reportBudgetTemplate" />
       </div>
     </section>
 
@@ -90,7 +89,7 @@
     </section>
 
     <section id="report-benefits" class="panel detail-section">
-      <div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="environment" /></span><div><h2>收益指标成果</h2><p v-if="isAudit && report.benefits.some(item => benefitReviewComment(item))">点击行任意位置可添加或编辑审核意见</p></div></div>
+      <div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="environment" /></span><div><h2>收益指标成果</h2><p v-if="isAudit && isCompletion && report.benefits.some(item => benefitReviewComment(item))">点击行任意位置可添加或编辑审核意见</p></div></div>
       <div class="detail-module-content">
       <div class="detail-table-wrap"><table class="detail-table report-benefits-table"><colgroup><col class="report-benefit-indicator" /><col /><col /><col /><col /><col /></colgroup><thead><tr><th>收益指标</th><th>分类</th><th>中文名</th><th>拉丁文名</th><th>受益数量</th><th>备注</th></tr></thead><tbody><tr v-for="benefit in report.benefits" :key="benefit.id" :class="[{ 'review-has-comment': isAudit && !!benefitReviewComment(benefit) }, { 'review-row-trigger': isAudit }]" v-bind="reviewAttrs(!!benefit.id)" v-on="reviewEvents('benefits.' + benefit.id, !!benefit.id)"><td><span @click="isAudit && benefitReviewComment(benefit) && $event.stopPropagation()" @keydown="isAudit && benefitReviewComment(benefit) && $event.stopPropagation()"><review-comment-label :comment="isAudit ? benefitReviewComment(benefit) : ''">{{ benefit.indicator }}</review-comment-label></span></td><td>{{ benefit.category }}</td><td>{{ benefit.name }}</td><td>{{ benefit.latinName }}</td><td>{{ benefit.quantity }}</td><td>{{ benefit.remark }}</td></tr><tr v-if="!report.benefits.length"><td colspan="6" class="report-empty">暂无收益指标成果</td></tr></tbody></table></div>
       </div>
@@ -149,6 +148,8 @@
 
 <script>
 import reports from '../mock/report-examples'
+import { normalizeReportArea } from '../mock/report-drafts'
+import GreenHomeReportSections from '../components/GreenHomeReportSections.vue'
 import { reviewText, rowReviewText } from '../utils/report-review'
 import ReviewCommentLabel from '../components/ReviewCommentLabel.vue'
 import BudgetReview from '../components/BudgetReview.vue'
@@ -176,18 +177,33 @@ const DetailRichContent = {
 
 export default {
   name: 'ReportDetail',
-  components: { BudgetReview, DetailRichContent, ReviewCommentLabel },
+  components: { BudgetReview, DetailRichContent, ReviewCommentLabel, GreenHomeReportSections },
   props: { reportId: { type: String, required: true }, mode: { type: String, default: 'view' }, type: { type: String, default: '' } },
   data () { return {
-    reports, auditForm: emptyForm(), formErrors: emptyErrors(), paymentOptions: [],
+    savedProjectArea: null, reports, auditForm: emptyForm(), formErrors: emptyErrors(), paymentOptions: [],
     paymentMismatchVisible: false, aidConfirmationVisible: false, auditPreviewVisible: false,
     reviewVisible: false, reviewField: '', reviewDraft: '', reviewComments: {},
     attachmentDialog: { visible: false, name: '', action: '' }, reportBudgetTemplate,
   } },
   computed: {
+    fundingLabel () { return this.report && this.report.projectType === '联合公益' ? '筹款目标' : '申请SEE基金会资金' },
     report () { const source = this.reports.find(item => item.id === this.reportId); return source && ['progress', 'completion'].includes(this.type) ? { ...source, type: this.type === 'completion' ? '结项报告' : '进展报告' } : source },
     isCompletion () { return this.report && this.report.type === '结项报告' },
     isAudit () { return this.mode === 'audit' },
+    aiInitialReview () {
+      const results = this.report && Array.isArray(this.report.aiInitialReview) ? this.report.aiInitialReview : []
+      return ['项目执行进展', '预算与请款', '收益成果', '票据检查结果'].map(section => {
+        const result = results.find(item => item.section === section)
+        return { section, content: result && typeof result.content === 'string' && result.content.trim() ? result.content : '暂无该类AI审核结果，请人工核验相关内容。' }
+      })
+    },
+    isOrganizationReport () { return this.report && ['green-home', 'grass'].includes(this.report.detailType) },
+    visibleOtherInformation () {
+      const items = this.report.otherInformation.filter(item => !this.isOrganizationReport || item.id !== 'followup' || item.paragraphs.some(text => text.trim())).map(item => ({ ...item, reviewKey: 'otherInformation.' + item.id }))
+      const riskIndex = items.findIndex(item => item.id === 'risks')
+      items.splice(riskIndex < 0 ? items.length : riskIndex + 1, 0, { id: 'communication', title: '项目传播情况', paragraphs: this.report.detailType === 'grass' ? this.report.communication.split(/\r?\n/) : [this.report.communication], reviewKey: 'communication' })
+      return items
+    },
     executedCents () { return this.report ? this.report.budgetRows.reduce((total, row) => total + row.executedCents, 0) : 0 },
     basicFields () {
       if (!this.report) return []
@@ -195,13 +211,24 @@ export default {
       const visibleField = field => this.isCompletion || !['beneficiaryAid', 'aidCompleted'].includes(field.key)
       const reviewableKeys = ['reportPeriod', 'request', 'reporter', 'contact', 'filledAt']
       if (this.isCompletion && this.report.beneficiaryAid) reviewableKeys.push('aidCompleted')
-      if (this.report.id === 'P-001006') return progressReportDetails['P-001006'].basic.fields.map((field, index) => ({ ...field, key: keys[index], reviewable: reviewableKeys.includes(keys[index]), wide: ['funding', 'filledAt'].includes(keys[index]) })).filter(visibleField)
+      if (this.report.id === 'P-001006') return progressReportDetails['P-001006'].basic.fields.map((field, index) => ({ ...field, ...(keys[index] === 'funding' ? { label: this.fundingLabel } : {}), key: keys[index], reviewable: reviewableKeys.includes(keys[index]), wide: ['funding', 'filledAt'].includes(keys[index]) })).filter(visibleField)
       const r = this.report
+      if (this.isOrganizationReport) return [
+        { key: 'organization', label: '申请机构', value: r.organization },
+        { key: 'organizationCode', label: 'CEGA机构信息码', value: r.organizationCode || '无' },
+        { key: 'projectArea', label: '项目实施区域', value: this.savedProjectArea === null ? normalizeReportArea({ detailType: r.detailType, projectArea: r.projectArea }).projectArea : this.savedProjectArea },
+        { key: 'projectPeriod', label: '项目执行周期', value: r.projectPeriod }, { key: 'reportPeriod', label: '本次报告涵盖时间', value: r.reportPeriod, reviewable: true },
+        { key: 'total', label: '预算总金额', value: this.moneyWithUppercase(r.totalCents) }, { key: 'funding', label: this.fundingLabel, value: this.moneyWithUppercase(r.fundingCents) },
+        { key: 'otherLocalFunding', label: '其他地方资助', value: r.otherLocalFunding, multiline: true },
+        { key: 'executed', label: '已执行预算金额（包括本报告提交的执行额）', value: this.moneyWithUppercase(this.executedCents) }, { key: 'executionRate', label: '项目预算总执行率', value: this.ratio(this.executedCents, r.totalCents) },
+        { key: 'request', label: '本次报告请款', value: r.requestedCents ? this.moneyWithUppercase(r.requestedCents) : '无需请款', reviewable: true }, { key: 'requestRate', label: '本报告通过后请款比例', value: this.ratio(r.paidCents + r.requestedCents, r.fundingCents) },
+        { key: 'reporter', label: '报告人', value: r.reporter, reviewable: true }, { key: 'contact', label: '联系方式', value: r.contact, reviewable: true }, { key: 'filledAt', label: '报告填写日期', value: r.filledAt, reviewable: true, wide: true }
+      ]
       return [
         { key: 'projectType', label: '项目类型', value: r.projectType }, { key: 'strategy', label: '项目策略', value: r.strategy },
         { key: 'issue', label: '项目议题', value: r.issue }, { key: 'organization', label: '执行机构', value: r.organization },
         { key: 'projectPeriod', label: '项目执行周期', value: r.projectPeriod }, { key: 'reportPeriod', label: '本报告执行周期', value: r.reportPeriod, reviewable: true },
-        { key: 'funding', label: '申请SEE基金会资金 / 筹款目标', value: this.moneyWithUppercase(r.fundingCents), wide: true },
+        { key: 'funding', label: this.fundingLabel, value: this.moneyWithUppercase(r.fundingCents), wide: true },
         { key: 'executed', label: '已执行预算金额（包括本报告提交的执行额）', value: this.moneyWithUppercase(this.executedCents) },
         { key: 'executionRate', label: '项目预算总执行率', value: this.ratio(this.executedCents, r.fundingCents) },
         { key: 'request', label: '本次报告请款', value: r.requestedCents ? this.moneyWithUppercase(r.requestedCents) : '无需请款', reviewable: true },
@@ -225,7 +252,16 @@ export default {
       return this.money(cents) + ' 元' + (uppercase[cents] ? '（' + uppercase[cents] + '）' : '')
     },
     ratio (amount, total) { return total ? (amount / total * 100).toFixed(1) + ' %' : '—' },
+    readSavedProjectArea () {
+      this.savedProjectArea = null
+      if (!this.report || !['green-home', 'grass'].includes(this.report.detailType)) return
+      try {
+        const saved = JSON.parse(localStorage.getItem('see-reviewed-report-draft-example-' + this.reportId))
+        if (saved && saved.exampleReportId === this.reportId) this.savedProjectArea = normalizeReportArea({ ...saved, detailType: this.report.detailType }).projectArea
+      } catch (error) { /* 无有效地址草稿时保留报告原值。 */ }
+    },
     resetReport () {
+      this.readSavedProjectArea()
       this.auditForm = emptyForm()
       this.formErrors = emptyErrors()
       this.closeDialogs()
@@ -306,6 +342,7 @@ export default {
       this.auditPreviewVisible = true
     }
   },
+  activated () { this.readSavedProjectArea() },
   deactivated () { this.closeDialogs() }
 }
 </script>
@@ -318,6 +355,7 @@ export default {
 .detail-module-content .attachment-list > div:first-child { min-height: 0; }
 
 #report-audit > .detail-module-content { background: #fff; }
+#report-budget, #report-budget > .detail-module-content { min-width: 0; }
 .report-benefits-table { table-layout: fixed; }
 .detail-module-content > .report-empty { padding: 0; margin: 0; }
 .review-dialog-actions { display: flex; justify-content: space-between; align-items: center; }
@@ -334,29 +372,28 @@ export default {
 .report-benefits-table tr.review-row-trigger:focus-visible { outline: 2px solid #ff7875; outline-offset: -2px; }
 .report-detail-page .output-title > span { flex: none; }
 
-.report-progress-records h3, .report-activity-label { margin: 0 0 12px; color: #18253c; }
+.report-progress-records h3 { margin: 0 0 12px; color: #18253c; }
 .report-progress-entry { position: relative; display: grid; grid-template-columns: 94px minmax(0, 1fr); align-items: start; gap: 16px; padding: 3px 0 11px; border-top: 0; }
 .report-progress-entry time { color: #18253c; font-variant-numeric: tabular-nums; line-height: 1.65; }
 .report-progress-entry p { position: relative; margin: 0; min-width: 0; color: #18253c; line-height: 1.65; overflow-wrap: anywhere; }
 
 .report-detail-page .output-standard > div { padding-top: 4px; }
 .output-progress-records { display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: start; gap: 8px; margin: 0; padding: 16px 18px; border: 0; border-radius: 0; background: #fff; }
-.output-progress-records > h3 { width: max-content; margin: 0; padding: 4px 9px; border-radius: 6px; color: #1677ff; background: #edf5ff; line-height: 1.55; }
+.output-progress-records > h3 { width: max-content; margin: 0; padding: 4px 9px; border-radius: 6px; color: #1677ff; background: #edf5ff; font-size: var(--text-14); line-height: 1.55; }
 .output-progress-list { min-width: 0; padding-top: 0; }
 .output-progress-list .report-progress-entry + .report-progress-entry { padding-top: 8px; border-top: 1px solid #edf1f5; }
 .output-progress-list .report-progress-entry p { white-space: normal; }
 
 .output-progress-list .report-progress-entry.is-latest { min-height: 48px; padding-top: 12px; padding-bottom: 12px; }
 .output-progress-list .report-progress-entry.is-latest time, .output-progress-list .report-progress-entry.is-latest p { color: #1677ff; }
-.report-detail-page .activity-progress-records { margin: 18px 0 0; padding: 0; border: 0; border-radius: 0; background: transparent; }
-.report-detail-page .activity-progress-records h3 { margin: 0 0 8px; color: #18a66a; }
-.activity-progress-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.report-detail-page .activity-progress-records { display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: start; gap: 8px; margin: 18px 0 0; padding: 0; border: 0; border-radius: 0; background: transparent; }
+.report-detail-page .activity-progress-records h3 { width: max-content; margin: 0; padding: 4px 9px; border-radius: 6px; color: #168b5a; background: #e8f8f0; font-size: var(--text-14); font-weight: 400; line-height: 1.55; }
+.activity-progress-table { min-width: 0; width: 100%; border-collapse: collapse; table-layout: fixed; }
 .activity-progress-table td { padding: 10px 0; color: #18253c; vertical-align: top; line-height: 1.65; overflow-wrap: anywhere; }
+.activity-progress-table tr:first-child td { padding-top: 4px; }
 .activity-progress-table tr + tr td { border-top: 1px solid #edf1f5; }
 .activity-progress-table tr.is-latest td { color: #18a66a; }
 .activity-progress-table td:first-child { width: 110px; padding-right: 16px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.report-activity-label { margin-bottom: 6px; }
-.report-detail-page .activity-card > p { color: #18253c; }
 .report-detail-page .activity-card > div:first-child > span { flex: none; }
 .report-detail-page .rich-text-field { overflow-wrap: anywhere; }
 .report-benefits-table td { overflow-wrap: anywhere; }

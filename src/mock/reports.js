@@ -1,4 +1,6 @@
 import { appliedProjects } from './projects'
+import greenHomeReport from './report-green-home'
+import grassReport from './report-grass'
 
 export const reportTypes = ['进展报告', '结项报告', '补充结项']
 export const reportStatuses = ['草稿', '进展待审', '进展已审', '进展通过', '进展放弃', '结项待审', '结项已审', '结项通过', '补充结项待审', '补充结项已审', '补充结项通过']
@@ -25,4 +27,6 @@ export const projectReports = examples.map(([reportType, status], index) => {
     submittedAt: status === '草稿' ? '' : `2026-09-0${index % 8 + 1} 17:32:08`,
     outcome: status.endsWith('通过') ? (index % 2 ? '已采纳' : '未采纳') : '-'
   }
-})
+}).concat([{ id: 'green-home-progress', projectId: 8, detailType: 'green-home', name: greenHomeReport.projectName, code: greenHomeReport.projectCode, reportCode: greenHomeReport.id, reportType: '进展报告', status: '进展待审', periodStart: '2025-01-01', periodEnd: '2025-11-23', submittedAt: greenHomeReport.editedAt, outcome: '-', cover: 'forest-table', icon: 'team' }])
+
+projectReports.push({ id: 'grass-progress', projectId: 9, detailType: 'grass', name: grassReport.projectName, code: grassReport.projectCode, reportCode: grassReport.id, reportType: '进展报告', status: '进展待审', periodStart: '2024-06-15', periodEnd: '2024-12-31', submittedAt: grassReport.editedAt, outcome: '-', cover: 'plateau', icon: 'team' })

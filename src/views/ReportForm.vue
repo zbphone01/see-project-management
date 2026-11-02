@@ -1,29 +1,41 @@
 <template>
   <section class="standard-edit-scope project-form-page report-form-page">
     <div class="detail-back-row"><a-button class="detail-back" @click="goBack"><a-icon type="arrow-left" /> 返回</a-button></div>
+    <div v-if="errors.length" class="validation-summary" role="alert"><a-icon type="exclamation-circle" /><div><strong>请完善以下内容后再提交</strong><ul><li v-for="message in errors" :key="message">{{ message }}</li></ul></div></div>
 
     <section class="panel form-section">
       <div class="detail-section-header"><span class="detail-section-icon"><a-icon type="profile" /></span><div><h2>{{ draft.type }}{{ draft.requestNeeded ? '（需要请款）' : '' }}</h2><p v-if="hasBasicReviewComments">请检查并修改标红的项目信息，点击信息小标题可查看具体审核意见</p><div class="basic-meta"><span class="project-code"><a-icon type="flag" /> {{ draft.projectCode }}</span><span class="report-code"><a-icon type="file-text" /> {{ draft.reportCode }}</span></div></div></div>
       <div class="form-fields description-grid">
         <div class="field full project-name-field project-name-item"><span class="basic-field-label">项目名称</span><span class="basic-field-value">{{ draft.projectName }}</span></div>
+        <template v-if="isOrganizationReport"><div class="field"><span class="basic-field-label">申请机构</span><span class="basic-field-value">{{ draft.organization }}</span></div><div class="field"><span class="basic-field-label">CEGA机构信息码</span><span class="basic-field-value">{{ draft.organizationCode || '无' }}</span></div><div class="field project-area-field" :class="reviewClass('projectArea')"><label for="report-project-area"><review-comment-label overlay-class-name="report-edit-review-comment" :comment="reviewComment('projectArea')">项目实施区域</review-comment-label></label><a-cascader id="report-project-area" v-model="draft.projectAreaPath" :options="projectAreaOptions" popup-class-name="standard-edit-dropdown" :display-render="displayRegion" placeholder="请选择地区" aria-label="项目实施区域省市区" @change="updateProjectArea" /><a-textarea v-model="draft.projectAreaAddress" :rows="1" :auto-size="{ minRows: 1 }" placeholder="详细地址（选填）" aria-label="项目实施区域详细地址" @input="updateProjectArea" /></div></template>
+        <template v-if="!isOrganizationReport">
         <div class="field"><span class="basic-field-label">项目类型</span><span class="basic-field-value">{{ draft.projectType }}</span></div>
         <div class="field"><span class="basic-field-label">项目策略</span><span class="basic-field-value">{{ draft.strategy }}</span></div>
         <div class="field"><span class="basic-field-label">项目议题</span><span class="basic-field-value">{{ draft.issue }}</span></div>
-        <div class="field"><span class="basic-field-label">执行机构</span><span class="basic-field-value">{{ draft.organization }}</span></div>
+        <div class="field"><span class="basic-field-label">{{ isOrganizationReport ? '申请机构' : '执行机构' }}</span><span class="basic-field-value">{{ draft.organization }}</span></div>
+        </template>
         <div class="field"><span class="basic-field-label">项目执行周期</span><span class="basic-field-value">{{ draft.projectPeriod }}</span></div>
-        <div class="field execution-period" :class="reviewClass('reportPeriod')"><label><review-comment-label overlay-class-name="report-edit-review-comment" :comment="reviewComment('reportPeriod')"><em>*</em> 本报告执行周期</review-comment-label></label><div class="date-pair"><a-date-picker class="execution-date-picker" :value="draft.periodStart || null" value-format="YYYY-MM-DD" format="YYYY-MM-DD" placeholder="请选择开始日期" aria-label="报告开始日期" :locale="executionDateLocale" :month-cell-content-render="renderExecutionMonth" dropdown-class-name="project-execution-calendar" @change="draft.periodStart = $event || ''" /><span>至</span><a-date-picker class="execution-date-picker" :value="draft.periodEnd || null" value-format="YYYY-MM-DD" format="YYYY-MM-DD" placeholder="请选择结束日期" aria-label="报告结束日期" :locale="executionDateLocale" :month-cell-content-render="renderExecutionMonth" dropdown-class-name="project-execution-calendar" @change="draft.periodEnd = $event || ''" /></div></div>
-        <div class="field full"><span class="basic-field-label">申请SEE基金会资金 / 筹款目标</span><span class="basic-field-value">{{ money(draft.funding) }} 元</span></div>
+        <div class="field execution-period" :class="reviewClass('reportPeriod')"><label><review-comment-label overlay-class-name="report-edit-review-comment" :comment="reviewComment('reportPeriod')"> {{ isOrganizationReport ? '本次报告涵盖时间' : '本报告执行周期' }}</review-comment-label></label><div class="date-pair"><a-date-picker class="execution-date-picker" :value="draft.periodStart || null" value-format="YYYY-MM-DD" format="YYYY-MM-DD" placeholder="请选择开始日期" aria-label="报告开始日期" :locale="executionDateLocale" :month-cell-content-render="renderExecutionMonth" dropdown-class-name="project-execution-calendar" @change="draft.periodStart = $event || ''" /><span>至</span><a-date-picker class="execution-date-picker" :value="draft.periodEnd || null" value-format="YYYY-MM-DD" format="YYYY-MM-DD" placeholder="请选择结束日期" aria-label="报告结束日期" :locale="executionDateLocale" :month-cell-content-render="renderExecutionMonth" dropdown-class-name="project-execution-calendar" @change="draft.periodEnd = $event || ''" /></div></div>
+        <div v-if="isOrganizationReport" class="field"><span class="basic-field-label">预算总金额</span><span class="basic-field-value">{{ draft.total }} 元</span></div>
+        <div class="field" :class="{ full: !isOrganizationReport }"><span class="basic-field-label">{{ fundingLabel }}</span><span class="basic-field-value">{{ money(draft.funding) }} 元</span></div>
+        <div v-if="isOrganizationReport" class="field"><span class="basic-field-label">其他地方资助</span><span class="basic-field-value basic-field-multiline">{{ draft.otherLocalFunding }}</span></div>
         <div class="field"><span class="basic-field-label">已执行预算金额（包括本报告提交的执行额）</span><span class="basic-field-value">{{ money(draft.executed) }} 元</span></div>
         <div class="field"><span class="basic-field-label">项目预算总执行率</span><span class="basic-field-value">{{ executionRate }}</span></div>
         <div class="field request-field" :class="reviewClass('request')"><label><review-comment-label overlay-class-name="report-edit-review-comment" :comment="reviewComment('request')">本次报告请款</review-comment-label></label><div class="request-control"><a-checkbox v-model="draft.requestNeeded" @change="changeRequestNeeded">需要请款</a-checkbox><div class="amount-input"><a-input-number v-model="draft.requested" :disabled="!draft.requestNeeded" :min="0" :precision="2" placeholder="请输入请款金额" /><span>元</span></div></div></div>
         <div class="field"><span class="basic-field-label">本报告通过后请款比例</span><span class="basic-field-value">{{ requestRate }}</span></div>
         <div v-if="isCompletion" class="field"><span class="basic-field-label">直接或委托其他组织资助给受益人款物</span><span class="basic-field-value">{{ draft.beneficiaryAid }}</span></div>
-        <div v-if="isCompletion" class="field" :class="draft.beneficiaryAid === '是' ? reviewClass('aidCompleted') : {}"><label><review-comment-label overlay-class-name="report-edit-review-comment" :comment="draft.beneficiaryAid === '是' ? reviewComment('aidCompleted') : ''"><em>*</em> 已完成对受益人款物的资助</review-comment-label></label><div class="choice-with-hint"><a-radio-group v-model="draft.aidCompleted" class="binary-choice" :disabled="draft.beneficiaryAid !== '是'"><a-radio value="否">否</a-radio><a-radio value="是">是</a-radio></a-radio-group><span v-if="!draft.aidCompleted" class="empty-hint">请选择资助完成状态</span></div></div>
-        <div class="field" :class="reviewClass('reporter')"><label><review-comment-label overlay-class-name="report-edit-review-comment" :comment="reviewComment('reporter')"><em>*</em> 报告人</review-comment-label></label><a-input v-model="draft.reporter" placeholder="请填写报告人姓名" /></div>
-        <div class="field" :class="reviewClass('contact')"><label><review-comment-label overlay-class-name="report-edit-review-comment" :comment="reviewComment('contact')"><em>*</em> 联系方式</review-comment-label></label><a-input v-model="draft.contact" placeholder="请填写联系电话" /></div>
-        <div class="field full report-filled-date" :class="reviewClass('filledAt')"><div class="report-filled-date-control"><label><review-comment-label overlay-class-name="report-edit-review-comment" :comment="reviewComment('filledAt')"><em>*</em> 报告填写日期</review-comment-label></label><input v-model="draft.filledAt" :type="draft.filledAt ? 'date' : 'text'" placeholder="请选择报告填写日期" class="ant-input" aria-label="报告填写日期" @focus="$event.target.type = 'date'" @blur="!draft.filledAt && ($event.target.type = 'text')" /></div></div>
+        <div v-if="isCompletion" class="field" :class="draft.beneficiaryAid === '是' ? reviewClass('aidCompleted') : {}"><label><review-comment-label overlay-class-name="report-edit-review-comment" :comment="draft.beneficiaryAid === '是' ? reviewComment('aidCompleted') : ''"> 已完成对受益人款物的资助</review-comment-label></label><div class="choice-with-hint"><a-radio-group v-model="draft.aidCompleted" class="binary-choice" :disabled="draft.beneficiaryAid !== '是'"><a-radio value="否">否</a-radio><a-radio value="是">是</a-radio></a-radio-group><span v-if="!draft.aidCompleted" class="empty-hint">请选择资助完成状态</span></div></div>
+        <div class="field" :class="reviewClass('reporter')"><label><review-comment-label overlay-class-name="report-edit-review-comment" :comment="reviewComment('reporter')"> 报告人</review-comment-label></label><a-input v-model="draft.reporter" placeholder="请填写报告人姓名" /></div>
+        <div class="field" :class="reviewClass('contact')"><label><review-comment-label overlay-class-name="report-edit-review-comment" :comment="reviewComment('contact')"> 联系方式</review-comment-label></label><a-input v-model="draft.contact" placeholder="请填写联系电话" /></div>
+        <div class="field full report-filled-date" :class="reviewClass('filledAt')"><div class="report-filled-date-control"><label><review-comment-label overlay-class-name="report-edit-review-comment" :comment="reviewComment('filledAt')"> 报告填写日期</review-comment-label></label><input v-model="draft.filledAt" :type="draft.filledAt ? 'date' : 'text'" placeholder="请选择报告填写日期" class="ant-input" aria-label="报告填写日期" @focus="$event.target.type = 'date'" @blur="!draft.filledAt && ($event.target.type = 'text')" /></div></div>
       </div>
     </section>
+
+    <green-home-report-sections v-if="isOrganizationReport" part="organization" :report="draft" :comments="draft.reviewComments" editing />
+
+    <green-home-report-sections v-if="isOrganizationReport" :report="draft" :comments="draft.reviewComments" editing />
+
+    <green-home-report-sections v-if="draft.detailType === 'grass'" part="community" :report="draft" :comments="draft.reviewComments" editing />
 
     <section class="panel form-section detail-section report-progress-section">
       <div class="detail-section-header"><span class="detail-section-icon orange"><a-icon type="project" /></span><div><h2>项目执行进展</h2><p v-if="hasProgressReviewComments">请检查并修改标红的最新进展内容，点击最新进展日期可查看具体审核意见</p></div></div>
@@ -36,7 +48,7 @@
           <section v-for="(activity, activityIndex) in output.activities" :key="activity.id" class="activity-card">
             <div><span>活动 {{ outputIndex + 1 }}.{{ activityIndex + 1 }}</span><strong>{{ activity.name }}</strong></div>
             <dl><div><dt>活动时间</dt><dd>{{ activity.period }}</dd></div><div><dt>活动地点</dt><dd>{{ activity.location }}</dd></div><div><dt>执行人员</dt><dd>{{ activity.people }}</dd></div></dl>
-            <h3 class="report-activity-label">活动内容</h3><p>{{ activity.content }}</p>
+            <p>{{ activity.content }}</p>
             <div class="report-progress-records activity-progress-records"><h3>活动执行进展</h3><table class="activity-progress-table"><tbody><tr v-for="entry in activity.progressHistory" :key="entry.date"><td>{{ entry.date }}</td><td>{{ entry.content }}</td></tr><tr class="is-latest"><td :class="{ 'report-date-hint': !draft.filledAt }"><review-comment-label overlay-class-name="report-edit-review-comment" :comment="progressReviewComment('activities', activity)">{{ draft.filledAt || '同报告填写日期' }}</review-comment-label></td><td><a-textarea v-model="activity.progress" :class="progressReviewClass('activities', activity)" :rows="2" placeholder="请填写本报告周期内的活动执行进展" /></td></tr></tbody></table></div>
           </section>
         </article>
@@ -47,14 +59,14 @@
     <section class="panel form-section other-info-section">
       <div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="read" /></span><div><h2>其他信息</h2><p v-if="hasOtherReviewComments">请检查并修改标红的项目信息，点击信息小标题可查看具体审核意见</p></div></div>
       <div class="detail-module-content report-module-content">
-      <div class="rich-fields"><div v-for="field in richFields" :key="field.key" class="field"><label><review-comment-label overlay-class-name="report-edit-review-comment" :comment="reviewComment('otherInformation.' + field.key)">{{ field.label }}</review-comment-label></label><rich-editor v-model="draft[field.key]" :label="field.label" :class="reviewClass('otherInformation.' + field.key)" /></div></div>
+      <div class="rich-fields"><div v-for="field in richFields" :key="field.key" class="field"><label><review-comment-label overlay-class-name="report-edit-review-comment" :comment="reviewComment(field.reviewKey)">{{ field.label }}</review-comment-label></label><rich-editor v-model="draft[field.key]" :label="field.label" :placeholder="field.placeholder" :class="reviewClass(field.reviewKey)" /></div></div>
       </div>
     </section>
 
-    <section class="panel form-section communication-section">
+    <section v-if="!isOrganizationReport" class="panel form-section communication-section">
       <div class="detail-section-header"><span class="detail-section-icon cyan"><a-icon type="notification" /></span><div><h2>传播信息</h2><p v-if="reviewComment('communication')">请检查并修改标红的项目信息，点击信息小标题可查看具体审核意见</p></div></div>
       <div class="detail-module-content report-module-content">
-      <div class="rich-fields"><div class="field"><label><review-comment-label overlay-class-name="report-edit-review-comment" :comment="reviewComment('communication')">项目传播情况</review-comment-label></label><rich-editor v-model="draft.communication" :class="reviewClass('communication')" label="项目传播情况" /></div></div>
+      <div class="rich-fields"><div class="field"><label><review-comment-label overlay-class-name="report-edit-review-comment" :comment="reviewComment('communication')">项目传播情况</review-comment-label></label><rich-editor v-model="draft.communication" :class="reviewClass('communication')" label="项目传播情况" placeholder="项目故事、相关媒体报道、项目传播内容的链接，以及其他与项目执行有关的内容均可" /></div></div>
       </div>
     </section>
 
@@ -98,7 +110,7 @@
         <div v-for="field in activeBenefitFields" :key="field.key" class="modal-field"><label :for="'benefit-' + field.key">{{ field.label }}</label><div class="benefit-control">
           <a-select dropdown-class-name="standard-edit-dropdown" v-if="field.kind === 'select'" :id="'benefit-' + field.key" v-model="benefitDraft[field.key]" :disabled="benefitFieldLocked(field)" placeholder="请选择" :show-search="field.key === 'name'" option-filter-prop="children" @change="benefitOptionChanged(field)"><a-select-option v-for="option in benefitOptions(field)" :key="option" :value="option">{{ option }}</a-select-option></a-select>
           <a-input v-if="field.kind === 'select' && benefitDraft[field.key] === '其他'" v-model="benefitDraft[field.key + 'Other']" :disabled="benefitFieldLocked(field)" placeholder="选择其他时填写" />
-          <a-cascader popup-class-name="standard-edit-dropdown" v-else-if="field.kind === 'region'" :id="'benefit-' + field.key" v-model="benefitDraft.regionPath" :options="benefitRegions" :disabled="benefitFieldLocked(field)" placeholder="请选择" @change="setBenefitRegion" />
+          <a-cascader popup-class-name="standard-edit-dropdown" v-else-if="field.kind === 'region'" :id="'benefit-' + field.key" v-model="benefitDraft.regionPath" :options="benefitRegions" :display-render="displayRegion" :disabled="benefitFieldLocked(field)" placeholder="请选择" @change="setBenefitRegion" />
           <div v-else-if="field.kind === 'number'" class="benefit-number"><a-input-number :id="'benefit-' + field.key" v-model="benefitDraft[field.key]" :min="0" :precision="field.integer ? 0 : 2" :placeholder="(benefitSectionKey === 'area' && field.key === 'planting') || (benefitSectionKey === 'species' && field.key === 'quantity') || (benefitSectionKey === 'people' && field.key === 'volunteers') ? '选填' : '请输入'" /><template v-if="benefitSectionKey === 'area' && field.key === 'area'"><span v-if="benefitDraft.ecosystem === '海洋'">平方公里</span><a-select dropdown-class-name="standard-edit-dropdown" v-else v-model="benefitDraft.areaUnit" class="benefit-area-unit" :disabled="benefitMode === 'edit'" aria-label="面积数量单位"><a-select-option value="亩">亩</a-select-option><a-select-option value="公顷">公顷</a-select-option><a-select-option v-if="benefitMode === 'edit' && benefitDraft.areaUnit === '平方公里'" value="平方公里">平方公里</a-select-option></a-select></template><span v-else-if="benefitSectionKey === 'weight' && field.key === 'weight'">{{ benefitDraft.weightUnit }}</span><span v-else-if="field.unit">{{ field.unit }}</span></div>
           <div v-else-if="field.kind === 'file'" class="benefit-file"><a-upload :before-upload="selectBenefitFile" :show-upload-list="false" :disabled="benefitFieldLocked(field)" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"><a-button icon="upload" :disabled="benefitFieldLocked(field)">点击上传</a-button></a-upload><span v-if="benefitDraft.file">{{ benefitDraft.file }}</span></div>
           <a-textarea v-else-if="field.key === 'remark'" :id="'benefit-' + field.key" v-model="benefitDraft[field.key]" :rows="2" :placeholder="benefitSectionKey === 'area' ? '填写种植数量后必填' : benefitSectionKey === 'species' ? '填写受益数量后必填' : '选填'" />
@@ -111,11 +123,14 @@
 </template>
 
 <script>
-import { loadReportDraft, loadReviewedReportExample, saveReportDraft } from '../mock/report-drafts'
+import { loadReportDraft, loadReviewedReportExample, saveReportDraft, normalizeReportArea } from '../mock/report-drafts'
 import { reviewText, rowReviewText } from '../utils/report-review'
 import ReviewCommentLabel from '../components/ReviewCommentLabel.vue'
+import GreenHomeReportSections from '../components/GreenHomeReportSections.vue'
 import ProjectBudgetEditor from '../components/ProjectBudgetEditor.vue'
 import { budgetKey, readBudgetContext, normalizeBudget } from '../utils/project-budget'
+import { reportRequiredErrors, reportOtherFields } from '../utils/report-validation'
+import { createRegionOptions, parseRegionText, normalizeRegionPath, formatRegionPath, regionPathComplete } from '../utils/administrative-regions'
 import datePickerZhCN from 'ant-design-vue/es/date-picker/locale/zh_CN'
 
 function cleanRichText (html) {
@@ -132,7 +147,7 @@ function cleanRichText (html) {
   return source.innerHTML
 }
 const RichEditor = {
-  props: ['value', 'label'],
+  props: ['value', 'label', 'placeholder'],
   data () { return { composing: false, lastEmittedValue: null, lastInputHtml: null } },
   mounted () { this.$refs.editor.innerHTML = cleanRichText(this.value || '') },
   watch: {
@@ -183,7 +198,7 @@ const RichEditor = {
     const actions = [['bold', 'B', '加粗'], ['italic', 'I', '斜体'], ['underline', 'U', '下划线'], ['insertUnorderedList', '• 列表', '无序列表'], ['insertOrderedList', '1. 列表', '有序列表'], ['removeFormat', '清除格式', '清除格式']]
     const toolbar = actions.map(([command, text, label]) => h('button', { attrs: { type: 'button', title: label, 'aria-label': this.label + '：' + label }, on: { mousedown: event => event.preventDefault(), click: () => this.command(command) } }, text))
     toolbar.push(h('button', { attrs: { type: 'button', title: '插入图片', 'aria-label': this.label + '：插入图片' }, on: { mousedown: event => event.preventDefault(), click: this.chooseImage } }, '图片'))
-    return h('div', { class: 'rich-editor' }, [h('div', { class: 'rich-toolbar' }, toolbar), h('input', { ref: 'imageInput', class: 'rich-image-input', attrs: { type: 'file', accept: 'image/png,image/jpeg,image/gif,image/webp', 'aria-label': this.label + '：选择图片' }, on: { change: this.insertImage } }), h('div', { ref: 'editor', class: 'rich-editable', attrs: { contenteditable: 'true', role: 'textbox', 'aria-label': this.label, 'aria-multiline': 'true' }, on: { input: this.update, compositionstart: this.compositionStart, compositionend: this.compositionEnd, paste: this.paste, drop: event => event.preventDefault() } })])
+    return h('div', { class: 'rich-editor' }, [h('div', { class: 'rich-toolbar' }, toolbar), h('input', { ref: 'imageInput', class: 'rich-image-input', attrs: { type: 'file', accept: 'image/png,image/jpeg,image/gif,image/webp', 'aria-label': this.label + '：选择图片' }, on: { change: this.insertImage } }), h('div', { ref: 'editor', class: 'rich-editable', attrs: { contenteditable: 'true', role: 'textbox', 'aria-label': this.label, 'data-placeholder': this.placeholder || '请填写' + this.label, 'aria-multiline': 'true' }, on: { input: this.update, compositionstart: this.compositionStart, compositionend: this.compositionEnd, paste: this.paste, drop: event => event.preventDefault() } })])
   }
 }
 const emptyBenefit = () => ({ indicator: '', category: '', name: '', latinName: '', quantity: '', remark: '' })
@@ -214,44 +229,55 @@ const benefitSchemas = {
   document: [benefitText('name', '名称'), benefitSelect('type', '类型', ['行业标准', '科研论文', '提案', '倡导文件', 'SEE支持出版——公开发行出版物', 'SEE合作出版——公开发行出版物', 'SEE自行出版——公开发行出版物', '其他']), benefitText('year', '年份'), benefitSelect('materialType', '材料类型', ['电子版', '出版物（版号）']), benefitText('edition', '版号', false), { key: 'file', label: '上传材料', kind: 'file', required: false }, benefitRemark]
 }
 const benefitSpecies = [{ name: '蜂猴', latinName: 'Nycticebus bengalensis', category: '保护动物' }, { name: '东黑冠长臂猿', latinName: 'Nomascus nasutus', category: '保护动物' }, { name: '银杏', latinName: 'Ginkgo biloba', category: '保护植物' }]
-const benefitRegions = [
-  { value: '四川省', label: '四川省', children: [{ value: '雅安市', label: '雅安市', children: [{ value: '荥经县', label: '荥经县' }] }, { value: '成都市', label: '成都市', children: [{ value: '锦江区', label: '锦江区' }, { value: '青羊区', label: '青羊区' }] }] },
-  { value: '青海省', label: '青海省', children: [{ value: '玉树藏族自治州', label: '玉树藏族自治州', children: [{ value: '囊谦县', label: '囊谦县' }, { value: '治多县扎河乡', label: '治多县扎河乡' }] }] },
-  { value: '云南省', label: '云南省', children: [{ value: '昆明市', label: '昆明市', children: [{ value: '五华区', label: '五华区' }, { value: '盘龙区', label: '盘龙区' }] }] }
-]
 
 export default {
   name: 'ReportForm',
-  components: { ProjectBudgetEditor, RichEditor, ReviewCommentLabel },
+  components: { ProjectBudgetEditor, RichEditor, ReviewCommentLabel, GreenHomeReportSections },
   props: { projectId: { type: [String, Number], required: true }, type: { type: String, default: 'progress' } },
-  data () { return { draft: ['P-001006', 'P-001007'].includes(this.$route.query.example) ? loadReviewedReportExample(this.projectId, this.$route.query.example) : loadReportDraft(this.projectId, this.type, this.$route.query.draftId), benefitSections: JSON.parse(JSON.stringify(benefitSections)), attachmentVisible: false, attachmentDraft: { category: undefined, file: null, error: '' }, benefitVisible: false, benefitMode: 'new', benefitErrors: {}, benefitOriginal: null, benefitRegions, benefitSectionKey: null, benefitDraft: emptyBenefit(), benefitReviewVisible: false, benefitReviewText: '' } },
+  data () { return { savedSnapshot: '', errors: [], draft: ['P-001006', 'P-001007', 'P-001008', 'P-001009'].includes(this.$route.query.example) ? loadReviewedReportExample(this.projectId, this.$route.query.example, ['green-home-fresh', 'grass-fresh'].includes(this.$route.query.draftId)) : loadReportDraft(this.projectId, this.type, this.$route.query.draftId), benefitSections: JSON.parse(JSON.stringify(benefitSections)), attachmentVisible: false, attachmentDraft: { category: undefined, file: null, error: '' }, benefitVisible: false, benefitMode: 'new', benefitErrors: {}, benefitOriginal: null, benefitSectionKey: null, benefitDraft: emptyBenefit(), benefitReviewVisible: false, benefitReviewText: '' } },
   created () {
     this.draft.type = this.type === 'completion' ? '结项报告' : '进展报告'
     if (this.draft.benefitsInitialized || this.draft.exampleReportId || this.draft.benefits.length) this.benefitSections.forEach(section => { section.rows = this.draft.benefits.filter(row => row.sectionKey === section.key || (!row.sectionKey && row.indicator === section.title)) })
+    this.captureSavedSnapshot()
   },
   activated () {
     if (String(this.draft.projectId) !== String(this.projectId) || this.draft.draftId !== this.$route.query.draftId || this.draft.type !== (this.type === 'completion' ? '结项报告' : '进展报告') || this.draft.exampleReportId !== this.$route.query.example) {
-      this.draft = ['P-001006', 'P-001007'].includes(this.$route.query.example) ? loadReviewedReportExample(this.projectId, this.$route.query.example) : loadReportDraft(this.projectId, this.type, this.$route.query.draftId)
+      this.errors = []
+      this.draft = ['P-001006', 'P-001007', 'P-001008', 'P-001009'].includes(this.$route.query.example) ? loadReviewedReportExample(this.projectId, this.$route.query.example, ['green-home-fresh', 'grass-fresh'].includes(this.$route.query.draftId)) : loadReportDraft(this.projectId, this.type, this.$route.query.draftId)
       this.benefitSections = JSON.parse(JSON.stringify(benefitSections))
       if (this.draft.benefitsInitialized || this.draft.exampleReportId || this.draft.benefits.length) this.benefitSections.forEach(section => { section.rows = this.draft.benefits.filter(row => row.sectionKey === section.key || (!row.sectionKey && row.indicator === section.title)) })
+      this.captureSavedSnapshot()
     }
     this.draft.type = this.type === 'completion' ? '结项报告' : '进展报告'
+    if (this.isOrganizationReport && !this.draft.fresh) {
+      try {
+        const audit = JSON.parse(localStorage.getItem('see-report-review-example-' + this.draft.exampleReportId))
+        if (audit && audit.reviewComments && typeof audit.reviewComments === 'object' && !Array.isArray(audit.reviewComments)) this.$set(this.draft, 'reviewComments', { ...audit.reviewComments })
+      } catch (error) { /* 无有效本地审核数据时保留草稿意见。 */ }
+    }
     const context = readBudgetContext(budgetKey({ params: { id: this.projectId }, query: { ...this.$route.query, reportBudget: '1' } }))
-    if (context && context.report) { this.draft.budget = normalizeBudget(context.draft.budget); this.draft.executed = context.draft.executed }
+    if (context && context.report) { this.draft.budget = normalizeBudget(context.draft.budget); this.draft.executed = context.draft.executed; this.captureSavedSnapshot() }
   },
   beforeRouteUpdate (to, from, next) {
     if (to.query.draftId !== from.query.draftId || to.params.id !== from.params.id || to.query.type !== from.query.type || to.query.example !== from.query.example) {
-      this.draft = ['P-001006', 'P-001007'].includes(to.query.example) ? loadReviewedReportExample(to.params.id, to.query.example) : loadReportDraft(to.params.id, to.query.type === 'completion' ? 'completion' : 'progress', to.query.draftId)
+      this.errors = []
+      this.draft = ['P-001006', 'P-001007', 'P-001008', 'P-001009'].includes(to.query.example) ? loadReviewedReportExample(to.params.id, to.query.example, ['green-home-fresh', 'grass-fresh'].includes(to.query.draftId)) : loadReportDraft(to.params.id, to.query.type === 'completion' ? 'completion' : 'progress', to.query.draftId)
       if (['progress', 'completion'].includes(to.query.type)) this.draft.type = to.query.type === 'completion' ? '结项报告' : '进展报告'
       this.benefitSections = JSON.parse(JSON.stringify(benefitSections))
       if (this.draft.benefitsInitialized || this.draft.exampleReportId || this.draft.benefits.length) this.benefitSections.forEach(section => { section.rows = this.draft.benefits.filter(row => row.sectionKey === section.key || (!row.sectionKey && row.indicator === section.title)) })
+      this.captureSavedSnapshot()
     }
     next()
   },
   computed: {
+    fundingLabel () { return this.draft.projectType === '联合公益' ? '筹款目标' : '申请SEE基金会资金' },
+    projectAreaOptions () { return createRegionOptions([this.draft.projectAreaPath || []]) },
+    benefitRegions () { return createRegionOptions([this.benefitDraft.regionPath || []]) },
+    dirty () { return !!this.savedSnapshot && JSON.stringify({ draft: this.draft, benefits: this.benefitSections }) !== this.savedSnapshot },
+    isOrganizationReport () { return ['green-home', 'grass'].includes(this.draft.detailType) },
     executionDateLocale () { return { ...datePickerZhCN, lang: { ...datePickerZhCN.lang, monthFormat: 'M月' } } },
-    hasBasicReviewComments () { return ['reportPeriod', 'request', 'reporter', 'contact', 'filledAt'].concat(this.isCompletion && this.draft.beneficiaryAid === '是' ? ['aidCompleted'] : []).some(key => !!this.reviewComment(key)) },
-    richFields () { return [{ key: 'followup', label: '后续项目活动安排' }, { key: 'risks', label: '项目风险及其影响' }, { key: 'summary', label: '此阶段项目的优点、不足及其他需要说明的情况' }] },
+    hasBasicReviewComments () { return ['reportPeriod', 'request', 'reporter', 'contact', 'filledAt'].concat(this.isOrganizationReport ? ['projectArea'] : []).concat(this.isCompletion && this.draft.beneficiaryAid === '是' ? ['aidCompleted'] : []).some(key => !!this.reviewComment(key)) },
+    richFields () { return reportOtherFields(this.isOrganizationReport).filter(field => this.isOrganizationReport || field.key !== 'communication') },
     hasOtherReviewComments () { return this.richFields.some(field => !!this.reviewComment('otherInformation.' + field.key)) },
     hasBenefitReviewComments () { return this.benefitSections.some(section => section.rows.some(row => !!this.benefitReviewComment(section, row))) },
     hasProgressReviewComments () { return this.draft.outputs.some(output => !!this.progressReviewComment('outputs', output) || output.activities.some(activity => !!this.progressReviewComment('activities', activity))) },
@@ -260,14 +286,27 @@ export default {
     executionRate () { return this.ratio(this.draft.executed, this.draft.funding) },
     requestRate () { return this.ratio(Number(this.draft.paid || 0) + (this.draft.requestNeeded ? Number(this.draft.requested || 0) : 0), this.draft.funding) }
   },
+  beforeRouteLeave (to, from, next) {
+    if (['project-budget-form', 'project-personnel-form'].includes(to.name) && to.query.reportBudget && budgetKey(to) === budgetKey({ params: from.params, query: { ...from.query, reportBudget: '1' } })) { next(); return }
+    if (!this.dirty) { next(); return }
+    this.$confirm({ title: '填写内容尚未保存', content: '是否保存为本地草稿后离开？', maskClosable: false, keyboard: false, okText: '保存并离开', cancelText: '放弃填写', onOk: () => { if (this.save()) next(); else next(false) }, onCancel: () => {
+      const saved = JSON.parse(this.savedSnapshot)
+      this.draft = saved.draft; this.benefitSections = saved.benefits
+      next()
+    } })
+  },
   methods: {
+    displayRegion ({ labels }) { return formatRegionPath(labels) },
+    updateProjectArea () { normalizeReportArea(this.draft) },
+    captureSavedSnapshot () { this.savedSnapshot = JSON.stringify({ draft: this.draft, benefits: this.benefitSections }) },
     openReportBudget (event) {
       this.draft.benefits = this.benefitSections.reduce((rows, section) => rows.concat(section.rows.map(row => ({ ...row, sectionKey: section.key, indicator: section.title }))), [])
       this.draft.benefitsInitialized = true
       const query = { ...this.$route.query, reportBudget: '1', type: this.type, sheet: event.title === '人力成本分摊表' ? 'personnel' : event.title === '预算及执行汇总表' ? 'summary' : 'detail', mode: event.action === '填写执行' ? 'execution' : event.action === '预算调整' ? 'adjustment' : 'view' }
       const key = budgetKey({ params: { id: this.projectId }, query })
       try {
-        saveReportDraft(this.draft)
+        this.draft.savedAt = saveReportDraft(this.draft)
+        this.captureSavedSnapshot()
         sessionStorage.setItem('see-budget-context:' + key, JSON.stringify({ report: true, draft: this.draft, returnTo: { name: 'report-form', params: { id: this.projectId }, query: { ...this.$route.query } } }))
         this.$router.push({ name: 'project-budget-form', params: { id: this.projectId }, query })
       } catch (error) { this.$message.error('无法保存报告预算上下文，请保留当前页面后重试') }
@@ -284,8 +323,24 @@ export default {
     money (value) { return (Number(value) || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) },
     ratio (value, total) { return Number(total) ? (Number(value || 0) / Number(total) * 100).toFixed(1) + ' %' : '—' },
     changeRequestNeeded (event) { if (!event.target.checked) this.draft.requested = 0 },
-    save () { this.draft.benefits = this.benefitSections.reduce((rows, section) => rows.concat(section.rows.map(row => ({ ...row, sectionKey: section.key, indicator: section.title }))), []); this.draft.benefitsInitialized = true; this.draft.savedAt = saveReportDraft(this.draft); this.$message.success('报告草稿已保存到当前浏览器') },
-    submit () { this.$confirm({ title: `确认提交${this.isCompletion ? '结项' : '进展'}报告`, content: '提交报告后，项目状态将变更为进展或结项待审。如果本报告同时请款，报告审核通过后基金会进入付款流程，项目状态将自动变更为进展或结项已审。', maskClosable: false, okText: '确认提交', cancelText: '继续编辑' }) },
+    save () {
+      this.draft.benefits = this.benefitSections.reduce((rows, section) => rows.concat(section.rows.map(row => ({ ...row, sectionKey: section.key, indicator: section.title }))), [])
+      this.draft.benefitsInitialized = true
+      try { this.draft.savedAt = saveReportDraft(this.draft); this.captureSavedSnapshot(); this.$message.success('报告草稿已保存到当前浏览器'); return true }
+      catch (error) { this.$message.error('保存失败，请保留当前页面后重试'); return false }
+    },
+    submit () {
+      this.errors = reportRequiredErrors(this.draft, this.benefitSections, value => {
+        const element = document.createElement('div')
+        element.innerHTML = cleanRichText(value || '')
+        return !!element.textContent.replace(/[\s\u200b\u200c\u200d\ufeff]/g, '') || Array.from(element.querySelectorAll('img')).some(image => !!image.getAttribute('src'))
+      })
+      if (this.errors.length) {
+        this.$nextTick(() => this.$el.querySelector('.validation-summary').scrollIntoView({ behavior: 'smooth', block: 'center' }))
+        return
+      }
+      this.$confirm({ title: `确认提交${this.isCompletion ? '结项' : '进展'}报告`, content: '提交报告后，项目状态将变更为进展或结项待审。如果本报告同时请款，报告审核通过后基金会进入付款流程，项目状态将自动变更为进展或结项已审。', maskClosable: false, okText: '确认提交', cancelText: '继续编辑' })
+    },
     openAttachmentModal () { this.attachmentDraft = { category: undefined, file: null, error: '' }; this.attachmentVisible = true },
     selectAttachment (file) { if (!/\.(pdf|docx?|xlsx?|png|jpe?g)$/i.test(file.name) || file.size > 20 * 1024 * 1024) { this.attachmentDraft.error = '请选择 20 MB 以内的 PDF、Word、Excel 或图片文件'; this.attachmentDraft.file = null; return false }; this.attachmentDraft.file = file; this.attachmentDraft.error = ''; return false },
     confirmAttachment () { const { category, file } = this.attachmentDraft; if (!category || !file) { this.attachmentDraft.error = !category ? '请选择附件类型' : '请选择需要上传的文件'; return }; this.draft.attachments.push({ id: `attachment-${Date.now()}`, name: file.name, size: file.size, type: file.type, category, time: new Date().toLocaleString('zh-CN', { hour12: false }) }); this.attachmentVisible = false; this.$message.success('附件已加入，请存为草稿以保存附件列表') },
@@ -310,7 +365,7 @@ export default {
         if (row.category === '动物') this.benefitDraft.category = '保护动物'
         if (row.category === '植物') this.benefitDraft.category = '保护植物'
       }
-      if (row && row.region) this.benefitDraft.regionPath = row.region.split('-')
+      if (row && row.region) this.benefitDraft.regionPath = parseRegionText(row.region)
       this.activeBenefitFields.filter(field => field.kind === 'select').forEach(field => {
         if (this.benefitDraft[field.key] && this.benefitOptions(field).indexOf(this.benefitDraft[field.key]) < 0) {
           this.benefitDraft[field.key + 'Other'] = this.benefitDraft[field.key]
@@ -328,7 +383,7 @@ export default {
       if (field.key === 'category') { this.benefitDraft.name = undefined; this.benefitDraft.nameOther = ''; this.benefitDraft.latinName = '' }
       if (field.key === 'name') { const species = benefitSpecies.find(item => item.name === this.benefitDraft.name); this.benefitDraft.latinName = species ? species.latinName : '' }
     },
-    setBenefitRegion (values) { this.benefitDraft.region = values.join('-') },
+    setBenefitRegion (values) { this.benefitDraft.regionPath = normalizeRegionPath(values); this.benefitDraft.region = formatRegionPath(values) },
     selectBenefitFile (file) {
       if (!/\.(pdf|docx?|xlsx?|png|jpe?g)$/i.test(file.name) || file.size > 20 * 1024 * 1024) { this.$set(this.benefitErrors, 'file', '请选择20MB以内的PDF、Word、Excel或图片文件'); return false }
       this.benefitDraft.file = file.name; this.$delete(this.benefitErrors, 'file'); return false
@@ -342,6 +397,7 @@ export default {
         const raw = this.benefitDraft[field.key]
         const resolved = raw === '其他' ? this.benefitDraft[field.key + 'Other'] : raw
         if (field.required && (resolved === undefined || resolved === null || String(resolved).trim() === '')) errors[field.key] = '请填写' + field.label
+        if (field.kind === 'region' && !regionPathComplete(this.benefitDraft.regionPath)) errors[field.key] = '请选择地区（可选择全部）'
         if (field.kind === 'number' && raw !== undefined && raw !== null && raw !== '' && (!isFinite(Number(raw)) || Number(raw) < 0 || (field.integer && Number(raw) % 1 !== 0))) errors[field.key] = '请输入有效的非负' + (field.integer ? '整数' : '数值')
         value[field.key] = resolved === undefined || resolved === null ? '' : resolved
       })
@@ -369,12 +425,20 @@ export default {
 </script>
 
 <style scoped>
+.validation-summary { background: #fff6f5; color: #cf1322; border: 1px solid #ffd3d0; border-radius: 12px; padding: 20px 24px; display: flex; gap: 12px; }
+.validation-summary .anticon { margin-top: 4px; }
+.validation-summary ul { padding-left: 18px; margin: 8px 0 0; line-height: 1.8; }
+
 .project-form-page { display: grid; gap: 20px; min-width: 0; padding-bottom: 18px; color: #18253c; }
 .form-section { overflow: hidden; }.form-section .detail-section-header > .ant-btn { height: 32px; border-radius: 6px; }
 .basic-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 7px; }.basic-meta > span { padding: 2px 7px; border-radius: 3px; line-height: 20px; font-weight: 400; }.basic-meta .anticon { margin-right: 5px; }.project-code { color: #62bfe6; background: #effaff; }.report-code { color: #5b8ff9; background: #f0f5ff; }
 .form-fields.description-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; padding: 0 22px 22px; }.field { min-width: 0; display: flex; flex-direction: column; gap: 8px; }.full { grid-column: 1 / -1; }.form-fields > .field { min-height: 76px; padding: 17px 18px; display: grid; align-content: center; gap: 8px; border-bottom: 1px solid #edf1f5; }.field label, .basic-field-label { color: #7b899b; font-weight: 400; line-height: 1.6; }.basic-field-value { color: #27384e; font-weight: 500; line-height: 1.6; overflow-wrap: anywhere; } em { margin-right: 3px; color: #ff4d4f; font-style: normal; }
 
 .report-filled-date-control { width: calc(50% - 18px); display: grid; gap: 8px; }
+.project-area-field >>> .ant-cascader-picker { width: 100%; }
+.project-area-field >>> textarea.ant-input { min-height: 40px; padding: 7px 12px; border-color: transparent; background: transparent; color: #27384e; font-size: var(--edit-input-size); font-weight: 500; line-height: 24px; box-shadow: none; resize: vertical; }
+.project-area-field >>> textarea.ant-input:focus { border-color: #1677ff; box-shadow: 0 0 0 2px rgba(22,119,255,.12); }
+.project-area-field >>> textarea.ant-input::placeholder { font-size: inherit; }
 .date-pair { display: flex; gap: 12px; align-items: center; }.date-pair >>> .execution-date-picker { flex: 1; min-width: 0; width: 0; }.date-pair >>> .execution-date-picker .ant-input { width: 100%; }.date-pair > span { color: #718095; }.form-fields >>> input.ant-input, .form-fields .date-pair .ant-input { padding: 0 12px; border-color: transparent; background: transparent; color: #27384e; font-weight: 500; line-height: normal; box-shadow: none; }.form-fields >>> input.ant-input:hover, .form-fields .date-pair .ant-input:hover { border-color: #d9e1eb; }.form-fields >>> input.ant-input:focus, .form-fields .date-pair .ant-input:focus { border-color: #1677ff; box-shadow: 0 0 0 2px rgba(22,119,255,.12); }
 .amount-input { display: flex; align-items: center; gap: 8px; }.amount-input >>> .ant-input-number { width: 190px; height: 40px; border-color: transparent; background: transparent; box-shadow: none; }.amount-input >>> .ant-input-number:hover { border-color: #d9e1eb; }.amount-input >>> .ant-input-number-focused { border-color: #1677ff; box-shadow: 0 0 0 2px rgba(22,119,255,.12); }.amount-input >>> .ant-input-number-input { height: 38px; padding: 0 12px; color: #27384e; }.amount-input > span { color: #718095; }.form-fields >>> .binary-choice { min-height: 40px; line-height: 40px; }
 .form-fields >>> .binary-choice .ant-radio-wrapper { display: inline-flex; align-items: center; line-height: 24px; }
@@ -387,16 +451,16 @@ export default {
 .rich-fields .field { gap: 8px; }
 .rich-fields { display: grid; gap: 32px; padding: 0; }
 .other-info-section .rich-fields .field > label, .communication-section .rich-fields .field > label { color: #18253c; font-weight: 500; line-height: 1.6; }
-.field >>> .rich-editor { overflow: hidden; border: 1px solid #d9e1eb; border-radius: 6px; }.field >>> .rich-toolbar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid #e6ebf2; background: #fafbfd; }.field >>> .rich-toolbar button { padding: 3px 9px; border: 0; border-radius: 4px; background: transparent; color: #536277; cursor: pointer; }.field >>> .rich-toolbar button:hover { color: #1677ff; background: #eaf3ff; }.field >>> .rich-toolbar button:first-child { font-weight: 800; }.field >>> .rich-toolbar button:nth-child(2) { font-style: italic; }.field >>> .rich-toolbar button:nth-child(3) { text-decoration: underline; }.field >>> .rich-image-input { display: none; }.field >>> .rich-editable { min-height: 138px; padding: 12px; line-height: 24px; outline: none; overflow-wrap: anywhere; }.field >>> .rich-editable:empty::before { content: '请填写' attr(aria-label); color: #5b8ff9; pointer-events: none; }.field >>> .rich-editable:focus { box-shadow: inset 0 0 0 1px #1677ff; }.field >>> .rich-editable p:last-child { margin-bottom: 0; }.field >>> .rich-editable table { width: 100%; margin: 10px 0; border-collapse: collapse; table-layout: fixed; }.field >>> .rich-editable td, .field >>> .rich-editable th { min-width: 80px; height: 36px; padding: 6px 8px; border: 1px solid #d9e1eb; vertical-align: top; }.field >>> .rich-editable img { display: block; width: auto; max-width: 400px; height: auto; max-height: 400px; margin: 10px 0; border-radius: 6px; object-fit: contain; }
+.field >>> .rich-editor { overflow: hidden; border: 1px solid #d9e1eb; border-radius: 6px; }.field >>> .rich-toolbar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid #e6ebf2; background: #fafbfd; }.field >>> .rich-toolbar button { padding: 3px 9px; border: 0; border-radius: 4px; background: transparent; color: #536277; cursor: pointer; }.field >>> .rich-toolbar button:hover { color: #1677ff; background: #eaf3ff; }.field >>> .rich-toolbar button:first-child { font-weight: 800; }.field >>> .rich-toolbar button:nth-child(2) { font-style: italic; }.field >>> .rich-toolbar button:nth-child(3) { text-decoration: underline; }.field >>> .rich-image-input { display: none; }.field >>> .rich-editable { min-height: 138px; padding: 12px; line-height: 24px; outline: none; overflow-wrap: anywhere; }.field >>> .rich-editable:empty::before { content: attr(data-placeholder); color: #5b8ff9; pointer-events: none; }.field >>> .rich-editable:focus { box-shadow: inset 0 0 0 1px #1677ff; }.field >>> .rich-editable p:last-child { margin-bottom: 0; }.field >>> .rich-editable table { width: 100%; margin: 10px 0; border-collapse: collapse; table-layout: fixed; }.field >>> .rich-editable td, .field >>> .rich-editable th { min-width: 80px; height: 36px; padding: 6px 8px; border: 1px solid #d9e1eb; vertical-align: top; }.field >>> .rich-editable img { display: block; width: auto; max-width: 400px; height: auto; max-height: 400px; margin: 10px 0; border-radius: 6px; object-fit: contain; }
 
 .report-module-content .output-block + .output-block { margin-top: 24px; }
 .report-module-content >>> .budget-sheet-list { padding: 0; }
 .report-module-content >>> .budget-sheet-row:first-child { padding-top: 0; min-height: 60px; align-items: start; }
 .form-attachment-list > div:first-child { min-height: 0; }
-.outputs-body { display: block; padding: 0; }.report-progress-section .output-title strong, .report-progress-section .activity-card strong { min-width: 0; overflow-wrap: anywhere; }.report-progress-section .output-standard > div { padding-top: 4px; }.report-progress-section .activity-card > p { color: #18253c; white-space: pre-line; }.report-progress-section .activity-card > div:first-child > span { flex: none; }
-.report-progress-records h3, .report-activity-label { margin: 0 0 12px; color: #18253c; }.report-progress-entry { position: relative; display: grid; grid-template-columns: 94px minmax(0, 1fr); align-items: start; gap: 16px; padding: 3px 0 11px; border-top: 0; }.report-progress-entry time { color: #18253c; font-variant-numeric: tabular-nums; line-height: 1.65; }.report-progress-entry p { position: relative; margin: 0; color: #18253c; line-height: 1.65; overflow-wrap: anywhere; }
-.output-progress-records { display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: start; gap: 8px; margin: 0; padding: 16px 18px; border: 0; border-radius: 0; background: #fff; }.output-progress-records > h3 { width: max-content; margin: 0; padding: 4px 9px; border-radius: 6px; color: #1677ff; background: #edf5ff; line-height: 1.55; }.output-progress-list { min-width: 0; padding-top: 0; }.output-progress-list .report-progress-entry + .report-progress-entry { padding-top: 8px; border-top: 1px solid #edf1f5; }.output-progress-list .report-progress-entry.is-latest time { color: #1677ff; }
-.activity-progress-records { margin: 18px 0 0; padding: 0; border: 0; border-radius: 0; background: transparent; }.activity-progress-records h3 { margin: 0 0 8px; color: #18a66a; }.activity-progress-table { width: 100%; border-collapse: collapse; table-layout: fixed; }.activity-progress-table td { padding: 10px 0; color: #18253c; vertical-align: top; line-height: 1.65; overflow-wrap: anywhere; }.activity-progress-table tr + tr td { border-top: 1px solid #edf1f5; }.activity-progress-table tr.is-latest td { color: #18a66a; }.activity-progress-table td:first-child { width: 110px; padding-right: 16px; font-variant-numeric: tabular-nums; white-space: nowrap; }.report-activity-label { margin-bottom: 6px; }
+.outputs-body { display: block; padding: 0; }.report-progress-section .output-title strong, .report-progress-section .activity-card strong { min-width: 0; overflow-wrap: anywhere; }.report-progress-section .output-standard > div { padding-top: 4px; }.report-progress-section .activity-card > p { white-space: pre-line; }.report-progress-section .activity-card > div:first-child > span { flex: none; }
+.report-progress-records h3 { margin: 0 0 12px; color: #18253c; }.report-progress-entry { position: relative; display: grid; grid-template-columns: 94px minmax(0, 1fr); align-items: start; gap: 16px; padding: 3px 0 11px; border-top: 0; }.report-progress-entry time { color: #18253c; font-variant-numeric: tabular-nums; line-height: 1.65; }.report-progress-entry p { position: relative; margin: 0; color: #18253c; line-height: 1.65; overflow-wrap: anywhere; }
+.output-progress-records { display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: start; gap: 8px; margin: 0; padding: 16px 18px; border: 0; border-radius: 0; background: #fff; }.output-progress-records > h3 { width: max-content; margin: 0; padding: 4px 9px; border-radius: 6px; color: #1677ff; background: #edf5ff; font-size: var(--text-14); line-height: 1.55; }.output-progress-list { min-width: 0; padding-top: 0; }.output-progress-list .report-progress-entry + .report-progress-entry { padding-top: 8px; border-top: 1px solid #edf1f5; }.output-progress-list .report-progress-entry.is-latest time { color: #1677ff; }
+.activity-progress-records { display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: start; gap: 8px; margin: 18px 0 0; padding: 0; border: 0; border-radius: 0; background: transparent; }.activity-progress-records h3 { width: max-content; margin: 0; padding: 4px 9px; border-radius: 6px; color: #168b5a; background: #e8f8f0; font-size: var(--text-14); font-weight: 400; line-height: 1.55; }.activity-progress-table { min-width: 0; width: 100%; border-collapse: collapse; table-layout: fixed; }.activity-progress-table td { padding: 10px 0; color: #18253c; vertical-align: top; line-height: 1.65; overflow-wrap: anywhere; }.activity-progress-table tr:first-child td { padding-top: 4px; }.activity-progress-table tr + tr td { border-top: 1px solid #edf1f5; }.activity-progress-table tr.is-latest td { color: #18a66a; }.activity-progress-table td:first-child { width: 110px; padding-right: 16px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .report-progress-entry >>> textarea.ant-input, .activity-progress-table >>> textarea.ant-input { min-height: 54px; padding: 7px 10px; border-color: #d9e1eb; border-radius: 6px; color: #18253c; line-height: 24px; resize: vertical; }.report-progress-entry >>> textarea.ant-input:focus, .activity-progress-table >>> textarea.ant-input:focus { border-color: #1677ff; box-shadow: 0 0 0 2px rgba(22,119,255,.12); }
 .attachment-section .detail-section-header { align-items: center; }.attachment-section .detail-section-header > div { display: flex; align-items: center; min-height: 40px; }.attachment-section .detail-section-header h2 { margin: 0; }.attachment-empty-add { margin: 0; padding: 24px; border: 1px dashed #d9e1eb; border-radius: 10px; cursor: pointer; }.attachment-empty-add >>> .ant-empty-description { color: #5b8ff9; }.attachment-empty-add:hover, .attachment-empty-add:focus { border-color: #1677ff; background: #f8fbff; outline: none; }.form-attachment-list > div { grid-template-columns: minmax(0, 1fr) auto; }.form-attachment-list strong { overflow-wrap: anywhere; }.form-attachment-list .ant-btn { padding: 0 6px; }.add-more-attachment { width: 100%; margin: 16px 0 0; border-color: #91d5ff; border-style: dashed; color: #096dd9 !important; background: #e6f7ff; }.add-more-attachment:hover, .add-more-attachment:focus { border-color: #40a9ff; color: #096dd9 !important; background: #fff; }.attachment-file-picker { min-width: 0; display: flex; align-items: center; gap: 12px; }.attachment-file-picker >>> .ant-upload .ant-btn { height: 40px; }
 .attachment-file-picker > span { min-width: 0; color: #536277; overflow-wrap: anywhere; }.attachment-picker .form-error { grid-column: 2; margin: -4px 0 0; color: #ff4d4f; }.attachment-picker { display: grid; width: 470px; max-width: 100%; gap: 16px 18px; margin: 0 auto; padding: 0; grid-template-columns: max-content minmax(0, 1fr); }.attachment-picker .area-picker-row { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; column-gap: 18px; align-items: start; }.attachment-picker .area-picker-row .ant-select { width: 100%; }.danger-link { color: #ff4d4f; }

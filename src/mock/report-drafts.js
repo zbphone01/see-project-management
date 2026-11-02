@@ -1,5 +1,7 @@
+import { normalizeRegionPath, parseRegionText, formatRegionPath } from '../utils/administrative-regions'
 import reportExamples from './report-examples'
 import { createReportBudget } from '../utils/report-budget'
+import { reportMemberChanged, reportStaffCounts } from '../utils/report-members'
 
 const storageKey = (projectId, type, draftId) => `see-report-draft-example-v4-${projectId}-${type}${draftId ? '-' + draftId : ''}`
 const reviewedExampleKey = reportId => `see-reviewed-report-draft-example-${reportId}`
@@ -99,7 +101,36 @@ export function loadReportDraft (projectId, type, draftId) {
   }
 }
 
-export function loadReviewedReportExample (projectId, reportId = 'P-001006') {
+export function normalizeReportArea (draft) {
+  if (!['green-home', 'grass'].includes(draft.detailType)) return draft
+  if (!Array.isArray(draft.projectAreaPath)) {
+    const parts = String(draft.projectArea || '').split(/[,，]/)
+    draft.projectAreaPath = parseRegionText(parts.shift() || '')
+    draft.projectAreaAddress = parts.join('，').trim()
+  }
+  draft.projectAreaAddress = typeof draft.projectAreaAddress === 'string' ? draft.projectAreaAddress : ''
+  draft.projectAreaPath = normalizeRegionPath(draft.projectAreaPath)
+  const region = formatRegionPath(draft.projectAreaPath)
+  const address = draft.projectAreaAddress.trim()
+  draft.projectArea = region + (region && address ? '，' + address : '')
+  return draft
+}
+
+function restoreMemberChangeFlags (draft, source) {
+  normalizeReportArea(draft)
+  if (!['green-home', 'grass'].includes(source.detailType) || !Array.isArray(draft.members)) return draft
+  draft.projectType = source.projectType
+  const applicationMembers = clone(source.applicationMembers)
+  const members = draft.members.slice()
+  applicationMembers.forEach(original => { if (!members.some(member => member.id === original.id)) members.push(clone(source.members.find(member => member.id === original.id) || original)) })
+  return { ...draft, applicationMembers, staffCounts: reportStaffCounts(members), members: members.map(member => ({ ...member, changedFromApplication: reportMemberChanged(member, applicationMembers) })) }
+}
+
+function withoutProgressHistory (draft) {
+  return { ...draft, outputs: draft.outputs.map(output => ({ ...output, progressHistory: [], activities: output.activities.map(activity => ({ ...activity, progressHistory: [] })) })) }
+}
+
+export function loadReviewedReportExample (projectId, reportId = 'P-001006', fresh = false) {
   const source = reportExamples.find(report => report.id === reportId)
   if (!source) return loadReportDraft(projectId, 'progress')
   const basic = source, isCompletion = source.type === '结项报告'
@@ -111,11 +142,12 @@ export function loadReviewedReportExample (projectId, reportId = 'P-001006') {
     projectName: basic.projectName, projectCode: basic.projectCode,
     projectType: basic.projectType, strategy: basic.strategy, issue: basic.issue,
     organization: basic.organization, projectPeriod: basic.projectPeriod,
+    ...(['green-home', 'grass'].includes(source.detailType) ? { detailType: source.detailType, projectArea: source.projectArea, organizationCode: source.organizationCode, total: source.totalCents / 100, otherLocalFunding: source.otherLocalFunding, budget: clone(source.budget), organizationSections: source.organizationSections.map(field => ({ ...clone(field), content: field.paragraphs.map(text => '<p>' + escape(text) + '</p>').join('') })), communitySections: (source.communitySections || []).map(field => ({ ...clone(field), content: field.paragraphs.map(text => '<p>' + escape(text) + '</p>').join('') })), members: clone(source.members), staffCounts: clone(source.staffCounts) } : {}),
     periodStart: dateValue(basic.reportPeriod.split(' 至 ')[0]), periodEnd: dateValue(basic.reportPeriod.split(' 至 ')[1]), filledAt: dateValue(basic.filledAt),
     executed: source.budgetRows.reduce((sum, row) => sum + row.executedCents, 0) / 100,
     beneficiaryAid: basic.beneficiaryAid ? '是' : '否', aidCompleted: basic.beneficiaryAid ? (basic.aidCompleted ? '是' : '否') : undefined,
     ...source.otherInformation.reduce((values, field) => { values[field.id] = field.paragraphs.map(text => '<p>' + escape(text) + '</p>').join(''); return values }, {}),
-    communication: '<p>' + escape(source.communication) + '</p>',
+    communication: '<p>' + (source.detailType === 'grass' ? source.communication.split(/\r?\n/).map(escape).join('</p><p>') : escape(source.communication)) + '</p>',
     benefits: clone(source.benefits), benefitsInitialized: true,
     funding: basic.fundingCents / 100, requestNeeded: !!basic.requestedCents,
     requested: basic.requestedCents / 100, paid: basic.paidCents / 100,
@@ -132,9 +164,30 @@ export function loadReviewedReportExample (projectId, reportId = 'P-001006') {
     })),
     auditHistory: source.auditHistory.map(entry => ({ ...entry, id: reportId + '-' + entry.time })),
     reviewComments: { ...(source.reviewComments || {}),
-      ...(!isCompletion ? { 'outputs.output-1': '请补充最新产出进展对应的监测资料、核查结果及成果归档情况。',
+      ...(!isCompletion && !['green-home', 'grass'].includes(source.detailType) ? { 'outputs.output-1': '请补充最新产出进展对应的监测资料、核查结果及成果归档情况。',
       'activities.activity-1-1': '请补充最新活动进展的执行记录及设备维护问题处理结果。' } : {})
     }
+  }
+  if (fresh && ['green-home', 'grass'].includes(source.detailType)) {
+    Object.assign(draft, { fresh: true, draftId: source.detailType + '-fresh', projectArea: '', projectAreaPath: [], projectAreaAddress: '', periodStart: '', periodEnd: '', filledAt: today(), requestNeeded: false, requested: 0, reporter: '', contact: '', executed: 0, communication: '', followup: '', risks: '', summary: '', benefits: [], attachments: [], auditHistory: [], reviewComments: {} })
+    draft.outputs.forEach(output => { output.progress = ''; output.activities.forEach(activity => { activity.progress = '' }) })
+    draft.organizationSections.forEach(field => { if (field.editable) field.content = '' })
+    draft.communitySections.forEach(field => { field.content = '' })
+    draft.emptyExecutionUsesNull = true
+    draft.budget.rows.concat(draft.budget.personnel).forEach(row => { row.executed = null })
+    draft.budget.updatedAt = ''; draft.budget.personnelUpdatedAt = ''
+    const raw = localStorage.getItem(storageKey(projectId, 'progress', draft.draftId))
+    if (!raw) return withoutProgressHistory(restoreMemberChangeFlags(draft, source))
+    try {
+      const saved = JSON.parse(raw)
+      if (saved.fresh && saved.exampleReportId === reportId) {
+        const restored = restoreMemberChangeFlags({ ...draft, ...saved, organizationCode: draft.organizationCode }, source)
+        const budget = restored.budget, rows = (budget.rows || []).concat(budget.personnel || [], budget.legacyPersonnel || [])
+        if (!saved.emptyExecutionUsesNull && !budget.updatedAt && !budget.personnelUpdatedAt && rows.every(row => (row.executed == null || row.executed === 0) && row.adjustment == null)) rows.forEach(row => { row.executed = null })
+        return withoutProgressHistory(restored)
+      }
+      return withoutProgressHistory(restoreMemberChangeFlags(draft, source))
+    } catch (error) { return withoutProgressHistory(restoreMemberChangeFlags(draft, source)) }
   }
   let result = draft
   try {
@@ -145,12 +198,14 @@ export function loadReviewedReportExample (projectId, reportId = 'P-001006') {
     const audit = JSON.parse(localStorage.getItem('see-report-review-example-' + reportId))
     if (audit && audit.reviewComments && typeof audit.reviewComments === 'object' && !Array.isArray(audit.reviewComments)) result.reviewComments = { ...audit.reviewComments }
   } catch (error) { /* Retain example comments if local audit data is invalid. */ }
-  return result
+  if (['green-home', 'grass'].includes(source.detailType)) result.organizationCode = source.organizationCode
+  return restoreMemberChangeFlags(result, source)
 }
 
 export function saveReportDraft (draft) {
+  normalizeReportArea(draft)
   const savedAt = new Date().toLocaleString('zh-CN', { hour12: false })
-  const key = draft.exampleReportId ? reviewedExampleKey(draft.exampleReportId) : storageKey(draft.projectId, draft.type === '结项报告' ? 'completion' : 'progress', draft.draftId)
-  localStorage.setItem(key, JSON.stringify({ ...draft, savedAt }))
+  const key = draft.exampleReportId && !draft.fresh ? reviewedExampleKey(draft.exampleReportId) : storageKey(draft.projectId, draft.type === '结项报告' ? 'completion' : 'progress', draft.draftId)
+  localStorage.setItem(key, JSON.stringify({ ...draft, ...(['green-home', 'grass'].includes(draft.detailType) ? { staffCounts: reportStaffCounts(draft.members || []) } : {}), savedAt }))
   return savedAt
 }

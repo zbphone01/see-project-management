@@ -12,6 +12,7 @@
 
 <script>
 import { budgetStatus, canViewBudget } from '../utils/project-budget'
+import { reportBudgetStatus } from '../utils/report-budget'
 export default {
   name: 'ProjectBudgetEditor',
   props: {
@@ -34,7 +35,7 @@ export default {
   computed: {
     viewable () { return canViewBudget(this.value) },
     visibleSheets () {
-      if (this.reportMode) return this.sheets.filter(sheet => sheet.title !== '费用类型分析表').map(sheet => ({ ...sheet, actions: sheet.title === '预算及执行汇总表' ? ['查看'] : ['填写执行', '预算调整', '查看'], status: sheet.title === '预算及执行汇总表' ? '自动生成' : (sheet.detail ? (this.value.rows || []).concat(this.value.personnel || [], this.value.legacyPersonnel || []) : this.value.personnel || []).some(row => row.executed != null) ? '已填写执行' : '未填写执行', viewable: true }))
+      if (this.reportMode) return this.sheets.filter(sheet => sheet.title !== '费用类型分析表').map(sheet => ({ ...sheet, actions: sheet.title === '预算及执行汇总表' ? ['查看'] : ['填写执行', '预算调整', '查看'], status: sheet.title === '预算及执行汇总表' ? '自动生成' : reportBudgetStatus((sheet.detail ? this.value.rows || [] : []).concat(this.value.personnel || [], this.value.legacyPersonnel || [])), viewable: true }))
       const sheets = this.donationProject ? [{ title: '北京市企业家环保基金会联合公益项目预算表', actions: ['编辑', '查看'], detail: true }] : this.sheets.filter(sheet => !this.hideCostTypeAnalysis || sheet.title !== '费用类型分析表')
       return sheets.map(sheet => ({ ...sheet, status: sheet.title === '人力成本分摊表' ? (this.value.personnelStatus === 'completed' || this.value.personnelUpdatedAt ? '已保存' : '待编辑') : budgetStatus(this.value), viewable: sheet.title === '人力成本分摊表' ? !!this.value.personnelUpdatedAt : this.viewable }))
     }

@@ -31,10 +31,15 @@
           <a-dropdown v-if="report.status !== '进展放弃'" :trigger="['hover']" placement="bottomRight">
             <a-button class="operation-button">操作 <a-icon type="down" /></a-button>
             <a-menu slot="overlay" @click="showDemo($event.key, report)">
+              <template v-if="['green-home', 'grass'].includes(report.detailType)">
+                <a-menu-item key="审核">审核</a-menu-item><a-menu-item key="查看">查看</a-menu-item><a-menu-item key="驳回编辑">驳回编辑</a-menu-item><a-menu-item key="全新编辑">全新编辑</a-menu-item>
+              </template>
+              <template v-else>
               <a-menu-item v-if="report.status === '进展待审'" key="审核">审核</a-menu-item>
               <a-menu-item :key="report.reportType === '进展报告' ? '查看进展报告' : '查看报告'">{{ report.reportType === '进展报告' ? '查看进展报告' : '查看报告' }}</a-menu-item>
               <a-menu-item v-if="report.reportCode === 'P-001006'" key="编辑示例">编辑示例</a-menu-item>
               <a-menu-item v-if="report.status === '草稿'" key="编辑报告">编辑报告</a-menu-item>
+              </template>
             </a-menu>
           </a-dropdown>
           <a-button v-else class="operation-button" @click="showDemo('查看报告', report)">查看</a-button>
@@ -94,8 +99,9 @@ export default {
     changePage (pagination) { this.page = pagination.pageSize !== this.pageSize ? 1 : pagination.current; this.pageSize = pagination.pageSize },
     showDemo (action, report) {
       const type = report.reportType === '结项报告' || report.reportType === '结项' ? 'completion' : 'progress'
+      if (['green-home', 'grass'].includes(report.detailType) && ['驳回编辑', '全新编辑'].includes(action)) { this.$router.push({ name: 'report-form', params: { id: String(report.projectId) }, query: { type, example: report.reportCode, ...(action === '全新编辑' ? { draftId: report.detailType + '-fresh' } : {}) } }); return }
       if (action === '编辑示例') { this.$router.push({ name: 'report-form', params: { id: String(report.projectId) }, query: { type, example: report.reportCode } }); return }
-      if (action === '审核' || action === '查看进展报告' || action === '查看报告') {
+      if (action === '审核' || action === '查看' || action === '查看进展报告' || action === '查看报告') {
         this.$router.push({ name: 'report-detail', params: { id: report.reportCode }, query: action === '审核' ? { mode: 'audit', type } : { type } })
         return
       }

@@ -1,4 +1,6 @@
 import progressReportDetails from './report-progress-detail.json'
+import greenHomeReport from './report-green-home'
+import grassReport from './report-grass'
 
 const project = {
   projectName: '大熊猫栖息地生态监测与社区保护项目', projectCode: 'ZZ-1234567895',
@@ -33,6 +35,7 @@ const otherInformation = [
   { id: 'summary', title: '此阶段项目的优点、不足及其他需要说明的情况', paragraphs: ['优点：社区巡护员持续参与，监测记录更加规范，保护行动与社区日常协作逐步衔接。', '不足：部分偏远点位的数据回收仍需较长时间，不同巡护人员的记录质量存在差异。后续将通过现场复核和针对性培训持续改进。'] }
 ]
 const reports = [
+  greenHomeReport, grassReport,
   { ...project, ...progressReportDetails['P-001006'].basic, id: 'P-001006', type: '进展报告',
     aiInitialReview: progressReportDetails['P-001006'].aiInitialReview, outputs: progressReportDetails['P-001006'].outputs, otherInformation,
     communication: '本阶段围绕栖息地监测、社区巡护和公众保护参与开展传播，累计发布12篇项目动态，获得地方媒体报道3篇。相关活动图片、报道链接及传播记录已整理为附件。',
