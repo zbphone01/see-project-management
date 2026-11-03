@@ -19,9 +19,9 @@
             <label><span>申请编码</span><a-input v-model="appliedFilters.code" placeholder="请输入申请编码" @pressEnter="queryAppliedProjects" /></label>
             <label><span>项目名称</span><a-input v-model="appliedFilters.projectName" placeholder="请输入项目名称" @pressEnter="queryAppliedProjects" /></label>
             <label><span>招募名称</span><a-input v-model="appliedFilters.recruitmentName" placeholder="请输入招募名称" @pressEnter="queryAppliedProjects" /></label>
-            <div class="filter-actions">
-              <a-button @click="resetAppliedFilters"><a-icon type="reload" /> 重置</a-button>
-              <a-button type="primary" @click="queryAppliedProjects"><a-icon type="search" /> 查询</a-button>
+            <div class="filter-actions shared-list-filter-actions">
+              <a-button class="shared-list-filter-button" @click="resetAppliedFilters"><a-icon type="reload" /> 重置</a-button>
+              <a-button class="shared-list-filter-button" type="primary" @click="queryAppliedProjects"><a-icon type="search" /> 查询</a-button>
             </div>
           </div>
         </section>
@@ -296,5 +296,7 @@ export default {
 </script>
 
 <style scoped>
+.project-primary-meta { flex-wrap: wrap; }
+.project-code, .project-organization { min-width: 0; overflow: visible; white-space: normal; text-overflow: clip; overflow-wrap: anywhere; line-height: 1.5; }
 .applied-overdue-label { display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: 8px; color: #d48806; line-height: 1.5; }
 </style>

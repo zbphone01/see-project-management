@@ -1,4 +1,5 @@
 import { availableProjects, appliedProjects } from './projects'
+import recruitmentDetails from './recruitment-details.json'
 
 // 原型未提供账号/字典接口。仅复用现有演示数据，不代表生产权限或完整业务字典。
 export const recruitmentAccount = { department: '捐赠人服务中心', functionalDepartment: true }
@@ -33,14 +34,35 @@ export function createRecruitmentForm () {
   }
 }
 
-export function validateRecruitmentForm (form) {
+export function createExistingRecruitmentForm (id) {
+  const project = availableProjects.find(item => String(item.id) === String(id))
+  if (!project) return null
+  const detail = recruitmentDetails[id] || {}
+  const contact = detail.contact || {}
+  const form = createRecruitmentForm()
+  ;['name', 'type', 'strategy', 'topic', 'department', 'startDate', 'endDate'].forEach(key => { form[key] = project[key] })
+  form.fundingSource = project.type === '联合公益' ? '筹款' : '项目'
+  form.fundraisingMethod = project.type === '联合公益' ? '' : '不适用'
+  form.summary = (detail.description || []).join('\n\n')
+  form.contactName = contact.name || ''
+  form.phone = contact.phone || ''
+  form.landline = contact.landline || ''
+  form.email = contact.email || ''
+  form.cover = project.image ? { name: project.image.split('/').pop(), url: project.image } : null
+  form.attachments = (detail.attachments || []).map(item => ({ id: item.id, name: item.name, time: '', file: null }))
+  return form
+}
+
+export function validateRecruitmentForm (form, recruitmentId) {
   const errors = []
   const required = { name: '招募名称', type: '项目类型', strategy: '项目策略', topic: '项目议题', startDate: '招募开始日期', endDate: '招募结束日期', contactName: '联系人姓名', phone: '联系手机号' }
   Object.keys(required).forEach(key => { if (!String(form[key] || '').trim()) errors.push('请填写或选择' + required[key]) })
-  if (!form.cover || !form.cover.file) errors.push('请上传招募头图')
-  const hasValidDirection = form.type === '联合公益'
+  if (!form.cover || (!form.cover.file && !form.cover.url)) errors.push('请上传招募头图')
+  const original = recruitmentId && createExistingRecruitmentForm(recruitmentId)
+  const preservedDirection = original && original.type === form.type && original.strategy === form.strategy && original.topic === form.topic
+  const hasValidDirection = preservedDirection || (form.type === '联合公益'
     ? form.strategy === jointRecruitmentStrategy && jointRecruitmentTopics.includes(form.topic)
-    : recruitmentDirections.some(item => item.type === form.type && item.strategy === form.strategy && item.topic === form.topic)
+    : recruitmentDirections.some(item => item.type === form.type && item.strategy === form.strategy && item.topic === form.topic))
   if (form.type && !hasValidDirection) errors.push('请选择与项目类型对应的策略和议题')
   if (form.type === '联合公益' && !recruitmentAccount.functionalDepartment) errors.push('只有职能部门可选择联合公益')
   const validAmount = value => value !== null && value !== '' && Number.isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 999999999.99 && Math.abs(Number(value) * 100 - Math.round(Number(value) * 100)) < 0.0001
@@ -59,7 +81,7 @@ export function validateRecruitmentForm (form) {
 }
 
 // 将文件本体与表单一起保留在独立 IndexedDB 中；不向服务器发送或实际发布招募。
-export function recruitmentLocalRecord (record) {
+export function recruitmentLocalRecord (record, recruitmentId) {
   return new Promise((resolve, reject) => {
     const request = window.indexedDB.open('see-recruitment-form', 1)
     request.onupgradeneeded = () => request.result.createObjectStore('submissions')
@@ -69,7 +91,8 @@ export function recruitmentLocalRecord (record) {
       const db = request.result
       const transaction = db.transaction('submissions', record ? 'readwrite' : 'readonly')
       const store = transaction.objectStore('submissions')
-      const operation = record ? store.put(record, 'latest') : store.get('latest')
+      const key = recruitmentId ? 'recruitment-' + recruitmentId : 'latest'
+      const operation = record ? store.put(record, key) : store.get(key)
       transaction.oncomplete = () => { db.close(); resolve(record || operation.result || null) }
       transaction.onerror = () => { db.close(); reject(transaction.error) }
       transaction.onabort = () => { db.close(); reject(transaction.error || new Error('本地存储已取消')) }

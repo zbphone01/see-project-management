@@ -50,7 +50,7 @@ export default {
   beforeRouteLeave (to, from, next) {
     if (to.name === 'project-personnel-form' && budgetKey(to) === this.key) { next(); return }
     if (!this.dirty) { next(); return }
-    this.$confirm({ title: '是否放弃已编辑内容？', content: '本次尚未暂存或完成的修改将被放弃，已保存内容不受影响。', maskClosable: false, okText: '放弃并返回', cancelText: '继续编辑', onOk: () => next(), onCancel: () => next(false) })
+    this.$confirm({ title: '填写内容尚未保存', content: '是否保存为本地草稿后离开？', maskClosable: false, keyboard: false, okText: '保存并离开', cancelText: '放弃填写', onOk: () => { this.save('editing'); next(!this.dirty) }, onCancel: () => { this.budget = JSON.parse(this.snapshot); next() } })
   },
   methods: {
     money,

@@ -5,7 +5,7 @@
         <a-tab-pane key="plans" tab="规划列表">
           <form class="filter-grid plan-filters" @submit.prevent="queryPlans">
             <label for="plan-name"><a-input id="plan-name" v-model="planName" aria-label="筹款规划名称" placeholder="请输入筹款规划名称" allow-clear /></label>
-            <div class="filter-actions query-actions"><a-button type="primary" html-type="submit" icon="search">查询</a-button></div>
+            <div class="filter-actions shared-list-filter-actions query-actions"><a-button class="shared-list-filter-button" type="primary" html-type="submit" icon="search">查询</a-button></div>
             <a-button class="new-plan-button" icon="file-add" @click="openPlan()">发起筹款规划</a-button>
           </form>
           <a-table class="applied-table plan-table shared-list-table shared-list-fixed shared-list-inset-12 shared-list-operation-spacing" :columns="planColumns" :data-source="filteredPlans" :pagination="planPagination" :scroll="{ x: true }" row-key="id" :locale="{ emptyText: '暂无符合条件的筹款规划' }" @change="changePlanPage">
@@ -30,7 +30,7 @@
           <form class="filter-grid application-filters" @submit.prevent="queryApplications">
             <label for="plan-application-name"><a-input id="plan-application-name" v-model="applicationFilters.name" aria-label="筹款规划申请名称" placeholder="请输入筹款规划申请名称" allow-clear /></label>
             <label for="plan-application-department"><a-select id="plan-application-department" v-model="applicationFilters.department" aria-label="部门" placeholder="请选择部门" allow-clear><a-select-option v-for="department in departments" :key="department" :value="department">{{ department }}</a-select-option></a-select></label>
-            <div class="filter-actions"><a-button type="primary" html-type="submit" icon="search">查询</a-button><a-button icon="reload" @click="resetApplications">重置</a-button></div>
+            <div class="filter-actions shared-list-filter-actions"><a-button class="shared-list-filter-button" type="primary" html-type="submit" icon="search">查询</a-button><a-button class="shared-list-filter-button" icon="reload" @click="resetApplications">重置</a-button></div>
           </form>
           <a-table class="applied-table plan-table shared-list-table shared-list-fixed shared-list-inset-12 shared-list-operation-spacing" :columns="applicationColumns" :data-source="filteredApplications" :pagination="applicationPagination" :scroll="{ x: true }" row-key="id" :locale="{ emptyText: '暂无符合条件的规划申请' }" @change="changeApplicationPage">
             <template slot="name" slot-scope="name"><strong class="plan-name">{{ name }}</strong></template>
@@ -124,8 +124,8 @@ export default {
 .fundraising-plans-page { min-width: 0; }
 
 .plan-filters, .application-filters { padding: 20px; border-bottom: 1px solid #edf1f5; }
-.plan-filters { grid-template-columns: minmax(240px, 360px) 88px minmax(88px, 1fr); }
-.application-filters { grid-template-columns: minmax(240px, 360px) minmax(220px, 300px) 196px; }
+.plan-filters { grid-template-columns: minmax(240px, 360px) 92px minmax(88px, 1fr); }
+.application-filters { grid-template-columns: minmax(240px, 360px) minmax(220px, 300px) 193px; }
 .query-actions { grid-template-columns: 1fr; }
 .new-plan-button { justify-self: end; height: 32px; border-radius: 5px; color: #fff; border-color: #18a66a; background: #18a66a; box-shadow: 0 2px 0 rgba(0,0,0,.043); }
 .new-plan-button:hover, .new-plan-button:focus, .new-plan-button:active { color: #18a66a; border-color: #18a66a; background: #fff; }
@@ -136,7 +136,7 @@ export default {
 .plan-amount { font-variant-numeric: tabular-nums; }
 
 @media (max-width: 1439px) {
-  .application-filters { grid-template-columns: minmax(220px, 1fr) minmax(220px, 1fr) 196px; }
+  .application-filters { grid-template-columns: minmax(220px, 1fr) minmax(220px, 1fr) 193px; }
 }
 .application-row-actions { display: grid; justify-items: center; gap: 0; }
 .application-row-actions button { min-height: 24px; padding: 0 2px; border: 0; border-radius: 5px; color: #1677ff; background: transparent; cursor: pointer; }

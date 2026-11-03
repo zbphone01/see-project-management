@@ -5,7 +5,7 @@
 
     <section id="form-basic" class="panel form-section"><div class="detail-section-header"><span class="detail-section-icon"><a-icon type="profile" /></span><div><h2>项目基本信息</h2><p v-if="hasBasicReviewComments">请检查并修改标红的项目信息，点击信息小标题可查看具体审核意见</p><div v-if="isOrganizationProject" class="detail-basic-meta"><button class="project-recruitment" type="button" :title="greenHomeRecruitment" @click="$message.info('打开招募详情：' + greenHomeRecruitment)"><a-icon type="notification" /> {{ greenHomeRecruitment }}</button></div><p v-else-if="!hasBasicReviewComments">{{ draft.code }}</p></div></div>
       <div v-if="!isDonationProject" class="form-fields description-grid" :class="{ 'green-home-basic-fields': isOrganizationProject }">
-        <div class="field full" :class="reviewClass('name')"><label><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment('name')">项目名称</review-comment-label></label><a-input id="application-name" v-model="draft.name" :placeholder="isGrass ? '例：劲草同行支持xxxx级机构名称发展项目（第n年）' : '请填写项目名称'" :max-length="200" /></div>
+        <div class="field full" :class="reviewClass('name')"><label><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment('name')">项目名称</review-comment-label></label><a-input id="application-name" v-model="draft.name" :placeholder="isGrass ? '请按示例格式填写项目名称，例：劲草同行支持2026级机构名称发展项目（第1年）' : isOrganizationProject ? '请按示例格式填写项目名称，例：创绿家支持“某组织或机构”发展项目' : '请填写项目名称'" :max-length="200" /></div>
         <template v-for="field in inheritedFields">
           <div :key="field.key" class="field"><span class="basic-field-label">{{ field.label }}</span><span class="basic-field-value" :class="{ 'empty-hint': field.key !== 'funding' && !draft[field.key] }">{{ field.key === 'funding' ? fundingSourceText : (draft[field.key] || '选择招募后自动带入') }}</span></div>
         </template>
@@ -66,7 +66,7 @@
     <section v-if="!isOrganizationProject" class="panel form-section"><div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="read" /></span><div><h2>{{ isDonationProject ? '详细资料' : '附加信息' }}</h2><p v-if="hasAdditionalReviewComments">请检查并修改标红的项目信息，点击信息小标题可查看具体审核意见</p></div></div><div class="project-module-content"><div class="rich-fields"><div v-for="field in richFields" :key="field.key" class="field"><label><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment(field.key)">{{ field.label }}</review-comment-label></label><rich-editor v-model="draft[field.key]" :label="field.label" :placeholder="field.placeholder" :class="{ 'rich-review-has-comment': !!reviewComment(field.key) }" /></div></div></div></section>
 
     <section v-if="!isOrganizationProject" id="form-areas" class="panel form-section area-section"><div class="detail-section-header"><span class="detail-section-icon cyan"><a-icon type="environment" /></span><div><h2>项目实施区域</h2><p v-if="hasAreaReviewComments">请检查并修改标红的项目信息，点击行任意位置可查看具体审核意见</p></div></div><div class="project-module-content">
-      <div class="detail-table-wrap area-entry-wrap"><table class="detail-table area-entry-table"><thead><tr><th class="index-col">序号</th><th>省 / 直辖市</th><th>地级市 / 直辖市区</th><th>行政区</th><th class="action-col">操作</th></tr></thead><tbody><tr v-for="(row, index) in draft.areas" :key="row.id" :class="rowReviewClass('areas', row)" :role="rowReviewComment('areas', row) ? 'button' : undefined" :tabindex="rowReviewComment('areas', row) ? 0 : undefined" @click="openRowReview('areas', row)" @keydown.enter.prevent="openRowReview('areas', row)" @keydown.space.prevent="openRowReview('areas', row)"><td><a-popover v-if="rowReviewComment('areas', row)" :visible="rowReviewKey === 'areas.' + row.id" trigger="click" placement="topLeft" @visibleChange="visible => changeRowReviewVisibility('areas', row, visible)"><template slot="content"><div class="row-review-content"><div><a-icon type="exclamation-circle" theme="filled" /><p>{{ rowReviewComment('areas', row) }}</p></div><a-button size="small" type="primary" @click.stop="rowReviewKey = ''">关闭</a-button></div></template><span class="row-review-anchor">{{ index + 1 }}</span></a-popover><template v-else>{{ index + 1 }}</template></td><td :class="reviewClass('areas.' + row.id + '.province')"><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment('areas.' + row.id + '.province')">{{ row.province }}</review-comment-label></td><td :class="reviewClass('areas.' + row.id + '.city')"><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment('areas.' + row.id + '.city')">{{ row.city }}</review-comment-label></td><td :class="reviewClass('areas.' + row.id + '.district')"><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment('areas.' + row.id + '.district')">{{ row.district }}</review-comment-label></td><td class="area-actions" @click.stop @keydown.stop><a-button type="link" class="danger-link" @click="removeRow('areas', index)">删除</a-button></td></tr><tr class="area-entry-row"><td>{{ draft.areas.length + 1 }}</td><td></td><td></td><td></td><td class="area-actions"><a-button type="link" @click="openAreaPicker">新增</a-button></td></tr></tbody></table></div>
+      <div class="detail-table-wrap area-entry-wrap"><table class="detail-table area-entry-table"><thead><tr><th class="index-col">序号</th><th>省 / 直辖市</th><th>地级市 / 直辖市区</th><th>县 / 行政区</th><th class="action-col">操作</th></tr></thead><tbody><tr v-for="(row, index) in draft.areas" :key="row.id" :class="rowReviewClass('areas', row)" :role="rowReviewComment('areas', row) ? 'button' : undefined" :tabindex="rowReviewComment('areas', row) ? 0 : undefined" @click="openRowReview('areas', row)" @keydown.enter.prevent="openRowReview('areas', row)" @keydown.space.prevent="openRowReview('areas', row)"><td><a-popover v-if="rowReviewComment('areas', row)" :visible="rowReviewKey === 'areas.' + row.id" trigger="click" placement="topLeft" @visibleChange="visible => changeRowReviewVisibility('areas', row, visible)"><template slot="content"><div class="row-review-content"><div><a-icon type="exclamation-circle" theme="filled" /><p>{{ rowReviewComment('areas', row) }}</p></div><a-button size="small" type="primary" @click.stop="rowReviewKey = ''">关闭</a-button></div></template><span class="row-review-anchor">{{ index + 1 }}</span></a-popover><template v-else>{{ index + 1 }}</template></td><td :class="reviewClass('areas.' + row.id + '.province')"><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment('areas.' + row.id + '.province')">{{ row.province }}</review-comment-label></td><td :class="reviewClass('areas.' + row.id + '.city')"><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment('areas.' + row.id + '.city')">{{ row.city === '全部' ? '' : row.city }}</review-comment-label></td><td :class="reviewClass('areas.' + row.id + '.district')"><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment('areas.' + row.id + '.district')">{{ row.city === '全部' || row.district === '全部' ? '' : row.district }}</review-comment-label></td><td class="area-actions" @click.stop @keydown.stop><a-button type="link" class="danger-link" @click="removeRow('areas', index)">删除</a-button></td></tr><tr class="area-entry-row"><td>{{ draft.areas.length + 1 }}</td><td></td><td></td><td></td><td class="area-actions"><a-button type="link" @click="openAreaPicker">新增</a-button></td></tr></tbody></table></div>
     </div></section>
 
     <section v-for="section in tableSections.filter(section => !isOrganizationProject && section.key === 'team')" :key="section.key" :id="'form-' + section.key" class="panel form-section team-section"><div class="detail-section-header"><span class="detail-section-icon" :class="section.tone"><a-icon :type="section.icon" /></span><div><h2>{{ section.title }}</h2><p v-if="hasTeamReviewComments">请检查并修改标红的项目信息，点击信息小标题或行任意位置可查看具体审核意见</p></div></div><div class="project-module-content">
@@ -114,7 +114,7 @@
       <p v-if="['output', 'activity'].includes(modal.kind) && modalFieldErrors[field.key]" class="form-error modal-field-error" role="alert">{{ modalFieldErrors[field.key] }}</p></div></div><p v-if="modal.error && !['team', 'organizationMembers', 'output', 'activity'].includes(modal.kind)" class="form-error" role="alert">{{ modal.error }}</p><template slot="footer"><a-button @click="modal.visible = false">{{ modal.kind === 'team' || (modal.kind === 'organizationMembers' && modal.index < 0) ? '关闭' : '取消' }}</a-button><a-button type="primary" @click="confirmModal">{{ modal.kind === 'team' || modal.kind === 'organizationMembers' ? (modal.index < 0 ? '添加' : '保存') : '确定' }}</a-button></template>
     </a-modal>
 
-    <a-modal v-model="areaVisible" wrap-class-name="standard-form-modal standard-edit-scope standard-edit-modal" title="项目实施区域" :width="550" :mask-closable="false" :keyboard="false" ok-text="确定" cancel-text="关闭" @ok="confirmArea"><div class="area-picker"><div class="area-picker-row"><label>省 / 直辖市</label><a-select dropdown-class-name="standard-edit-dropdown" v-model="areaSelection.province" placeholder="请选择" @change="changeAreaProvince"><a-select-option v-for="option in regionOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option></a-select></div><div class="area-picker-row"><label>地级市 / 直辖市区</label><a-select dropdown-class-name="standard-edit-dropdown" v-model="areaSelection.city" :disabled="!areaSelection.province" placeholder="请选择" @change="changeAreaCity"><a-select-option v-for="option in areaCityOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option></a-select></div><div class="area-picker-row"><label>县 / 行政区</label><a-select dropdown-class-name="standard-edit-dropdown" v-model="areaSelection.district" :disabled="!areaSelection.city" placeholder="请选择"><a-select-option v-for="option in areaDistrictOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option></a-select></div><p v-if="areaError" class="form-error" role="alert">{{ areaError }}</p></div></a-modal>
+    <a-modal v-model="areaVisible" wrap-class-name="standard-form-modal standard-edit-scope standard-edit-modal" title="项目实施区域" :width="550" :mask-closable="false" :keyboard="false" ok-text="确定" cancel-text="关闭" @ok="confirmArea"><div class="area-picker"><div class="area-picker-row"><label>省 / 直辖市</label><a-select dropdown-class-name="standard-edit-dropdown" v-model="areaSelection.province" placeholder="请选择" @change="changeAreaProvince"><a-select-option v-for="option in regionOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option></a-select></div><div class="area-picker-row"><label>地级市 / 直辖市区</label><a-select dropdown-class-name="standard-edit-dropdown" v-model="areaSelection.city" :disabled="!areaSelection.province" placeholder="请选择" @change="changeAreaCity"><a-select-option v-for="option in areaCityOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option></a-select></div><div class="area-picker-row"><label>县 / 行政区</label><a-select dropdown-class-name="standard-edit-dropdown" v-model="areaSelection.district" :disabled="!areaSelection.city || areaSelection.city === '全部'" placeholder="请选择"><a-select-option v-for="option in areaDistrictOptions" :key="option.value" :value="option.value">{{ option.label }}</a-select-option></a-select></div><p v-if="areaError" class="form-error" role="alert">{{ areaError }}</p></div></a-modal>
 
     <a-modal v-model="thirdVisible" title="编辑第三方名单" wrap-class-name="standard-form-modal standard-edit-scope standard-edit-modal" :width="550" :mask-closable="false" :keyboard="false" :body-style="{ maxHeight: '65vh', overflowY: 'auto' }" @ok="confirmThirdParties" ok-text="确定" cancel-text="取消">
       <div class="third-picker">
@@ -129,6 +129,7 @@
 </template>
 
 <script>
+import { createRegionOptions, regionFieldOptions, regionPathComplete } from '../utils/administrative-regions'
 import { createOneTimeDonationDraft, loadOneTimeDonationDraft, saveOneTimeDonationDraft, donationOrganization, monthlyDonationOrganization, donationPlatformOptions } from '../mock/one-time-donation-project-draft'
 import greenHomeDetail from '../mock/project-green-home-detail.json'
 import { createGrassDraft, loadGrassDraft, saveGrassDraft, grassDecisionOptions, grassCoachingOptions } from '../mock/grass-project-draft'
@@ -351,11 +352,7 @@ export default {
     fundraisingEdit: { id: '', value: {}, error: '' },
     targetOptions: ['物种', '荒漠', '保护地', '水'],
     provinces: ['全国', '北京市', '天津市', '河北省', '山西省', '内蒙古自治区', '辽宁省', '吉林省', '黑龙江省', '上海市', '江苏省', '浙江省', '安徽省', '福建省', '江西省', '山东省', '河南省', '湖北省', '湖南省', '广东省', '广西壮族自治区', '海南省', '重庆市', '四川省', '贵州省', '云南省', '西藏自治区', '陕西省', '甘肃省', '青海省', '宁夏回族自治区', '新疆维吾尔自治区', '香港特别行政区', '澳门特别行政区', '台湾省'],
-    regionOptions: [
-      { value: '青海省', label: '青海省', children: [{ value: '玉树藏族自治州', label: '玉树藏族自治州', children: [{ value: '治多县扎河乡', label: '治多县扎河乡' }, { value: '囊谦县', label: '囊谦县' }] }] },
-      { value: '四川省', label: '四川省', children: [{ value: '成都市', label: '成都市', children: [{ value: '锦江区', label: '锦江区' }, { value: '青羊区', label: '青羊区' }] }] },
-      { value: '云南省', label: '云南省', children: [{ value: '昆明市', label: '昆明市', children: [{ value: '五华区', label: '五华区' }, { value: '盘龙区', label: '盘龙区' }] }] }
-    ],
+    regionOptions: createRegionOptions(),
     modalFieldErrors: {}, attachmentCategories: ['预算表', '其他附件'], attachmentVisible: false, attachmentDraft: { category: undefined, file: null, error: '' }, modal: { visible: false, kind: '', title: '', fields: [], value: {}, index: -1, parent: -1, error: '' },
     areaVisible: false, areaSelection: { province: undefined, city: undefined, district: undefined }, areaError: '', rowReviewKey: '', thirdVisible: false, thirdQuery: '', thirdSearch: '', thirdDraft: [], thirdOptions: ['武汉观鸟会', '青海省三江源生态环境保护协会', '社区生态保护合作组织', '长江流域湿地生态保护与候鸟迁徙通道修复社区联合行动协作中心（演示）'],
     riskTargetSelection: undefined, previewVisible: false, previewName: '', previewUrl: '', previewType: ''
@@ -439,8 +436,8 @@ export default {
 
     budgetDifference () { return roundMoney(budgetTotal(this.draft.budget) - Number(this.draft.total || 0)) },
     thirdResults () { const query = this.thirdSearch; if (!query) return []; const matches = this.thirdOptions.filter(name => name.includes(query)); return matches.length ? matches : this.thirdOptions },
-    areaCityOptions () { const province = this.regionOptions.find(option => option.value === this.areaSelection.province); return province ? province.children || [] : [] },
-    areaDistrictOptions () { const city = this.areaCityOptions.find(option => option.value === this.areaSelection.city); return city ? city.children || [] : [] },
+    areaCityOptions () { return regionFieldOptions('city', this.areaSelection) },
+    areaDistrictOptions () { return regionFieldOptions('district', this.areaSelection) },
     teamMemberOptions () {
       const names = (this.draft.team || []).concat(this.draft.organizationMembers || []).map(member => member.name)
       ;(this.draft.outputs || []).forEach(output => (output.activities || []).forEach(activity => names.push(...String(activity.people || '').split(/[、,，]/))))
@@ -508,7 +505,7 @@ export default {
     if (this.uploading) { this.$message.info('附件正在保存，请稍候。'); next(false); return }
     if (['project-budget-form', 'project-personnel-form'].includes(to.name) && budgetKey(to) === budgetKey(from)) { next(); return }
     if (!this.dirty && !this.fundraisingEdit.id) { next(); return }
-    this.$confirm({ title: '填写内容尚未保存', content: '是否保存为本地草稿后离开？', maskClosable: false, okText: '保存并离开', cancelText: '继续填写', onOk: () => { if (this.save()) next(); else next(false) }, onCancel: () => next(false) })
+    this.$confirm({ title: '填写内容尚未保存', content: '是否保存为本地草稿后离开？', maskClosable: false, keyboard: false, okText: '保存并离开', cancelText: '放弃填写', onOk: () => { if (this.save()) next(); else next(false) }, onCancel: () => { if (this.savedDraft) this.draft = clone(this.savedDraft); next() } })
   },
   methods: {
     restoreBudget () {
@@ -588,7 +585,7 @@ export default {
     changeAreaCity () { this.areaSelection.district = undefined; this.areaError = '' },
     confirmArea () {
       const { province, city, district } = this.areaSelection
-      if (!province || !city || !district) { this.areaError = '请完成省、市、区三级选择'; return }
+      if (!regionPathComplete([province, city, district])) { this.areaError = '请选择实施区域（可选择全部）'; return }
       if (this.draft.areas.some(row => row.province === province && row.city === city && row.district === district)) { this.areaError = '该实施区域已添加'; return }
       this.draft.areas.push({ id: this.uid(), province, city, district })
       this.areaVisible = false
@@ -659,6 +656,10 @@ export default {
       if (!this.isDonationProject) this.inheritedFields.forEach(field => { required[field.key] = field.label })
       if (this.isDonationProject) required.onlineFundraisingPlatform = '在线筹款平台'
       Object.entries(required).forEach(([key, label]) => { if (!String(this.draft[key] || '').trim()) errors.push('请填写' + label) })
+      if (this.isOrganizationProject && !this.isGrass) {
+        const projectName = String(this.draft.name || '').trim()
+        if (projectName && !/^创绿家支持“[^“”\r\n]*[^\s“”][^“”\r\n]*”发展项目$/.test(projectName)) errors.unshift('项目名称格式不正确，请按示例格式填写：创绿家支持“某组织或机构”发展项目')
+      }
       if (this.isOrganizationProject) {
         if (!this.draft.environmentalFieldSelection.length) errors.push('请选择从事的环保领域')
         if (!String(this.draft.otherLocalFundingDescription || '').trim()) errors.push('请填写其他地方资助说明')
@@ -781,9 +782,9 @@ export default {
 .execution-period >>> .execution-date-picker { flex: 1; min-width: 0; width: 0; }
 .execution-period >>> .execution-date-picker .ant-input { width: 100%; }
 .form-fields .rural-field { grid-column: 1; }
-.form-fields .field > .ant-input, .form-fields .date-pair .ant-input, .form-fields .amount-input .ant-input-number { border-color: transparent; background: transparent; box-shadow: none; }
-.form-fields .field > .ant-input:hover, .form-fields .date-pair .ant-input:hover { border-color: #d9e1eb; }
-.form-fields .field > .ant-input:focus, .form-fields .date-pair .ant-input:focus { border-color: #1677ff; box-shadow: 0 0 0 2px rgba(22,119,255,.12); }
+.form-fields .field > .ant-input, .form-fields .date-pair >>> .ant-input, .form-fields .amount-input .ant-input-number { border-color: transparent; background: transparent; box-shadow: none; }
+.form-fields .field > .ant-input:hover, .form-fields .date-pair >>> .ant-input:hover { border-color: #d9e1eb; }
+.form-fields .field > .ant-input:focus, .form-fields .date-pair >>> .ant-input:focus { border-color: #1677ff; box-shadow: 0 0 0 2px rgba(22,119,255,.12); }
 .form-fields >>> .ant-select-selection { border-color: transparent; background: transparent; }
 .form-fields >>> .ant-select-selection:hover { border-color: #d9e1eb; }
 .form-fields >>> .ant-select-focused .ant-select-selection { border-color: #1677ff; }
@@ -987,7 +988,6 @@ export default {
 .project-module-content .output-block { margin: 0 0 24px; }
 .project-module-content .add-output { width: 100%; margin: 0; }
 .project-module-content >>> .budget-sheet-row:first-child { padding-top: 0; min-height: 60px; align-items: start; }
-.project-module-content .form-attachment-list > div:first-child { min-height: 0; padding-top: 0; align-items: start; }
 .project-module-content .add-more-attachment { width: 100%; margin: 16px 0 0; }
 /* 活动执行人员保持单行，已选姓名用顿号连接。 */
 .modal-form >>> .people-select .ant-select-selection--multiple { height: 40px; min-height: 40px; padding: 0; }

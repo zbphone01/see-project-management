@@ -352,7 +352,6 @@ export default {
 .description-grid { --detail-inner-padding: 0 22px 22px; }
 .description-item { gap: 8px; }
 .detail-module-content .output-block + .output-block { margin-top: 24px; }
-.detail-module-content .attachment-list > div:first-child { min-height: 0; }
 
 #report-audit > .detail-module-content { background: #fff; }
 #report-budget, #report-budget > .detail-module-content { min-width: 0; }

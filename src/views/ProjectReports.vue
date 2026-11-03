@@ -8,7 +8,7 @@
         <label><span>报告类型</span><a-select v-model="filters.reportType" placeholder="选择报告类型" allow-clear><a-select-option v-for="type in reportTypes" :key="type" :value="type">{{ type }}</a-select-option></a-select></label>
         <label><span>状态</span><a-select v-model="filters.status" placeholder="选择报告状态" allow-clear><a-select-option v-for="status in reportStatuses" :key="status" :value="status">{{ status }}</a-select-option></a-select></label>
         <label><span>成果指标</span><a-select v-model="filters.outcome" placeholder="选择成果指标状态" allow-clear><a-select-option value="未采纳">未采纳</a-select-option><a-select-option value="已采纳">已采纳</a-select-option></a-select></label>
-        <div class="filter-actions"><a-button @click="resetFilters"><a-icon type="reload" /> 重置</a-button><a-button type="primary" @click="queryReports"><a-icon type="search" /> 查询</a-button></div>
+        <div class="filter-actions shared-list-filter-actions"><a-button class="shared-list-filter-button" @click="resetFilters"><a-icon type="reload" /> 重置</a-button><a-button class="shared-list-filter-button" type="primary" @click="queryReports"><a-icon type="search" /> 查询</a-button></div>
       </div>
     </section>
     <section class="panel applied-table-panel">
@@ -118,7 +118,6 @@ export default {
 .report-type-supplement { color: #62bfe6; }
 .reports-filters { grid-template-columns: minmax(140px, 1.2fr) repeat(3, minmax(120px, 1fr)) minmax(140px, 1fr) minmax(150px, 1fr) 193px; gap: 10px; }
 .reports-filters .filter-actions { grid-column: auto; }
-.reports-filters .filter-actions .ant-btn { flex: none; width: 92px; }
 
 .reports-page ::v-deep .applied-table .report-id-column { box-sizing: border-box; width: 110px !important; min-width: 110px !important; max-width: 110px !important; }
 

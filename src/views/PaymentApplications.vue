@@ -6,7 +6,7 @@
         <label><span>请款编码</span><a-input v-model="filters.paymentCode" placeholder="请输入请款编码" @pressEnter="query" /></label>
         <label><span>报告类型</span><a-select v-model="filters.reportType" placeholder="选择报告类型" allow-clear><a-select-option v-for="type in reportTypes" :key="type" :value="type">{{ type }}</a-select-option></a-select></label>
         <label><span>状态</span><a-select v-model="filters.status" placeholder="选择状态" allow-clear><a-select-option v-for="status in statuses" :key="status" :value="status">{{ status }}</a-select-option></a-select></label>
-        <div class="filter-actions"><a-button @click="reset"><a-icon type="reload" /> 重置</a-button><a-button type="primary" @click="query"><a-icon type="search" /> 查询</a-button></div>
+        <div class="filter-actions shared-list-filter-actions"><a-button class="shared-list-filter-button" @click="reset"><a-icon type="reload" /> 重置</a-button><a-button class="shared-list-filter-button" type="primary" @click="query"><a-icon type="search" /> 查询</a-button></div>
       </div>
     </section>
     <section class="panel applied-table-panel">
@@ -109,7 +109,6 @@ export default {
 <style scoped>
 .payment-filters { grid-template-columns: minmax(180px, 1.5fr) repeat(3, minmax(130px, 1fr)) 193px; }
 .payment-filters .filter-actions { grid-column: auto; }
-.payment-filters .filter-actions .ant-btn { flex: none; width: 92px; }
 
 .payments-page ::v-deep .applied-table th.payment-centered-column,
 .payments-page ::v-deep .applied-table td.payment-centered-column { text-align: center !important; }

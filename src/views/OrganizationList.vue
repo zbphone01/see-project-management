@@ -6,14 +6,14 @@
         <label for="organization-approval"><span>审批状态</span><a-select id="organization-approval" v-model="filters.approval" placeholder="全部状态" allow-clear>
           <a-select-option v-for="option in approvalOptions" :key="option" :value="option">{{ option }}</a-select-option>
         </a-select></label>
-        <div class="filter-actions">
-          <a-button icon="reload" @click="resetFilters">重置</a-button>
-          <a-button type="primary" html-type="submit" icon="search">查询</a-button>
+        <div class="filter-actions shared-list-filter-actions">
+          <a-button class="shared-list-filter-button" icon="reload" @click="resetFilters">重置</a-button>
+          <a-button class="shared-list-filter-button" type="primary" html-type="submit" icon="search">查询</a-button>
         </div>
       </form>
     </section>
     <section class="panel applied-table-panel">
-        <a-table class="applied-table organization-table shared-list-table shared-list-inset-8" :columns="columns" :data-source="filteredOrganizations" :pagination="pagination" :scroll="{ x: true }" row-key="id" :locale="{ emptyText: '暂无符合条件的机构' }" @change="changePage">
+        <a-table class="applied-table organization-table shared-list-table shared-list-inset-8 shared-list-operation-spacing" :columns="columns" :data-source="filteredOrganizations" :pagination="pagination" :scroll="{ x: true }" row-key="id" :locale="{ emptyText: '暂无符合条件的机构' }" @change="changePage">
           <template slot="logo" slot-scope="text, item"><div class="organization-logo"><img v-if="item.image" :src="item.image" :alt="item.name" /><a-icon v-else type="bank" /></div></template>
           <template slot="name" slot-scope="text, item"><div class="organization-name">{{ item.name }}<span v-if="item.isPrimaryAccount" class="primary-account-tag">主账号</span><div v-if="item.organizationName" class="organization-subline"><span>{{ item.organizationName }}</span><span v-if="item.isSubAccount" class="sub-account-tag">子账号</span></div></div></template>
           <template slot="contact" slot-scope="text, item"><div class="organization-contact"><span>{{ item.contactName }}</span><span>{{ item.contactPhone }}</span></div></template>
@@ -26,12 +26,12 @@
           </template>
         </a-table>
     </section>
-    <a-modal v-model="reportVisible" title="上传年报" :width="550" :mask-closable="false" ok-text="确定" cancel-text="取消" @ok="saveReport" @cancel="clearReport">
+    <a-modal v-model="reportVisible" wrap-class-name="standard-form-modal standard-edit-scope standard-edit-modal" title="上传年报" :width="550" :mask-closable="false" ok-text="确定" cancel-text="取消" @ok="saveReport" @cancel="clearReport">
       <div class="area-picker team-picker report-picker">
-        <div class="area-picker-row"><label for="report-year">报告年份：</label><a-select id="report-year" v-model="report.year" placeholder="请选择报告年份"><a-select-option v-for="year in reportYears" :key="year" :value="year">{{ year }}年</a-select-option></a-select></div>
-        <div class="area-picker-row"><label for="report-type">年报类型：</label><a-select id="report-type" v-model="report.type" placeholder="请选择年报类型" @change="changeReportType"><a-select-option v-for="type in ['年检年报', '机构年报', '审计报告']" :key="type" :value="type">{{ type }}</a-select-option></a-select></div>
-        <div v-if="report.type === '年检年报'" class="area-picker-row"><label for="report-civil-status">已上报民政：</label><a-select id="report-civil-status" v-model="report.civilStatus" placeholder="请选择上报状态"><a-select-option v-for="status in ['已上报', '未上报']" :key="status" :value="status">{{ status }}</a-select-option></a-select></div>
-        <div class="area-picker-row"><label>报告文件：</label><a-upload :before-upload="selectFile" :file-list="fileList" :remove="removeFile"><a-button icon="upload">点击上传</a-button></a-upload></div>
+        <div class="area-picker-row"><label for="report-year">报告年份</label><a-select dropdown-class-name="standard-edit-dropdown" id="report-year" v-model="report.year" placeholder="请选择报告年份"><a-select-option v-for="year in reportYears" :key="year" :value="year">{{ year }}年</a-select-option></a-select></div>
+        <div class="area-picker-row"><label for="report-type">年报类型</label><a-select dropdown-class-name="standard-edit-dropdown" id="report-type" v-model="report.type" placeholder="请选择年报类型" @change="changeReportType"><a-select-option v-for="type in ['年检年报', '机构年报', '审计报告']" :key="type" :value="type">{{ type }}</a-select-option></a-select></div>
+        <div v-if="report.type === '年检年报'" class="area-picker-row"><label for="report-civil-status">已上报民政</label><a-select dropdown-class-name="standard-edit-dropdown" id="report-civil-status" v-model="report.civilStatus" placeholder="请选择上报状态"><a-select-option v-for="status in ['已上报', '未上报']" :key="status" :value="status">{{ status }}</a-select-option></a-select></div>
+        <div class="area-picker-row"><label>报告文件</label><a-upload :before-upload="selectFile" :file-list="fileList" :remove="removeFile"><a-button icon="upload">点击上传</a-button></a-upload></div>
         <p v-if="reportError" class="form-error" role="alert">{{ reportError }}</p>
       </div>
     </a-modal>
@@ -50,7 +50,7 @@ export default {
       states: organizationStates,
       organizations: createOrganizations().map(item => {
         const detail = loadOrganizationDetail(item.id)
-        return detail.formVersion ? Object.assign({}, item, { name: detail.fields.name, organizationName: detail.fields.organizationName, registrationType: detail.fields.registrationType, contactName: detail.fields.leader, contactPhone: detail.fields.phone, image: detail.fields.avatar, status: detail.status, charityQualification: detail.fields.isCharity + ' / ' + detail.fields.hasFundraisingQualification }) : item
+        return detail.formVersion || item.registrationUpdate ? Object.assign({}, item, { name: detail.fields.name, organizationName: detail.fields.organizationName, registrationType: detail.fields.registrationType, contactName: detail.fields.leader, contactPhone: detail.fields.phone, image: detail.fields.avatar, status: detail.status, charityQualification: detail.fields.isCharity + ' / ' + detail.fields.hasFundraisingQualification }) : item
       }),
       filters: { name: '', approval: undefined },
       appliedFilters: { name: '', approval: undefined },
@@ -85,7 +85,7 @@ export default {
     openExternalPage (action) { this.$message.info(`${action}为独立机构页面，当前尚未接入`) },
     handleAction (action, item) {
       if (['查看详情', '查看变更前', '审核'].includes(action)) {
-        this.$router.push({ name: 'organization-detail', params: { id: item.id }, query: action === '审核' ? { mode: 'audit' } : {} })
+        this.$router.push({ name: 'organization-detail', params: { id: item.id }, query: action === '审核' ? Object.assign({ mode: 'audit' }, item.registrationUpdate ? { registrationUpdate: '1' } : {}) : {} })
       } else if (action === '修改' || action === '提交变更') {
         this.$router.push({ name: 'organization-form', params: { id: item.id }, query: { review: action === '修改' && ['变更驳回', '驳回待修改'].includes(item.status) ? 'comments' : 'none', change: action === '提交变更' ? '1' : undefined } })
       } else if (action === '上传年报') {
@@ -125,27 +125,29 @@ export default {
 </script>
 
 <style scoped>
-.organization-filters { grid-template-columns: 260px 200px 196px; justify-content: start; }
+.organization-filters { grid-template-columns: 260px 200px 193px; justify-content: start; }
 
-.organization-table >>> .ant-table-thead > tr > th:first-child,
-.organization-table >>> .ant-table-tbody > tr > td:first-child { padding-left: 20px; white-space: nowrap; }
+.organization-table >>> .ant-table-scroll .ant-table-thead > tr > th:first-child,
+.organization-table >>> .ant-table-scroll .ant-table-tbody > tr > td:first-child { padding-left: 20px; white-space: nowrap; }
 .organization-table >>> .ant-table-thead > tr > th:nth-child(4) { white-space: nowrap; }
+.organization-table >>> .ant-table-tbody > tr:last-child > td { border-bottom: 0; }
 .organization-logo { width: 80px; height: 80px; border-radius: 13px; overflow: hidden; display: grid; place-items: center; flex: none; background: #f1fbf5; color: #61bd98; font-size: 28px; }
 .organization-logo img { width: 100%; height: 100%; object-fit: cover; }
 .organization-name { min-width: 0; white-space: normal; overflow-wrap: anywhere; line-height: 1.6; color: #18253c; }
-.organization-name span { display: block; margin-top: 8px; color: #718095; font-weight: 400; }
-.organization-name .primary-account-tag { display: table; margin-top: 8px; padding: 2px 7px; border-radius: 3px; color: #62bfe6; background: #effaff; font-weight: 400; line-height: 1.5; }
+.organization-name .primary-account-tag,
+.organization-name .sub-account-tag { padding: 2px 7px; border-radius: 3px; line-height: 1.5; }
+.organization-name .primary-account-tag { display: table; margin-top: 8px; color: #62bfe6; background: #effaff; }
 .organization-subline { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
-.organization-subline > span { display: inline-block; margin: 0; }
-.organization-name .sub-account-tag { display: table; margin-top: 8px; padding: 2px 7px; border-radius: 3px; color: #61bd98; background: #f1fbf5; font-weight: 400; line-height: 1.5; }
-.organization-subline .sub-account-tag { display: inline-block; margin: 0; }
+.organization-subline > span { display: inline-block; margin: 0; color: #718095; }
+.organization-name .sub-account-tag { color: #61bd98; background: #f1fbf5; }
 .organization-contact { display: grid; gap: 6px; overflow-wrap: anywhere; }
 .organization-contact span + span { color: #718095; }
-.report-picker { display: grid; width: 470px; max-width: 100%; gap: 16px; margin: 0 auto; padding: 16px 0 12px; }
-.report-picker .area-picker-row { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 18px; align-items: start; }
-.report-picker .area-picker-row label { display: flex; min-height: 32px; align-items: center; justify-content: flex-end; color: #27384e; text-align: right; white-space: nowrap; }
+.report-picker { display: grid; width: 470px; max-width: 100%; grid-template-columns: max-content minmax(0, 1fr); column-gap: 18px; row-gap: 16px; margin: 0 auto; padding: 0; }
+.report-picker .area-picker-row { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; align-items: start; }
+.report-picker .area-picker-row label { max-width: 140px; color: #27384e; text-align: right; white-space: normal; overflow-wrap: anywhere; }
+.report-picker .area-picker-row > :not(label) { min-width: 0; }
 .report-picker .area-picker-row .ant-select { width: 100%; }
-.report-picker > .form-error { margin: -4px 0 0 108px; }
-.operation-button { border: 0; background: transparent; padding: 0; height: 32px; box-shadow: none; }
-.operation-button >>> .anticon { margin-left: 2px !important; }
+.report-picker .area-picker-row >>> .ant-upload-select .ant-btn { height: 40px; }
+.report-picker > .form-error { grid-column: 2; margin: -4px 0 0; }
+.operation-button { border: 0; padding: 0; height: 32px; }
 </style>

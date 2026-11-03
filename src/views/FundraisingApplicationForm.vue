@@ -5,11 +5,11 @@
       <div class="detail-section-header"><span class="detail-section-icon"><a-icon type="file-text" /></span><div><h2>{{ draft.recruitment || '招募名称' }} - 募捐申请书</h2><p v-if="basicFieldsOrdered.some(field => comment(field.key)) || basicRichContent.some(section => comment(section.key))">{{ fieldReviewHint }}</p></div></div>
       <div class="edit-grid">
         <div v-for="field in basicFieldsOrdered" :key="field.key" class="edit-field" :class="[{ wide: field.key === 'name' }, reviewClass(field.key)]">
-          <label :for="'fundraising-' + field.key"><em v-if="field.key !== 'organization'">*</em><review-comment-label :comment="comment(field.key)">{{ basicFieldLabel(field) }}</review-comment-label></label>
+          <label :for="'fundraising-' + field.key"><review-comment-label overlay-class-name="fundraising-edit-review-comment" :comment="comment(field.key)">{{ basicFieldLabel(field) }}</review-comment-label></label>
           <a-input v-if="field.key === 'name'" :id="'fundraising-' + field.key" v-model="field.value" :max-length="200" placeholder="建议9个字，项目名称需具有项目代表性，体现项目急需要解决的社会问题" />
           <div v-else-if="field.key === 'fundraisingPeriod'" class="date-pair">
-            <input id="fundraising-fundraisingPeriod" v-model="draft.periodStart" :type="draft.periodStart ? 'date' : 'text'" class="ant-input" placeholder="开始日期" aria-label="预计筹款开始日期" @focus="$event.target.type = 'date'" @blur="!draft.periodStart && ($event.target.type = 'text')" />
-            <span>至</span><input v-model="draft.periodEnd" :type="draft.periodEnd ? 'date' : 'text'" class="ant-input" :min="draft.periodStart || undefined" placeholder="结束日期" aria-label="预计筹款结束日期" @focus="$event.target.type = 'date'" @blur="!draft.periodEnd && ($event.target.type = 'text')" />
+            <a-date-picker id="fundraising-fundraisingPeriod" class="fundraising-date-picker" :value="draft.periodStart || null" value-format="YYYY-MM-DD" format="YYYY-MM-DD" :locale="datePickerLocale" :month-cell-content-render="dateMonthLabel" dropdown-class-name="fundraising-period-calendar" placeholder="请选择开始日期" aria-label="预计筹款开始日期" @change="value => draft.periodStart = value || ''" />
+            <span>至</span><a-date-picker class="fundraising-date-picker" :value="draft.periodEnd || null" value-format="YYYY-MM-DD" format="YYYY-MM-DD" :locale="datePickerLocale" :month-cell-content-render="dateMonthLabel" :disabled-date="endDateDisabled" dropdown-class-name="fundraising-period-calendar" placeholder="请选择结束日期" aria-label="预计筹款结束日期" @change="value => draft.periodEnd = value || ''" />
           </div>
           <span v-else-if="field.key === 'organization'" :id="'fundraising-' + field.key" class="basic-field-value">{{ draft.organization || '暂无' }}</span>
           <a-input v-else :id="'fundraising-' + field.key" v-model="field.value" :max-length="field.key === 'phone' ? 25 : 100" :placeholder="field.key === 'leader' ? '请负责人姓名' : field.key === 'phone' ? '请填写联系电话' : '请填写' + basicFieldLabel(field)" />
@@ -17,7 +17,7 @@
       </div>
       <div class="application-edit-content">
       <div v-for="section in basicRichContent" :key="section.key" class="section-body organization-introduction">
-        <h3><review-comment-label :comment="comment(section.key)">{{ section.title }}</review-comment-label></h3>
+        <h3><review-comment-label overlay-class-name="fundraising-edit-review-comment" :comment="comment(section.key)">{{ section.title }}</review-comment-label></h3>
         <fundraising-rich-editor :value="sectionHtml(section)" :label="section.title" :placeholder="contentHints[section.key]" :class="reviewClass(section.key)" @input="value => changeRichText(section, value)" @busy="value => editorBusy(section.key, value)" />
       </div>
       <div v-if="annualFundsSection" class="section-body basic-annual-funds">
@@ -31,14 +31,14 @@
             <thead><tr><th>序号</th><th>资金来源描述</th><th>资金量（万元）</th><th>机构年度总收入占比</th><th>操作</th></tr></thead>
             <tbody>
               <tr v-for="(row, index) in year.rows" :key="row.id" :class="rowClass('annualFunds', row)" v-bind="rowAttrs('annualFunds', row)" @click="openRowReview('annualFunds', row)" @keydown.enter.prevent="openRowReview('annualFunds', row)" @keydown.space.prevent="openRowReview('annualFunds', row)">
-                <td>{{ index + 1 }}</td><td>{{ row.source }}</td><td class="number-cell">{{ numberText(row.amount, 4) }}</td><td class="number-cell">{{ numberText(row.ratio, 2) }}%</td>
+                <td><a-popover v-if="rowComment('annualFunds', row)" :visible="rowReviewKey === 'annualFunds.' + row.id" trigger="click" placement="topLeft" overlay-class-name="fundraising-edit-review-comment" @visibleChange="visible => changeRowReviewVisibility('annualFunds', row, visible)"><template slot="content"><div class="fundraising-row-review-content"><div><a-icon type="exclamation-circle" theme="filled" /><p>{{ rowComment('annualFunds', row) }}</p></div><a-button size="small" type="primary" @click.stop="rowReviewKey = ''" @keydown.stop>关闭</a-button></div></template><span class="row-review-anchor">{{ index + 1 }}</span></a-popover><template v-else>{{ index + 1 }}</template></td><td>{{ row.source }}</td><td class="number-cell">{{ numberText(row.amount, 4) }}</td><td class="number-cell">{{ numberText(row.ratio, 2) }}%</td>
                 <td class="row-actions" @click.stop @keydown.stop><a-button type="link" @click.stop="openRow('annualFunds', year, row)">编辑</a-button><a-button type="link" class="danger-link" @click.stop="removeRow(year.rows, row, '资金来源')">删除</a-button></td>
               </tr>
               <tr v-if="annualEntries[year.year]" class="annual-input-row">
                 <td>{{ year.rows.length + 1 }}</td>
                 <td><a-input v-model="annualEntries[year.year].source" :aria-label="year.year + '资金来源描述'" placeholder="请填写资金来源描述" /></td>
                 <td><a-input-number v-model="annualEntries[year.year].amount" :min="0" :max="1000000000" :aria-label="year.year + '资金量（万元）'" placeholder="请填写资金量" /></td>
-                <td><a-input-number v-model="annualEntries[year.year].ratio" :min="0" :max="100" :aria-label="year.year + '机构年度总收入占比（%）'" placeholder="请填写占比（%）" /></td>
+                <td><a-input-number v-model="annualEntries[year.year].ratio" :min="0" :max="100" :aria-label="year.year + '机构年度总收入占比（%）'" placeholder="填写占比数字" /></td>
                 <td class="row-actions" @click.stop @keydown.stop><a-button type="link" @click.stop="addAnnualEntry(year)">增加</a-button></td>
               </tr>
               <tr class="total-row"><td colspan="2">合计</td><td class="number-cell">{{ numberText(amountTotal(year.rows), 4) }}</td><td class="number-cell" :class="{ 'form-error': ratioTotal(year.rows) !== 100 }">{{ numberText(ratioTotal(year.rows), 2) }}%</td><td></td></tr>
@@ -50,7 +50,7 @@
 
     <div v-for="section in remainingContent" :key="section.key" class="section-body merged-input-section">
       <div v-if="section.type !== 'amounts'" class="merged-input-heading">
-        <div><h3><review-comment-label :comment="comment(section.key)">{{ section.title }}</review-comment-label></h3><p v-if="sectionHasReview(section)" class="annual-review-hint">{{ section.type === 'fundDirections' ? rowReviewHint : fieldReviewHint }}</p></div>
+        <div><h3><review-comment-label overlay-class-name="fundraising-edit-review-comment" :comment="comment(section.key)">{{ section.title }}</review-comment-label></h3><p v-if="sectionHasReview(section)" class="annual-review-hint">{{ section.type === 'fundDirections' ? rowReviewHint : fieldReviewHint }}</p></div>
         <span v-if="section.key === 'purpose'" class="word-count" :class="{ 'word-count-error': plainText(section).replace(/\s/g, '').length > 100 }">{{ plainText(section).replace(/\s/g, '').length }} / 100 字</span>
       </div>
       <div v-if="section.type === 'text'" class="section-body">
@@ -60,7 +60,7 @@
       <div v-else-if="section.type === 'amounts'" class="section-body">
         <p v-if="sectionHasReview(section)" class="annual-review-hint">{{ fieldReviewHint }}</p>
         <div class="edit-grid amount-grid"><div v-for="field in draft.amountFields" :key="field.key" class="edit-field" :class="reviewClass(field.key)">
-          <label :for="'fundraising-' + field.key"><em>*</em><review-comment-label :comment="comment(field.key)">{{ field.label }}</review-comment-label></label>
+          <label :for="'fundraising-' + field.key"><review-comment-label overlay-class-name="fundraising-edit-review-comment" :comment="comment(field.key)">{{ field.label }}</review-comment-label></label>
           <div class="amount-input"><a-input-number :id="'fundraising-' + field.key" v-model="field.amount" :min="0" :max="1000000000" :precision="2" placeholder="输入数字" /><span>元</span></div>
           <small>大写：{{ uppercaseMoney(field.amount) }}</small>
           <p v-if="field.key === 'fundraisingTarget'" class="input-hint amount-target-hint">此目标按照年度计算，最长可按照3年做目标计划，最短为1年，金额需参考贵机构年度收支情况，避免过高/过低目标金额。</p>
@@ -74,7 +74,7 @@
           <thead><tr><th>序号</th><th>资金使用方向</th><th>资金分配比例</th><th>详细说明（具体支出）</th><th>操作</th></tr></thead>
           <tbody>
             <tr v-for="(row, index) in draft.fundDirections" :key="row.id" :class="rowClass('fundDirections', row)" v-bind="rowAttrs('fundDirections', row)" @click="openRowReview('fundDirections', row)" @keydown.enter.prevent="openRowReview('fundDirections', row)" @keydown.space.prevent="openRowReview('fundDirections', row)">
-              <td>{{ index + 1 }}</td><td>{{ row.direction }}</td><td class="number-cell">{{ numberText(row.ratio, 2) }}%</td><td class="multiline">{{ row.description }}</td>
+              <td><a-popover v-if="rowComment('fundDirections', row)" :visible="rowReviewKey === 'fundDirections.' + row.id" trigger="click" placement="topLeft" overlay-class-name="fundraising-edit-review-comment" @visibleChange="visible => changeRowReviewVisibility('fundDirections', row, visible)"><template slot="content"><div class="fundraising-row-review-content"><div><a-icon type="exclamation-circle" theme="filled" /><p>{{ rowComment('fundDirections', row) }}</p></div><a-button size="small" type="primary" @click.stop="rowReviewKey = ''" @keydown.stop>关闭</a-button></div></template><span class="row-review-anchor">{{ index + 1 }}</span></a-popover><template v-else>{{ index + 1 }}</template></td><td>{{ row.direction }}</td><td class="number-cell">{{ numberText(row.ratio, 2) }}%</td><td class="multiline">{{ row.description }}</td>
               <td class="row-actions" @click.stop @keydown.stop><template v-if="row.editable !== false"><a-button type="link" @click.stop="openRow('fundDirections', null, row)">编辑</a-button><a-button type="link" class="danger-link" @click.stop="removeRow(draft.fundDirections, row, '资金使用方向')">删除</a-button></template><span v-else class="muted"><a-icon type="lock" /> 固定</span></td>
             </tr>
             <tr class="fund-direction-input-row">
@@ -94,7 +94,7 @@
     </section>
 
     <section class="panel detail-section">
-      <div class="detail-section-header"><span class="detail-section-icon blue"><a-icon type="picture" /></span><div><h2><review-comment-label :comment="comment('images')">筹款图片</review-comment-label></h2><p class="input-hint image-module-hint">请使用美观、突出项目亮点、经过授权的图片，建议6张</p><p v-if="comment('images')">{{ fieldReviewHint }}</p></div></div>
+      <div class="detail-section-header"><span class="detail-section-icon blue"><a-icon type="picture" /></span><div><h2><review-comment-label overlay-class-name="fundraising-edit-review-comment" :comment="comment('images')">筹款图片</review-comment-label></h2><p class="input-hint image-module-hint">请使用美观、突出项目亮点、经过授权的图片，建议6张</p><p v-if="comment('images')">{{ fieldReviewHint }}</p></div></div>
       <div class="section-body" :class="reviewClass('images')"><div class="image-editor">
         <div v-for="item in draft.images" :key="item.id" class="image-item">
           <button type="button" class="image-button" :aria-label="'预览图片：' + item.alt" @click="openImage(item)"><img v-if="imageSource(item)" :src="imageSource(item)" :alt="item.alt" /><span v-else class="image-unavailable">图片不可用</span></button>
@@ -105,13 +105,13 @@
     </section>
 
     <section class="panel detail-section">
-      <div class="detail-section-header"><span class="detail-section-icon blue"><a-icon type="paper-clip" /></span><div><h2><review-comment-label :comment="comment('attachments')">附件</review-comment-label></h2><p><a href="#" @click.prevent="downloadTemplate">下载诚信承诺函模板</a></p><p v-if="attachmentHasReview">请检查并修改标红的项目信息，点击信息小标题或行任意位置可查看具体审核意见</p></div></div>
+      <div class="detail-section-header"><span class="detail-section-icon blue"><a-icon type="paper-clip" /></span><div><h2><review-comment-label overlay-class-name="fundraising-edit-review-comment" :comment="comment('attachments')">附件</review-comment-label></h2><p><a href="#" @click.prevent="downloadTemplate">下载诚信承诺函模板</a></p><p v-if="attachmentHasReview">请检查并修改标红的项目信息，点击信息小标题或行任意位置可查看具体审核意见</p></div></div>
       <div class="section-body" :class="reviewClass('attachments')">
         <a-empty v-if="!draft.attachments.length" class="attachment-empty-add" description="点击添加附件" role="button" tabindex="0" @click="openAttachment(attachmentTypes[0])" @keydown.enter.native.prevent="openAttachment(attachmentTypes[0])" @keydown.space.native.prevent="openAttachment(attachmentTypes[0])" />
         <template v-else>
           <div class="attachment-list form-attachment-list">
             <div v-for="file in draft.attachments" :key="file.id" :class="rowClass('attachments', file)" v-bind="rowAttrs('attachments', file)" @click="openRowReview('attachments', file)" @keydown.enter.prevent="openRowReview('attachments', file)" @keydown.space.prevent="openRowReview('attachments', file)">
-              <div><strong>{{ file.name }}</strong><span>{{ file.type }} · {{ file.uploadedAt }}<template v-if="file.size"> · {{ formatSize(file.size) }}</template></span></div>
+              <div><a-popover v-if="rowComment('attachments', file)" :visible="rowReviewKey === 'attachments.' + file.id" trigger="click" placement="topLeft" overlay-class-name="fundraising-edit-review-comment" @visibleChange="visible => changeRowReviewVisibility('attachments', file, visible)"><template slot="content"><div class="fundraising-row-review-content"><div><a-icon type="exclamation-circle" theme="filled" /><p>{{ rowComment('attachments', file) }}</p></div><a-button size="small" type="primary" @click.stop="rowReviewKey = ''" @keydown.stop>关闭</a-button></div></template><span class="row-review-anchor"><span class="attachment-review-name"><strong>{{ file.name }}</strong><span>{{ file.type }} · {{ file.uploadedAt }}<template v-if="file.size"> · {{ formatSize(file.size) }}</template></span></span></span></a-popover><template v-else><span class="attachment-review-name"><strong>{{ file.name }}</strong><span>{{ file.type }} · {{ file.uploadedAt }}<template v-if="file.size"> · {{ formatSize(file.size) }}</template></span></span></template></div>
               <a-button type="link" @click.stop="previewAttachment(file)" @keydown.stop>预览</a-button><a-button type="link" @click.stop="downloadAttachment(file)" @keydown.stop>下载</a-button><a-button type="link" class="danger-link" @click.stop="removeRow(draft.attachments, file, '附件')" @keydown.stop>删除</a-button>
             </div>
           </div>
@@ -124,7 +124,7 @@
     <section class="panel detail-section">
       <div class="detail-section-header"><span class="detail-section-icon gray"><a-icon type="history" /></span><div><h2>审核信息</h2></div></div>
       <div class="section-body"><a-timeline v-if="draft.auditHistory.length" class="audit-timeline">
-        <a-timeline-item v-for="record in draft.auditHistory" :key="record.id" color="blue">
+        <a-timeline-item v-for="record in draft.auditHistory" :key="record.id" :color="record.result === '通过' ? '#70B603' : '#FF4D4F'">
           <div class="audit-entry">
             <strong>审核结果：{{ record.result }}</strong>
             <div class="audit-result-row"><span class="audit-info-chip audit-time">{{ record.time }} · {{ record.account }}</span></div>
@@ -136,24 +136,24 @@
     </section>
 
     <a-modal wrap-class-name="standard-form-modal standard-edit-scope standard-edit-modal" :visible="rowEditor.visible" :title="rowEditorTitle" :width="550" :mask-closable="false" ok-text="保存" cancel-text="取消" @ok="saveRow" @cancel="rowEditor.visible = false">
-      <div class="compact-modal-form">
+      <div class="compact-modal-form adaptive-modal-form">
         <div v-for="field in rowEditorFields" :key="field.key" class="modal-field"><label :for="'fundraising-row-' + field.key">{{ field.label }}</label><div>
           <a-input-number v-if="field.numeric" :id="'fundraising-row-' + field.key" v-model="rowEditor.value[field.key]" :min="0" :max="field.key === 'ratio' ? 100 : 1000000000" :precision="field.key === 'ratio' ? 2 : 4" :placeholder="field.placeholder" />
+          <a-input v-else-if="rowEditor.kind === 'fundDirections' && field.key === 'direction'" :id="'fundraising-row-' + field.key" v-model="rowEditor.value[field.key]" :placeholder="field.placeholder" />
           <a-textarea v-else :id="'fundraising-row-' + field.key" v-model="rowEditor.value[field.key]" :rows="field.key === 'description' ? 3 : 2" :placeholder="field.placeholder" />
           <p v-if="rowEditor.errors[field.key]" class="form-error" role="alert">{{ rowEditor.errors[field.key] }}</p>
         </div></div>
       </div>
     </a-modal>
     <a-modal wrap-class-name="standard-form-modal standard-edit-scope standard-edit-modal" :visible="attachmentPicker.visible" title="上传附件" :width="550" :mask-closable="false" :confirm-loading="uploading > 0" :closable="!uploading" :keyboard="!uploading" :cancel-button-props="{ props: { disabled: uploading > 0 } }" ok-text="上传" cancel-text="取消" @ok="confirmAttachment" @cancel="closeAttachment">
-      <div class="compact-modal-form"><div class="modal-field"><label for="fundraising-file-type">附件类型</label><a-select dropdown-class-name="standard-edit-dropdown" id="fundraising-file-type" v-model="attachmentPicker.category" :disabled="uploading > 0"><a-select-option v-for="category in attachmentTypes" :key="category" :value="category">{{ category }}</a-select-option></a-select></div>
-        <div class="modal-field"><label>选择文件</label><div><a-upload accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" :before-upload="selectAttachment" :show-upload-list="false" :disabled="uploading > 0"><a-button icon="upload" :disabled="uploading > 0">选择文件</a-button></a-upload><p v-if="attachmentPicker.file" class="picked-file">{{ attachmentPicker.file.name }}</p><p class="muted file-hint">支持 PDF、Word、Excel、PNG、JPG，单个文件不超过 20 MB。</p><p v-if="attachmentPicker.error" class="form-error" role="alert">{{ attachmentPicker.error }}</p></div></div>
+      <div class="compact-modal-form adaptive-modal-form attachment-picker-form"><div class="modal-field"><label for="fundraising-file-type">附件类型</label><a-select dropdown-class-name="standard-edit-dropdown" id="fundraising-file-type" v-model="attachmentPicker.category" :disabled="uploading > 0"><a-select-option v-for="category in attachmentTypes" :key="category" :value="category">{{ category }}</a-select-option></a-select></div>
+        <div class="modal-field"><label>选择文件</label><div><a-upload accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" :before-upload="selectAttachment" :show-upload-list="false" :disabled="uploading > 0"><a-button icon="upload" :disabled="uploading > 0">选择文件</a-button></a-upload><p v-if="attachmentPicker.file" class="picked-file">{{ attachmentPicker.file.name }}</p><p class="input-hint file-hint">支持 PDF、Word、Excel、PNG、JPG，单个文件不超过 20 MB。</p><p v-if="attachmentPicker.error" class="form-error" role="alert">{{ attachmentPicker.error }}</p></div></div>
       </div>
     </a-modal>
     <a-modal :visible="!!previewImage" title="筹款图片" :width="900" :mask-closable="false" :footer="null" @cancel="previewImage = null"><img v-if="previewImage" class="preview-image" :src="previewImage.src" :alt="previewImage.alt" /></a-modal>
     <a-modal :visible="!!previewFile" :title="previewFile ? previewFile.name : '附件预览'" :width="900" :mask-closable="false" :footer="null" @cancel="clearPreview">
       <img v-if="previewType === 'image'" class="preview-image" :src="previewUrl" :alt="previewFile && previewFile.name" /><iframe v-else-if="previewType === 'pdf'" class="preview-pdf" :src="previewUrl" :title="previewFile && previewFile.name"></iframe><p v-else-if="previewType === 'missing'" class="muted">该示例附件未提供文件正文，请重新上传文件后预览或下载。</p><template v-else><p class="muted">此格式请下载后使用对应办公软件查看。</p><a-button icon="download" @click="downloadAttachment(previewFile)">下载附件</a-button></template>
     </a-modal>
-    <a-modal :visible="!!rowReviewText" title="审核意见" :width="560" :mask-closable="false" @cancel="rowReviewText = ''"><p class="review-text">{{ rowReviewText }}</p><template slot="footer"><a-button type="primary" @click="rowReviewText = ''">关闭</a-button></template></a-modal>
     <a-modal :visible="validationErrors.length > 0" :width="550" :mask-closable="false" :closable="false" :keyboard="false" :footer="null" :body-style="{ padding: '36px 28px 28px' }">
       <div class="validation-heading"><a-icon type="close-circle" theme="filled" /><strong>请完善申请信息</strong></div><ul class="validation-errors"><li v-for="(error, index) in validationErrors" :key="index">{{ error }}</li></ul><div class="validation-action"><a-button type="primary" @click="validationErrors = []">关闭</a-button></div>
     </a-modal>
@@ -163,6 +163,7 @@
 
 <script>
 import example from '../mock/fundraising-application-detail.json'
+import datePickerZhCN from 'ant-design-vue/es/date-picker/locale/zh_CN'
 import ReviewCommentLabel from '../components/ReviewCommentLabel.vue'
 import FundraisingRichEditor from '../components/FundraisingRichEditor.vue'
 import { cleanFundraisingRichText, paragraphsToRichText } from '../utils/fundraising-rich-text'
@@ -175,7 +176,8 @@ export default {
   components: { ReviewCommentLabel, FundraisingRichEditor },
   data () {
     return {
-      draft: normalizeFundraising(example), savedSnapshot: '', saved: false, rowReviewText: '', validationErrors: [], uploading: 0, busyEditors: {},
+      draft: normalizeFundraising(example), savedSnapshot: '', saved: false, rowReviewKey: '', validationErrors: [], uploading: 0, busyEditors: {},
+      datePickerLocale: Object.assign({}, datePickerZhCN, { lang: Object.assign({}, datePickerZhCN.lang, { monthFormat: 'M月' }) }),
       attachmentTypes, contentHints, annualEntries: {}, fundDirectionEntry: { direction: '', ratio: null, description: '' },
       fieldReviewHint: '请检查并修改标红的项目信息，点击信息小标题可查看具体审核意见',
       rowReviewHint: '请检查并修改标红的项目信息，点击行任意位置可查看具体审核意见',
@@ -204,8 +206,8 @@ export default {
     rowEditorTitle () { return (this.rowEditor.id ? '编辑' : '新增') + (this.rowEditor.kind === 'annualFunds' ? '资金来源' : '资金使用方向') },
     rowEditorFields () {
       return this.rowEditor.kind === 'annualFunds'
-        ? [{ key: 'source', label: '资金来源', placeholder: '请填写资金来源描述' }, { key: 'amount', label: '资金量', placeholder: '请填写金额（万元）', numeric: true }, { key: 'ratio', label: '收入占比', placeholder: '请填写比例（%）', numeric: true }]
-        : [{ key: 'direction', label: '使用方向', placeholder: '请填写资金使用方向' }, { key: 'ratio', label: '分配比例', placeholder: '请填写比例（%）', numeric: true }, { key: 'description', label: '详细说明', placeholder: '请填写具体支出' }]
+        ? [{ key: 'source', label: '资金来源', placeholder: '请填写资金来源描述' }, { key: 'amount', label: '资金量', placeholder: '请填写金额（万元）', numeric: true }, { key: 'ratio', label: '收入占比', placeholder: '填写占比数字', numeric: true }]
+        : [{ key: 'direction', label: '资金使用方向', placeholder: '请填写资金使用方向' }, { key: 'ratio', label: '资金分配比例', placeholder: '请填写比例（%）', numeric: true }, { key: 'description', label: '详细说明（具体支出）', placeholder: '请填写具体支出' }]
     }
   },
   created () { this.load() },
@@ -219,7 +221,7 @@ export default {
     if (this.busy) { this.$message.warning('文件正在处理中，请稍后再离开'); next(false); return }
     if (this.pendingEdits) { this.$message.warning('请先保存或取消弹窗中的修改'); next(false); return }
     if (!this.dirty) { next(); return }
-    this.$confirm({ title: '填写内容尚未保存', content: '是否保存为草稿后离开？', maskClosable: false, okText: '保存并离开', cancelText: '继续填写', onOk: () => next(this.save()), onCancel: () => next(false) })
+    this.$confirm({ title: '填写内容尚未保存', content: '是否保存为本地草稿后离开？', maskClosable: false, keyboard: false, okText: '保存并离开', cancelText: '放弃填写', onOk: () => { if (this.save()) next(); else next(false) }, onCancel: () => { this.draft = JSON.parse(this.savedSnapshot); next() } })
   },
   methods: {
     uppercaseMoney, ratioTotal,
@@ -261,7 +263,14 @@ export default {
     },
     rowClass (section, row) { return { 'review-row-has-comment': !!this.rowComment(section, row) } },
     rowAttrs (section, row) { return this.rowComment(section, row) ? { role: 'button', tabindex: 0, 'aria-label': '查看审核意见' } : {} },
-    openRowReview (section, row) { const text = this.rowComment(section, row); if (text) this.rowReviewText = text },
+    dateMonthLabel (value) { return value.format('M月') },
+    endDateDisabled (value) { return !!this.draft.periodStart && value.format('YYYY-MM-DD') < this.draft.periodStart },
+    openRowReview (section, row) { if (this.rowComment(section, row)) this.rowReviewKey = section + '.' + row.id },
+    changeRowReviewVisibility (section, row, visible) {
+      const key = section + '.' + row.id
+      if (visible && this.rowComment(section, row)) this.rowReviewKey = key
+      else if (this.rowReviewKey === key) this.rowReviewKey = ''
+    },
     sectionHasReview (section) {
       if (section.type === 'annualFunds') return this.draft.annualFunds.some(year => year.rows.some(row => !!this.rowComment('annualFunds', row)))
       if (section.type === 'fundDirections') return this.draft.fundDirections.some(row => !!this.rowComment('fundDirections', row))
@@ -406,13 +415,13 @@ export default {
 .edit-field { min-width: 0; min-height: 76px; padding: 17px 18px; display: grid; align-content: center; gap: 8px; border-bottom: 1px solid #edf1f5; }
 .edit-field > label { color: #7b899b; font-weight: 400; line-height: 1.6; }
 .edit-field >>> input.ant-input { height: 40px; padding: 0 12px; line-height: normal; }
-em { color: #ff4d4f; font-style: normal; margin-right: 6px; }
-.edit-field > .ant-input, .date-pair .ant-input, .amount-input >>> .ant-input-number { border-color: transparent; background: transparent; box-shadow: none; }
-.edit-field > .ant-input:hover, .date-pair .ant-input:hover, .amount-input >>> .ant-input-number:hover { border-color: #d9e1eb; }
-.edit-field > .ant-input:focus, .date-pair .ant-input:focus, .amount-input >>> .ant-input-number-focused { border-color: #1677ff; box-shadow: 0 0 0 2px rgba(22,119,255,.12); }
+.edit-field > .ant-input, .date-pair >>> .ant-input, .amount-input >>> .ant-input-number { border-color: transparent; background: transparent; box-shadow: none; }
+.edit-field > .ant-input:hover, .date-pair >>> .ant-input:hover, .amount-input >>> .ant-input-number:hover { border-color: #d9e1eb; }
+.edit-field > .ant-input:focus, .date-pair >>> .ant-input:focus, .amount-input >>> .ant-input-number-focused { border-color: #1677ff; box-shadow: 0 0 0 2px rgba(22,119,255,.12); }
 .date-pair { display: flex; gap: 12px; align-items: center; }
-.date-pair .ant-input { min-width: 0; width: calc(50% - 20px); }
-.date-pair > span, .muted, .edit-field small { color: #718095; }
+.date-pair > .fundraising-date-picker { flex: 1; min-width: 0; width: 0; }
+.date-pair >>> .ant-input { width: 100%; }
+.date-pair > span:not(.ant-calendar-picker), .muted, .edit-field small { color: #718095; }
 .edit-grid >>> .ant-input, .edit-grid >>> .ant-input-number-input { color: #27384e; }
 .fundraising-form-page >>> input::placeholder, .fundraising-form-page >>> textarea::placeholder { color: #5b8ff9; opacity: 1; }
 .section-body { padding: 24px; margin: 0; --detail-inner-padding: 0; }
@@ -474,7 +483,6 @@ em { color: #ff4d4f; font-style: normal; margin-right: 6px; }
 .image-button:focus-visible { outline: 2px solid #1677ff; outline-offset: 3px; }
 .form-attachment-list { padding: 0; }
 .attachment-empty-add { margin: 0; cursor: pointer; }
-.form-attachment-list > div:first-child { padding-top: 0; align-items: start; }
 .attachment-empty-add >>> .ant-empty-description { color: #5b8ff9; }
 .attachment-empty-add:focus-visible { outline: 2px solid #1677ff; outline-offset: 3px; }
 .add-more-attachment { width: 100%; margin: 16px 0 0; border-color: #91d5ff; border-style: dashed; color: #096dd9 !important; background: #e6f7ff; }
@@ -485,8 +493,13 @@ em { color: #ff4d4f; font-style: normal; margin-right: 6px; }
 .compact-modal-form { display: grid; gap: 16px; width: 470px; max-width: 100%; margin: 0 auto; padding: 0; }
 .modal-field { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 18px; align-items: start; }
 .modal-field > label { text-align: right; }
+.adaptive-modal-form { grid-template-columns: max-content minmax(0, 1fr); column-gap: 18px; }
+.adaptive-modal-form .modal-field { grid-column: 1 / -1; grid-template-columns: subgrid; column-gap: 18px; row-gap: 0; }
+.adaptive-modal-form .modal-field > label { display: block; min-width: 0; max-width: 140px; min-height: 40px; margin: 0; padding-top: 9px; color: #27384e; line-height: 22px; white-space: normal; overflow-wrap: anywhere; }
+.adaptive-modal-form .modal-field > :not(label) { min-width: 0; }
 .modal-field .ant-input-number, .modal-field > .ant-select { width: 100%; }
 .compact-modal-form >>> input::placeholder, .compact-modal-form >>> textarea::placeholder { color: #5b8ff9; }
+.attachment-picker-form >>> .ant-upload .ant-btn { height: 40px; }
 .picked-file { margin: 10px 0 0; overflow-wrap: anywhere; }
 .file-hint { margin: 10px 0 0; line-height: 1.6; }
 .form-error { color: #ff4d4f !important; margin: 8px 0 0; line-height: 1.6; }
@@ -497,7 +510,6 @@ em { color: #ff4d4f; font-style: normal; margin-right: 6px; }
 .detail-table tr.review-row-has-comment:hover > td, .form-attachment-list > .review-row-has-comment:hover { background: #ffe7e5; }
 .review-row-has-comment { cursor: pointer; }
 .review-row-has-comment:focus-visible { outline: 2px solid #ff7875; outline-offset: -2px; }
-.review-text { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
 .validation-heading { display: flex; align-items: center; gap: 12px; }
 .validation-heading .anticon { color: #ff4d4f; font-size: 22px; }
 .validation-errors { margin: 14px 0 24px 34px; padding-left: 18px; color: #718095; line-height: 1.7; max-height: 50vh; overflow: auto; }
@@ -505,4 +517,18 @@ em { color: #ff4d4f; font-style: normal; margin-right: 6px; }
 .danger-link { color: #ff4d4f; }
 .form-footer { position: sticky; bottom: 0; z-index: 5; border: 1px solid #e6ebf2; border-radius: 12px; background: rgba(255,255,255,.98); box-shadow: 0 -4px 22px rgba(23,56,92,.07); padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
 .form-footer > span { color: #718095; }.form-footer > div { display: flex; gap: 12px; }.form-footer .ant-btn { min-width: 100px; }
+</style>
+
+<style>
+.fundraising-edit-review-comment { --review-comment-font-size: 16px; --review-comment-line-height: 24px; --review-comment-icon-size: 16px; --review-comment-icon-offset: 0px; }
+.fundraising-edit-review-comment .review-comment-bubble .anticon, .fundraising-row-review-content .anticon { flex: none; display: inline-flex; align-items: center; justify-content: center; height: 24px; }
+.fundraising-row-review-content { width: 300px; max-width: 60vw; }
+.fundraising-row-review-content > div { display: flex; align-items: flex-start; gap: 10px; }
+.fundraising-row-review-content .anticon { color: #faad14; font-size: 16px; }
+.fundraising-row-review-content p { flex: 1; min-width: 0; margin: 0 0 14px; font-size: 16px; line-height: 24px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.fundraising-row-review-content .ant-btn { display: block; margin-left: auto; }
+.fundraising-form-page .row-review-anchor { display: block; width: 100%; }
+.fundraising-form-page .attachment-review-name { display: grid; gap: 5px; }
+.fundraising-form-page .attachment-review-name strong { color: #18253c; }
+.fundraising-period-calendar .ant-calendar { box-shadow: 0 8px 24px rgba(24,37,60,.2), 0 2px 6px rgba(24,37,60,.12); }
 </style>

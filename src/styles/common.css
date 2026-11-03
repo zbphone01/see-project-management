@@ -70,7 +70,7 @@ button { cursor: pointer; }
 .filter-title h2 i { width: 4px; height: 20px; border-radius: 4px; background: #1677ff; }
 .filter-title button { padding: 5px 2px; border: 0; color: #718095; background: transparent; cursor: pointer; }
 .filter-title button:hover { color: #1677ff; }
-.filter-grid { display: grid; grid-template-columns: minmax(130px,.9fr) minmax(140px,.9fr) minmax(140px,1fr) minmax(170px,1.2fr) minmax(160px,1.1fr) 196px; gap: 12px; align-items: end; }
+.filter-grid { display: grid; grid-template-columns: minmax(130px,.9fr) minmax(140px,.9fr) minmax(140px,1fr) minmax(170px,1.2fr) minmax(160px,1.1fr) 193px; gap: 12px; align-items: end; }
 .filter-grid label { min-width: 0; display: grid; gap: 7px; color: #526277; }
 .filter-grid label > span { font-weight: 600; }
 .filter-grid .ant-select, .filter-grid .ant-input { width: 100%; }
@@ -79,6 +79,9 @@ button { cursor: pointer; }
 .filter-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
 .filter-actions .ant-btn { padding: 0 12px; display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
 .filter-actions .ant-btn .anticon { top: 0; }
+/* 列表重置/查询按钮；仅显式接入，不影响其他筛选与表单按钮。 */
+.filter-actions.shared-list-filter-actions { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 92px; width: max-content; justify-self: start; }
+.shared-list-filter-button.ant-btn { box-sizing: border-box; width: 92px; min-width: 92px; max-width: 92px; height: 38px; flex: none; border-radius: 8px; }
 .applied-table-panel { overflow: hidden; }
 /* 列表页按需使用；不覆盖固定列副本、展开明细或数据下载的专项布局。 */
 .shared-list-table .ant-table-scroll table { width: 100% !important; min-width: 1140px !important; }
@@ -302,7 +305,7 @@ button { cursor: pointer; }
 .attachment-list { padding: var(--detail-inner-padding, 4px 22px 22px); }
 .attachment-list > div { min-height: 72px; padding: 12px 4px; display: grid; grid-template-columns: minmax(0,1fr) auto auto; align-items: center; gap: 12px; border-bottom: 1px solid #edf1f5; }
 .attachment-list > div:last-child { border-bottom: 0; }
-.donation-attachment-list > div:first-child { min-height: 0; }
+.attachment-list > div:first-child { min-height: 0; padding-top: 0; align-items: start; }
 .attachment-list > div > div { min-width: 0; display: grid; gap: 5px; }
 .attachment-list > div > div span { color: #8390a2; }
 .audit-timeline { padding: var(--detail-inner-padding, 30px 34px 8px); }
@@ -392,7 +395,6 @@ button { cursor: pointer; }
 /* 项目与机构查看/审核页共用布局。 */
 .detail-module-content { padding: 24px; --detail-inner-padding: 0; --detail-inner-margin: 0; --detail-subtitle-margin: 32px 0 8px; }
 .detail-module-content .rich-text-field > p:last-child { margin-bottom: 0; }
-.detail-module-content .attachment-list > div:first-child { padding-top: 0; align-items: start; }
 #detail-audit > .detail-module-content { background: #fff; }
 .detail-module-content .rich-content > .project-rich-section > h3 { margin: 0 0 12px; }
 .project-rich-separator { position: relative; height: 1px; margin: 40px 0; background: linear-gradient(90deg, #b7dfcf 0%, #e4f2ec 42%, transparent 100%); }
@@ -426,6 +428,9 @@ h1, h2, h3, h4, h5, h6, .ant-modal-title, .ant-modal-confirm-body .ant-modal-con
 .privacy-reminder-head strong,
 .summary-statistics strong { font-size: var(--text-16); font-weight: 700; }
 .status-chip, .positive-tag, .negative-tag { font-size: var(--text-13); }
+/* Editing-page review popovers opt in, including overlays mounted to body. */
+.standard-edit-review-comment { --review-comment-font-size: 16px; --review-comment-line-height: 24px; --review-comment-icon-size: 16px; --review-comment-icon-offset: 0px; }
+.standard-edit-review-comment .review-comment-bubble .anticon { flex: none; display: inline-flex; align-items: center; justify-content: center; height: 24px; }
 /* Secondary organization labels remain body text inside a title container. */
 .organization-name span, .organization-subline { font-size: var(--text-14); font-weight: 400; }
 /* Standard 32px modal controls: labels align to the first text line. */

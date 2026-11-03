@@ -6,7 +6,7 @@
           <form class="filter-grid agreement-filters" @submit.prevent="queryAgreements">
             <label for="agreement-organization"><a-input id="agreement-organization" v-model="filters.organization" aria-label="机构名称" placeholder="请输入机构名称" allow-clear /></label>
             <label for="agreement-code"><a-input id="agreement-code" v-model="filters.code" aria-label="协议编号" placeholder="请输入协议编号" allow-clear /></label>
-            <div class="filter-actions agreement-query"><a-button type="primary" html-type="submit" icon="search">查询</a-button></div>
+            <div class="filter-actions shared-list-filter-actions agreement-query"><a-button class="shared-list-filter-button" type="primary" html-type="submit" icon="search">查询</a-button></div>
           </form>
           <a-table class="applied-table agreement-table shared-list-table shared-list-inset-8 shared-list-operation-spacing" :columns="columns" :data-source="filteredAgreements" :pagination="pagination" :scroll="{ x: true }" row-key="id" :locale="{ emptyText: '暂无符合条件的框架协议' }" @change="changePage">
             <template slot="organization" slot-scope="text"><button class="agreement-link" type="button" @click="$message.info('链接机构详情页')">{{ text }}</button></template>
@@ -86,9 +86,8 @@ export default {
 </script>
 
 <style scoped>
-.agreement-filters { padding: 20px; grid-template-columns: repeat(2, minmax(200px, 300px)) 88px; border-bottom: 1px solid #edf1f5; }
+.agreement-filters { padding: 20px; grid-template-columns: repeat(2, minmax(200px, 300px)) 92px; border-bottom: 1px solid #edf1f5; }
 .agreement-query { grid-template-columns: 1fr; }
-.agreement-query .ant-btn { width: 88px; }
 .agreement-query .ant-btn >>> .anticon + span { margin-left: 8px; }
 
 .agreement-link { padding: 0; border: 0; color: #1677ff; background: transparent; text-align: left; cursor: pointer; }

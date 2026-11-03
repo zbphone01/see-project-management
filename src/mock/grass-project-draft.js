@@ -1,6 +1,8 @@
 import source from './project-grass-detail.json'
 import { createDraft, clone, roundMoney, createFreshOrganizationDraft } from './project-drafts'
 const storageKey = 'see-grass-project-draft-v1-9'
+const freshNamePrefillVersion = 1
+const freshProjectName = organization => `劲草同行支持${new Date().getFullYear()}级${organization}发展项目（第1年）`
 const escape = text => String(text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 const rich = paragraphs => paragraphs.map(text => '<p>' + escape(text).replace(/\n/g, '<br>') + '</p>').join('')
 export const grassCoachingOptions = ['战略定位', '业务模式梳理', '资源调动', '组织治理', '财务管理']
@@ -34,7 +36,11 @@ export function createGrassDraft (fresh = false) {
   organization.fundraising.rows.forEach(row => { row.amount = Number(row.amount.replace(/,/g, '')); row.supportRatio = Number(row.supportRatio.replace('%', '')) })
   draft.organizationDevelopment.plan.forEach(item => { item.content = rich(item.paragraphs) })
   draft.organizationCode = source.basic.organizationCode
-  return fresh ? createFreshOrganizationDraft(draft) : draft
+  if (!fresh) return draft
+  const initialDraft = createFreshOrganizationDraft(draft)
+  initialDraft.name = freshProjectName(initialDraft.organization)
+  initialDraft.freshNamePrefillVersion = freshNamePrefillVersion
+  return initialDraft
 }
 export function loadGrassDraft (fresh = false) {
   const defaults = createGrassDraft(fresh), raw = localStorage.getItem(storageKey + (fresh ? '-fresh' : ''))
@@ -42,6 +48,11 @@ export function loadGrassDraft (fresh = false) {
   if (raw) {
     const saved = JSON.parse(raw)
     if (!!saved.fresh !== fresh || saved.id !== 9 || saved.detailType !== 'grass' || !saved.organizationBasicInfo || !saved.organizationBasicInfo.fundraising || !Array.isArray(saved.organizationBasicInfo.fundraising.rows) || !saved.organizationDevelopment || !['growthNeeds', 'plan'].every(key => Array.isArray(saved.organizationDevelopment[key])) || !['organizationMembers', 'outputs', 'risks', 'targets', 'thirdParties', 'decisionBodySelection', 'coachingSelection', 'environmentalFieldSelection'].every(key => Array.isArray(saved[key])) || !saved.budget || !Array.isArray(saved.budget.rows) || !Array.isArray(saved.budget.personnel)) throw new Error('劲草草稿格式无法读取')
+    if (fresh && saved.freshNamePrefillVersion !== freshNamePrefillVersion) {
+      saved.name = freshProjectName(saved.organization || defaults.organization)
+      saved.freshNamePrefillVersion = freshNamePrefillVersion
+      localStorage.setItem(storageKey + '-fresh', JSON.stringify(saved))
+    }
     draft = { ...defaults, ...saved, coachingOtherSelected: typeof saved.coachingOtherSelected === 'boolean' ? saved.coachingOtherSelected : !!String(saved.coachingOther || '').trim(), reviewComments: { ...defaults.reviewComments, ...(saved.reviewComments || {}) } }
   }
   if (fresh) return draft

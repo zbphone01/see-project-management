@@ -1,9 +1,9 @@
 <template>
   <div class="snapshot-overlay" @keydown.esc.stop="$emit('close')">
-    <section ref="window" class="snapshot-window" role="dialog" aria-label="申请书快照" :style="{ transform: 'translate(' + x + 'px, ' + y + 'px)' }">
+    <section ref="window" class="snapshot-window" role="dialog" :aria-label="title" :style="{ transform: 'translate(' + x + 'px, ' + y + 'px)' }">
       <header class="snapshot-header" @pointerdown="startDrag" @pointermove="drag" @pointerup="endDrag" @pointercancel="endDrag" @lostpointercapture="endDrag">
-        <div class="snapshot-title"><strong>申请书快照</strong><slot name="title-meta" /></div>
-        <a-button ref="close" class="snapshot-close" aria-label="关闭申请书快照" @pointerdown.stop @click="$emit('close')"><a-icon type="close" /></a-button>
+        <div class="snapshot-title"><strong>{{ title }}</strong><slot name="title-meta" /></div>
+        <a-button ref="close" class="snapshot-close" :aria-label="'关闭' + title" @pointerdown.stop @click="$emit('close')"><a-icon type="close" /></a-button>
       </header>
       <div class="snapshot-body"><slot /></div>
     </section>
@@ -13,6 +13,7 @@
 <script>
 export default {
   name: 'ProjectSnapshotWindow',
+  props: { title: { type: String, default: '申请书快照' } },
   data () { return { x: 0, y: 0, dragging: false, pointerX: 0, pointerY: 0 } },
   mounted () {
     this._previousFocus = document.activeElement

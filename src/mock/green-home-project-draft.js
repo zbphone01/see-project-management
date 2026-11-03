@@ -1,6 +1,7 @@
 import source from './project-green-home-detail.json'
 import { createDraft, clone, createFreshOrganizationDraft } from './project-drafts'
 const storageKey = 'see-green-home-project-draft-v1-8'
+const freshNamePrefillVersion = 1
 const escape = text => String(text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 const rich = paragraphs => (Array.isArray(paragraphs) ? paragraphs : [paragraphs]).map(text => '<p>' + escape(text).replace(/\n/g, '<br>') + '</p>').join('')
 function splitLocalFunding (text) {
@@ -31,7 +32,10 @@ export function createGreenHomeDraft (fresh = false) {
   organization.entrepreneurshipOverview = String(organization.entrepreneurshipOverview || '')
   const keys = { background: ['environmentalProblem', 'problemCauses', 'existingEfforts'], plan: ['vision', 'publicBenefitModel'] }
   Object.keys(keys).forEach(section => draft.organizationDevelopment[section].forEach((item, index) => { item.key = item.key || keys[section][index]; item.content = section === 'plan' ? '<p>' + item.paragraphs.map(escape).join('<br>') + '</p>' : rich(item.paragraphs) }))
-  return normalizeGreenHomeDraft(fresh ? createFreshOrganizationDraft(draft) : draft)
+  const initialDraft = normalizeGreenHomeDraft(fresh ? createFreshOrganizationDraft(draft) : draft)
+  initialDraft.name = `创绿家支持“${initialDraft.organization}”发展项目`
+  if (fresh) initialDraft.freshNamePrefillVersion = freshNamePrefillVersion
+  return initialDraft
 }
 function withExampleReviewComments (draft) {
   try {
@@ -45,6 +49,11 @@ export function loadGreenHomeDraft (fresh = false) {
   if (!raw) return fresh ? defaults : withExampleReviewComments(defaults)
   const saved = JSON.parse(raw)
   if (!!saved.fresh !== fresh || saved.id !== 8 || saved.detailType !== 'green-home' || !saved.organizationBasicInfo || !saved.organizationDevelopment || !['background', 'plan'].every(key => Array.isArray(saved.organizationDevelopment[key])) || !['outputs', 'stakeholders', 'risks', 'attachments'].every(key => Array.isArray(saved[key]))) throw new Error('创绿家草稿格式无法读取')
+  if (fresh && saved.freshNamePrefillVersion !== freshNamePrefillVersion) {
+    saved.name = `创绿家支持“${saved.organization || defaults.organization}”发展项目`
+    saved.freshNamePrefillVersion = freshNamePrefillVersion
+    localStorage.setItem(storageKey + '-fresh', JSON.stringify(saved))
+  }
   const draft = { ...defaults, ...saved, organizationMembers: Array.isArray(saved.organizationMembers) ? saved.organizationMembers : Array.isArray(saved.organizationBasicInfo.members) ? saved.organizationBasicInfo.members : defaults.organizationMembers, environmentalFieldSelection: Array.isArray(saved.environmentalFieldSelection) ? saved.environmentalFieldSelection : String(saved.environmentalFields || '').split(/[、，,]/).filter(Boolean), ...(Object.prototype.hasOwnProperty.call(saved, 'otherLocalFundingAmount') ? {} : splitLocalFunding(saved.otherLocalFunding)), reviewComments: { ...defaults.reviewComments, ...(saved.reviewComments || {}) } }
   return normalizeGreenHomeDraft(fresh ? draft : withExampleReviewComments(draft))
 }

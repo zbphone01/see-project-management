@@ -7,7 +7,7 @@
       <div class="recruitment-search">
         <div class="search-controls">
           <a-input class="search-input" v-model="keyword" aria-label="招募名称" placeholder="请输入招募名称" allow-clear @pressEnter="queryProjects" />
-          <a-button class="search-button" type="primary" @click="queryProjects"><a-icon type="search" /> 查询</a-button>
+          <a-button class="shared-list-filter-button search-button" type="primary" @click="queryProjects"><a-icon type="search" /> 查询</a-button>
         </div>
         <a-button class="launch-recruitment-button" @click="startRecruitment"><a-icon type="notification" /> 发起招募</a-button>
       </div>
@@ -109,6 +109,10 @@ export default {
     handleTableChange (pagination) { this.page = pagination.current },
     startRecruitment () { this.$router.push({ name: 'recruitment-form', query: { recruitmentType: 'general' } }) },
     handleAction (key, project) {
+      if (key === 'edit') {
+        this.$router.push({ name: 'recruitment-form', query: { recruitmentId: String(project.id) } })
+        return
+      }
       if (key === 'detail' && [506306, 896257, 896258].includes(project.id)) {
         this.$router.push({ name: 'recruitment-detail', params: { id: String(project.id) } })
         return
@@ -122,12 +126,11 @@ export default {
 
 <style scoped>
 .recruitment-search { min-height: 72px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border-bottom: 1px solid #edf1f5; }
-.search-controls { display: grid; grid-template-columns: 300px 88px; align-items: center; gap: 10px; }
+.search-controls { display: grid; grid-template-columns: 300px 92px; align-items: center; gap: 10px; }
 .search-controls ::v-deep .search-input { width: 100%; margin-left: 0; }
-.search-controls ::v-deep .search-input,
-.search-controls ::v-deep .search-button { height: 38px; border-radius: 8px; }
+.search-controls ::v-deep .search-input { height: 38px; border-radius: 8px; }
 .search-controls ::v-deep .search-input .ant-input { height: 38px; border-radius: 8px; }
-.recruitment-search ::v-deep .search-button { width: 88px; padding: 0 12px; display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
+.recruitment-search ::v-deep .search-button { padding: 0 12px; display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
 .recruitment-search ::v-deep .search-button .anticon { top: 0; }
 .recruitment-search ::v-deep .search-button .anticon + span { margin-left: 8px; }
 .recruitment-search ::v-deep .launch-recruitment-button { height: 32px; display: inline-flex; align-items: center; justify-content: center; border-color: #1677ff; border-radius: 5px; color: #fff; background: #1677ff; box-shadow: 0 2px 0 rgba(0,0,0,.043); line-height: 1; }

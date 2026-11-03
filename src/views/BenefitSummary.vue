@@ -13,7 +13,7 @@
           <a-select-option value="all">全部部门</a-select-option>
           <a-select-option v-for="department in departments" :key="department" :value="department">{{ department }}</a-select-option>
         </a-select>
-        <a-button type="primary" html-type="submit" icon="filter">筛选</a-button>
+        <a-button class="shared-list-filter-button" type="primary" html-type="submit" icon="filter">筛选</a-button>
         <div class="benefit-update">
           <a-button v-if="hasDetails" html-type="button" @click="showDetails">查看详情</a-button>
           <span>数据更新日期：2026-01-16</span>

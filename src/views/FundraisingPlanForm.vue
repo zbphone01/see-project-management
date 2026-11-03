@@ -71,6 +71,7 @@
 </template>
 
 <script>
+import { regionFieldOptions, parseRegionText, normalizeRegionPath, formatRegionPath, regionPathComplete } from '../utils/administrative-regions'
 import ReviewCommentLabel from '../components/ReviewCommentLabel.vue'
 import FundraisingRichEditor from '../components/FundraisingRichEditor.vue'
 import BudgetPrototype from '../components/BudgetPrototype.vue'
@@ -128,7 +129,7 @@ export default {
     confirmLeave (next) {
       if (this.busy) { this.$message.info('文件处理中，请稍候'); next(false); return }
       if (this.leaving || !this.dirty) { next(); return }
-      this.$confirm({ title: '离开编辑页？', content: '填写内容尚未保存，离开将丢失本次修改。', maskClosable: false, okText: '离开', cancelText: '继续编辑', onOk: () => next(), onCancel: () => next(false) })
+      this.$confirm({ title: '填写内容尚未保存', content: '是否保存为本地草稿后离开？', maskClosable: false, keyboard: false, okText: '保存并离开', cancelText: '放弃填写', onOk: () => { if (this.save(false, true)) next(); else next(false) }, onCancel: () => { this.draft = JSON.parse(this.snapshot); next() } })
     },
     beforeUnload (event) { if (this.dirty || this.busy) { event.preventDefault(); event.returnValue = '' } },
     richHint (key) { return planRichFields.find(item => item.key === key).hint },
@@ -149,26 +150,20 @@ export default {
     openOutput (output) { this.entryErrors = {}; this.editor = { visible: true, type: 'output', id: output ? output.id : '', parentId: '', value: output ? clonePlan(output) : { name: '', standard: '', activities: [] }, firstActivity: { description: '', start: '', end: '', location: '', nationwide: false, province: '', city: '', district: '' } } },
     openActivity (output, activity) {
       const value = activity ? clonePlan(activity) : { description: '', location: '', time: '' }
-      const regions = (value.location || '').split(/\s*-\s*/)
+      const regions = parseRegionText(value.location)
       value.nationwide = typeof value.nationwide === 'boolean' ? value.nationwide : value.location === '全国'
       value.province = value.province || (value.nationwide ? '' : regions[0]) || ''
       value.city = value.city || (value.nationwide ? '' : regions[1]) || ''
       value.district = value.district || (value.nationwide ? '' : regions.slice(2).join(' - ')) || ''
+      const path = normalizeRegionPath([value.province, value.city, value.district])
+      value.province = path[0] || ''; value.city = path[1] || ''; value.district = path[2] || ''
       const months = (value.time.match(/\d{4}年\d{1,2}月/g) || []).map(item => item.replace('年', '-').replace('月', '').split('-').map((n, i) => i ? n.padStart(2, '0') : n).join('-'))
       value.start = value.start || months[0] || ''; value.end = value.end || months[1] || ''
       this.entryErrors = {}; this.editor = { visible: true, type: 'activity', id: activity ? activity.id : '', parentId: output.id, value }
     },
     activityLocationOptions (field) {
-      const examples = {
-        '北京市': { '北京市区': ['朝阳区', '海淀区'] },
-        '广东省': { '广州市': ['天河区', '越秀区'], '深圳市': ['南山区', '福田区'] },
-        '新疆维吾尔自治区': { '伊犁哈萨克自治州': ['察布查尔锡伯自治县', '伊宁市'] }
-      }
-      const activity = this.entryActivity, cities = examples[activity.province] || {}
-      let options = field === 'province' ? Object.keys(examples) : field === 'city' ? (activity.province ? ['全部'].concat(Object.keys(cities)) : []) : (activity.city ? ['全部'].concat(cities[activity.city] || []) : [])
-      const current = activity[field]
-      if (current && options.indexOf(current) === -1) options.push(current)
-      return options
+      const activity = this.entryActivity
+      return regionFieldOptions(field, activity, [[activity.province, activity.city, activity.district]]).map(item => item.value)
     },
     changeActivityRegion (field, value) {
       this.entryActivity[field] = value
@@ -178,8 +173,8 @@ export default {
     validateEntryActivity (value) {
       const errors = {}
       if (!value.description.trim()) errors.description = '请填写活动描述'
-      value.location = value.nationwide ? '全国' : [value.province, value.city, value.district].map(item => (item || '').trim()).filter(Boolean).join(' - ')
-      if (!value.location) errors.location = '请填写活动地点'
+      value.location = value.nationwide ? '全国' : formatRegionPath([value.province, value.city, value.district])
+      if (!value.nationwide && !regionPathComplete([value.province, value.city, value.district])) errors.location = '请选择活动地点（可选择全部）'
       if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(value.start) || !/^\d{4}-(0[1-9]|1[0-2])$/.test(value.end) || value.start > value.end) errors.time = '请选择有效的活动起止月份'
       else if ((this.draft.executionStart && value.start < this.draft.executionStart.slice(0, 7)) || (this.draft.executionEnd && value.end > this.draft.executionEnd.slice(0, 7))) errors.time = '活动时间应在项目执行周期内'
       return errors
@@ -236,13 +231,13 @@ export default {
       this.previewUrl = this.previewType === 'other' ? '' : URL.createObjectURL(blob); this.previewFile = file
     },
     async downloadAttachment (file) { const blob = await this.getFile(file); if (!blob) return; const url = URL.createObjectURL(blob), link = document.createElement('a'); link.href = url; link.download = file.name; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000) },
-    save (submitted) {
+    save (submitted, leaving = false) {
       if (this.busy) return false
       if (this.draft.name.trim() && createPlanApplications().some(item => item.id !== this.draft.id && item.name.trim().toLowerCase() === this.draft.name.trim().toLowerCase())) { this.$message.error('筹款规划申请名称不可重复'); return false }
       try {
         this.draft = savePlanDraft(this.draft, submitted); this.snapshot = JSON.stringify(this.draft)
         this.$message.success(submitted ? '申请已在本地提交，状态更新为规划待审' : '草稿已保存到当前浏览器')
-        if (!submitted && this.$route.params.id === 'new') this.$router.replace({ name: 'fundraising-plan-form', params: { id: this.draft.id } })
+        if (!submitted && !leaving && this.$route.params.id === 'new') this.$router.replace({ name: 'fundraising-plan-form', params: { id: this.draft.id } })
         return true
       } catch (error) { this.$message.error(error.message === '申请已提交审核，请返回列表查看最新状态' ? error.message : '本地保存失败，请检查浏览器存储空间或权限'); return false }
     },
@@ -311,12 +306,14 @@ em { color: #ff4d4f; font-style: normal; margin-right: 6px; }
 .budget-sheet-row .ant-btn { padding: 0 8px; }
 .add-more-attachment { border-color: #91d5ff; border-style: dashed; color: #096dd9; background: #e6f7ff; }
 .add-more-attachment:hover, .add-more-attachment:focus { border-color: #40a9ff; color: #096dd9; background: #fff; }
-.attachment-list { margin: 0; padding: 0; }.attachment-list > div:first-child { padding-top: 0; align-items: start; }.attachment-list > div { grid-template-columns: minmax(0, 1fr) auto auto auto; }.attachment-list strong { overflow-wrap: anywhere; }.attachment-list .ant-btn { padding: 0 6px; }.hidden-input { display: none; }.file-hint { color: #718095; margin: 12px 0 0; }
+.attachment-list { margin: 0; padding: 0; }.attachment-list > div { grid-template-columns: minmax(0, 1fr) auto auto auto; }.attachment-list strong { overflow-wrap: anywhere; }.attachment-list .ant-btn { padding: 0 6px; }.hidden-input { display: none; }.file-hint { color: #718095; margin: 12px 0 0; }
 .basic-field-value { color: #27384e; font-weight: 500; line-height: 1.6; overflow-wrap: anywhere; }
 .form-footer { position: sticky; bottom: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 18px 24px; border: 1px solid #e6ebf2; border-radius: 12px; background: rgba(255,255,255,.98); box-shadow: 0 -4px 22px rgba(23,56,92,.07); }.form-footer > span { color: #718095; }.form-footer > div { display: flex; gap: 12px; }.form-footer .ant-btn { min-width: 100px; height: 32px; }
 .compact-modal-form { width: 470px; max-width: 100%; margin: auto; padding: 0; display: grid; gap: 16px; }.modal-field { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 18px; align-items: start; }.modal-field > label { text-align: right; }.compact-modal-form >>> input::placeholder, .compact-modal-form >>> textarea::placeholder { color: #5b8ff9; }.modal-date-pair { gap: 6px; }.modal-date-pair > .ant-input { border-color: #d9d9d9; padding-left: 5px; padding-right: 5px; }
 .plan-entry-modal >>> .ant-modal-body { padding: 32px 24px; }.plan-entry-modal >>> .ant-modal-header, .plan-entry-modal >>> .ant-modal-footer { height: 55px; box-sizing: border-box; }.plan-entry-modal >>> .ant-modal-header { display: flex; align-items: center; }.plan-entry-modal >>> .ant-modal-close-x { height: 55px; line-height: 55px; }.plan-entry-modal >>> .ant-modal-footer { display: flex; justify-content: flex-end; align-items: center; }
-.activity-nationwide { height: 32px; display: flex; align-items: center; }.activity-location-inputs >>> .ant-select { width: 100%; }.activity-location-inputs { display: grid; gap: 8px; margin-top: 12px; }
+.activity-nationwide { height: 40px; display: flex; align-items: center; }
+.activity-nationwide >>> .ant-checkbox-wrapper { display: inline-flex; align-items: center; min-height: 0; padding-top: 0; line-height: 22px; }
+.activity-nationwide >>> .ant-checkbox { top: 0; }.activity-location-inputs >>> .ant-select { width: 100%; }.activity-location-inputs { display: grid; gap: 8px; margin-top: 12px; }
 .compact-modal-form .initial-activity-field { padding-top: 16px; border-top: 1px dashed #d9e1eb; }
 .budget-editor .entry-table { min-width: 1235px; }.budget-editor .ant-input-number { width: 100%; }.budget-total { margin: 16px 0 0; text-align: right; font-weight: 600; }.form-error { margin: 7px 0 0; color: #ff4d4f; line-height: 1.6; }
 .review-has-comment, .review-row-has-comment, .entry-table .review-row-has-comment > td { background: #fff1f0 !important; }.review-row-has-comment { cursor: pointer; }.review-row-has-comment:hover, .entry-table .review-row-has-comment:hover > td { background: #ffe7e5 !important; }.review-row-has-comment:focus-visible { outline: 2px solid #ff7875; outline-offset: -2px; }.review-text { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }

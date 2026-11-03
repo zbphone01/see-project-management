@@ -28,7 +28,7 @@ export const organizationFieldGroups = [
 export function createOrganizationDetail (id) {
   const item = createOrganizations().find(row => row.id === id)
   if (!item) return null
-  return {
+  const detail = {
     id, status: item.status, isSubAccount: item.isSubAccount, isPrimaryAccount: item.isPrimaryAccount, reviewComments: ['驳回待修改', '变更驳回'].includes(item.status) ? Object.assign({}, organizationReviewExample) : {},
     fields: {
       name: item.name, organizationName: item.organizationName, registrationType: item.registrationType,
@@ -59,6 +59,19 @@ export function createOrganizationDetail (id) {
       { id: 'history-example-rejected', submittedAt: '2025-12-10 09:00:00', auditedAt: '2025-12-11 14:20:00', approvedAt: '', reviewer: '审核账号名称', result: '驳回', remark: '登记资料和办公联系信息尚不完整，请按以下审核意见补充后重新提交。', versionLabel: '2025-12-11审核驳回的版本', reviewComments: { creditCode: '请核对统一信用代码，并补充清晰的登记证书扫描件。', officeAddress: '请补充完整办公地址及邮编。' } }
     ]
   }
+  const current = {}
+  organizationFieldGroups.find(group => group.key === 'registration').fields.forEach(field => { current[field[0]] = detail.fields[field[0]] })
+  current.validStart = detail.fields.validStart || '2022-12-17'
+  current.validEnd = detail.fields.validEnd || '2027-12-17'
+  detail.registrationVersions = { current, updated: Object.assign({}, current, item.registrationUpdate || item.registrationSnapshotExample ? {
+    issuedAt: '2026年10月20日', validStart: '2026-10-20', validEnd: '2031-10-19', validPeriod: '2026年10月20日 至 2031年10月19日',
+    legalRepresentative: '李海燕', registeredAddress: '山东省青岛市西海岸新区滨海大道218号公益创新中心502室',
+    businessScope: '开展海洋生态保护、海岸垃圾监测、社区垃圾分类和自然教育，组织环保志愿者培训及公众参与的生态修复公益活动。'
+  } : {}) }
+  detail.history.forEach(entry => {
+    if (entry.result === '通过') entry.registrationSnapshot = createOrganizationRegistrationSnapshot(detail, item.registrationSnapshotExample ? detail.registrationVersions.updated : detail.registrationVersions.current)
+  })
+  return detail
 }
 
 export function loadOrganizationDetail (id) {
@@ -68,7 +81,6 @@ export function loadOrganizationDetail (id) {
     const saved = JSON.parse(localStorage.getItem(storageKey) || '{}')[id]
     if (saved && saved.id === id) {
       const fields = Object.assign({}, defaults.fields, saved.fields || {})
-      if (defaults.isPrimaryAccount) fields.organizationName = ''
       const members = saved.members || defaults.members
       const history = (saved.history || []).filter(entry => !['history-1', 'history-example-approved', 'history-example-rejected'].includes(entry.id)).concat(defaults.history)
       return Object.assign({}, defaults, saved, { isSubAccount: defaults.isSubAccount, isPrimaryAccount: defaults.isPrimaryAccount, fields, members, history, reviewComments: Object.assign({}, saved.reviewComments || {}) })
@@ -86,9 +98,23 @@ export function saveOrganizationDetail (payload) {
   } catch (error) { return false }
 }
 
-export function validateOrganizationAudit (form) {
+export function validateOrganizationAudit (form, registrationUpdate = false) {
   if (form.confirmed !== 'confirmed') return '请先阅读并确认最新的年检年报'
-  if (!['approved', 'rejected'].includes(form.result)) return '请选择审核结果'
+  if (!(registrationUpdate ? ['approved-update', 'approved', 'rejected'] : ['approved', 'rejected']).includes(form.result)) return '请选择审核结果'
   if (form.result === 'rejected' && !form.remark.trim()) return '驳回时请填写审核备注'
   return ''
+}
+
+// 仅用于参数化本地审核演示；两份注册信息独立保存，不修改其他机构记录。
+export function applyOrganizationRegistrationAudit (detail, result) {
+  const versions = detail.registrationVersions
+  if (!versions || !['approved-update', 'approved', 'rejected'].includes(result)) return false
+  if (result === 'approved-update') versions.current = Object.assign({}, versions.updated)
+  Object.assign(detail.fields, result === 'rejected' ? versions.updated : versions.current)
+  detail.status = result === 'rejected' ? '驳回待修改' : '通过'
+  return true
+}
+
+export function createOrganizationRegistrationSnapshot (detail, fields) {
+  return { fields: JSON.parse(JSON.stringify(fields || detail.fields)), formVersion: detail.formVersion || 0 }
 }

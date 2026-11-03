@@ -134,7 +134,7 @@
 
         <section v-if="!isGreenHomeExample" id="detail-area" class="panel detail-section">
           <div class="detail-section-header"><span class="detail-section-icon cyan"><a-icon type="environment" /></span><div><h2>项目实施区域</h2><p v-if="hasAreaReviewComments" class="review-hint">点击表格行添加或编辑审核意见，添加审核意见后行背景色标红</p></div></div><div class="detail-module-content">
-          <div class="detail-table-wrap"><table class="detail-table project-area-table"><colgroup><col class="project-detail-index-col" /><col /><col /><col /></colgroup><thead><tr><th>序号</th><th>省 / 直辖市</th><th>地级市 / 直辖市区</th><th>行政区</th></tr></thead><tbody><tr v-for="(row, rowIndex) in detailTableData.areas" :key="row.id" :class="reviewRowClass('areas', row.id)" v-bind="reviewAttributes(rowReviewKey('areas', row.id))" v-on="reviewEvents(rowReviewKey('areas', row.id))"><td><review-row-comments :comment="rowCellReviewComment('areas', row.id)">{{ rowIndex + 1 }}</review-row-comments></td><td>{{ row.province }}</td><td>{{ row.city }}</td><td>{{ row.district }}</td></tr></tbody></table></div>
+          <div class="detail-table-wrap"><table class="detail-table project-area-table"><colgroup><col class="project-detail-index-col" /><col /><col /><col /></colgroup><thead><tr><th>序号</th><th>省 / 直辖市</th><th>地级市 / 直辖市区</th><th>县 / 行政区</th></tr></thead><tbody><tr v-for="(row, rowIndex) in detailTableData.areas" :key="row.id" :class="reviewRowClass('areas', row.id)" v-bind="reviewAttributes(rowReviewKey('areas', row.id))" v-on="reviewEvents(rowReviewKey('areas', row.id))"><td><review-row-comments :comment="rowCellReviewComment('areas', row.id)">{{ rowIndex + 1 }}</review-row-comments></td><td>{{ row.province }}</td><td>{{ row.city === '全部' ? '' : row.city }}</td><td>{{ row.city === '全部' || row.district === '全部' ? '' : row.district }}</td></tr></tbody></table></div>
         </div></section>
 
         <section v-if="!isGreenHomeExample" id="detail-team" class="panel detail-section">
@@ -193,7 +193,7 @@
 
         <section v-if="!snapshotEntry && !isGreenHomeExample" id="detail-attachments" class="panel detail-section">
           <div class="detail-section-header"><span class="detail-section-icon blue"><a-icon type="paper-clip" /></span><div><h2>附件</h2><p>项目相关附件，如有需要请下载留存</p></div></div><div class="detail-module-content">
-          <div class="attachment-list" :class="{ 'donation-attachment-list': isDonationProject }"><div v-for="file in detailAttachments" :key="file.id"><div><strong>{{ file.name }}</strong><span>{{ file.type }} · {{ file.uploadedAt }}</span></div><a-button type="link" @click="notify('预览' + file.name + '（演示入口）')">预览</a-button><a-button type="link" @click="notify('下载' + file.name + '（演示入口）')">下载</a-button></div></div>
+          <div class="attachment-list"><div v-for="file in detailAttachments" :key="file.id"><div><strong>{{ file.name }}</strong><span>{{ file.type }} · {{ file.uploadedAt }}</span></div><a-button type="link" @click="notify('预览' + file.name + '（演示入口）')">预览</a-button><a-button type="link" @click="notify('下载' + file.name + '（演示入口）')">下载</a-button></div></div>
         </div></section>
 
         <section v-if="!snapshotEntry && detailTableData.auditHistory && detailTableData.auditHistory.length" id="detail-history" class="panel detail-section">

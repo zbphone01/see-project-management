@@ -29,7 +29,7 @@ export default {
   beforeDestroy () { window.removeEventListener('beforeunload', this.beforeUnload) },
   beforeRouteLeave (to, from, next) {
     if (!this.dirty) { next(); return }
-    this.$confirm({ title: '是否放弃未保存的人力费用？', maskClosable: false, okText: '放弃并返回', cancelText: '继续编辑', onOk: () => next(), onCancel: () => next(false) })
+    this.$confirm({ title: '填写内容尚未保存', content: '是否保存为本地草稿后离开？', maskClosable: false, keyboard: false, okText: '保存并离开', cancelText: '放弃填写', onOk: () => { this.save(false); next(!this.dirty) }, onCancel: () => { this.rows = JSON.parse(this.snapshot); next() } })
   },
   methods: {
     load () {
@@ -46,13 +46,13 @@ export default {
     },
     updateRow (row) { const index = this.rows.findIndex(item => item.id === row.id); if (index >= 0) this.$set(this.rows, index, row) },
     beforeUnload (event) { if (this.dirty) { event.preventDefault(); event.returnValue = '' } },
-    save () {
+    save (leaveAfterSave = true) {
       if (this.readonly) return
       if (!this.rows.length || this.rows.some(personnelBudgetMissing)) {
         this.$info({ title: '人力成本未填写无法保存。', maskClosable: false, okText: '知道了' })
         return
       }
-      try { savePersonnelSheet(this.key, this.context, this.rows); this.snapshot = JSON.stringify(this.rows); this.$message.success('人力费用已保存到当前浏览器'); this.goBack() } catch (error) { this.$message.error('保存失败，请保留当前页面后重试') }
+      try { savePersonnelSheet(this.key, this.context, this.rows); this.snapshot = JSON.stringify(this.rows); this.$message.success('人力费用已保存到当前浏览器'); if (leaveAfterSave) this.goBack() } catch (error) { this.$message.error('保存失败，请保留当前页面后重试') }
     },
     goBack () {
       const query = { ...this.$route.query }; delete query.from

@@ -292,7 +292,6 @@ export default {
 .plan-activities-table table { table-layout: fixed; }
 .plan-activities-table td:first-child, .plan-activities-table th:first-child { text-align: center; }
 .plan-output-block .output-standard > div { min-width: 0; padding: 4px 0; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
-.attachment-list > div:first-child { padding-top: 0; align-items: start; }
 #detail-audit > .detail-module-content { background: #fff; }
 .plan-empty { margin: 0; color: #718095; }
 .plan-error { margin: 8px 0 0; color: #ff4d4f; }

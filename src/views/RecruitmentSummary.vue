@@ -12,7 +12,7 @@
           <span>有执行中项目的招募 <strong class="active-count">{{ activeRecruitmentCount }}</strong> 个</span>
         </div>
         <a-input id="summary-keyword" v-model="keyword" class="search-input" placeholder="请输入招募名称" allow-clear @pressEnter="queryRecruitments" />
-        <a-button type="primary" @click="queryRecruitments"><a-icon type="search" /> 查询</a-button>
+        <a-button class="shared-list-filter-button" type="primary" @click="queryRecruitments"><a-icon type="search" /> 查询</a-button>
       </div>
 
       <div ref="summaryScroll" class="summary-table-scroll" :class="{ 'has-operation-shadow': operationShadow }" @scroll="updateOperationShadow">
@@ -195,7 +195,7 @@ export default {
 .recruitment-search { min-height: 72px; padding: 12px 20px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #e6ebf2; }
 .search-input { width: 300px; flex: none; height: 38px; border-radius: 8px; }
 .search-input ::v-deep .ant-input { height: 38px; border-radius: 8px; }
-.recruitment-search .ant-btn { width: 88px; flex: none; height: 38px; border-radius: 8px; padding: 0 12px; display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
+.recruitment-search .ant-btn { padding: 0 12px; display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
 .recruitment-search .ant-btn ::v-deep .anticon + span { margin-left: 8px; }
 .recruitment-search .ant-btn .anticon { top: 0; }
 .summary-statistics { min-width: 0; flex: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 20px; color: #506177; line-height: 1.7; }

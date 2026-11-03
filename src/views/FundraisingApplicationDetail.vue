@@ -7,14 +7,14 @@
     </section>
 
     <section class="panel detail-section application-document">
-      <div class="detail-section-header"><span class="detail-section-icon"><a-icon type="file-text" /></span><div><h2>募捐申请书</h2><div class="detail-basic-meta"><span class="application-version">{{ application.version }}</span><span class="application-agreement"><a-icon type="file-protect" /> {{ application.agreementCode || '暂无框架协议编号' }}</span><span class="project-recruitment"><a-icon type="notification" /> {{ application.recruitment }}</span></div><p v-if="isAudit && Object.keys(application.reviewComments || {}).some(key => comment(key))">点击字段内容、信息小标题或表格行可添加审核意见</p></div></div>
+      <div class="detail-section-header"><span class="detail-section-icon"><a-icon type="file-text" /></span><div><h2>募捐申请书</h2><div class="detail-basic-meta"><span class="application-version">{{ application.version }}</span><span class="application-agreement"><a-icon type="file-protect" /> {{ application.agreementCode || '暂无框架协议编号' }}</span><span class="project-recruitment"><a-icon type="notification" /> {{ application.recruitment }}</span></div></div></div>
       <div class="description-grid">
         <div v-for="field in basicFields" :key="field.key" class="description-item" :class="[fieldClass(field.key), { 'wide project-name-item': field.key === 'name' }]" v-bind="reviewAttributes()" @click="openReview(field.key)" @keydown.enter.prevent="openReview(field.key)" @keydown.space.prevent="openReview(field.key)"><span>{{ field.label }}</span><strong>{{ field.value || '暂无' }}</strong></div>
       </div>
       <detail-rich-content class="rich-content application-content">
 
         <section v-for="section in application.content" :key="section.key" class="rich-text-section">
-          <h3><button v-if="isAudit && section.type === 'text'" type="button" class="review-label-trigger" @click="openReview(section.key)">{{ section.title }}</button><template v-else>{{ section.title }}</template></h3>
+          <h3 :class="{ 'review-heading': isAudit && section.type === 'text' }"><button v-if="isAudit && section.type === 'text'" type="button" @click="openReview(section.key)">{{ section.title }}</button><template v-else>{{ section.title }}</template></h3>
           <div v-if="section.type === 'text'" class="rich-text-field" :class="fieldClass(section.key)"><div v-if="hasRichHtml(section)" class="saved-rich-content" v-html="richHtml(section)"></div><template v-else><p v-for="(paragraph, index) in section.paragraphs" :key="index">{{ paragraph }}</p></template><p v-for="link in section.links || []" :key="link.url"><a v-if="safeLink(link.url)" :href="link.url" target="_blank" rel="noopener noreferrer">{{ link.label }}：{{ link.url }}</a></p></div>
           <template v-else-if="section.type === 'annualFunds'">
             <div v-for="year in application.annualFunds" :key="year.year"><h4>{{ year.year }}</h4><div class="detail-table-wrap"><table class="detail-table annual-funds-table"><colgroup><col /><col style="width: 180px" /><col style="width: 180px" /></colgroup><thead><tr><th>资金来源描述</th><th>资金量（万元）</th><th>机构年度总收入占比（%）</th></tr></thead><tbody><tr v-for="row in year.rows" :key="row.id" :class="rowClass('annualFunds', row)" v-bind="reviewAttributes(row)" @click="openRowReview('annualFunds', row)" @keydown.enter.prevent="openRowReview('annualFunds', row)" @keydown.space.prevent="openRowReview('annualFunds', row)"><td>{{ row.source }}</td><td>{{ row.amount }}</td><td>{{ row.ratio }}</td></tr></tbody></table></div></div>
@@ -26,9 +26,9 @@
     </section>
 
     <section id="detail-images" class="panel detail-section">
-      <div class="detail-section-header"><span class="detail-section-icon blue"><a-icon type="picture" /></span><div><h2><button v-if="isAudit" type="button" class="review-label-trigger" @click="openReview('images')">筹款图片</button><template v-else>筹款图片</template></h2><p v-if="isAudit && comment('images')">点击标题可添加审核意见，点击图片可查看大图</p></div></div>
+      <div class="detail-section-header"><span class="detail-section-icon blue"><a-icon type="picture" /></span><div><h2>筹款图片</h2></div></div>
       <div class="detail-module-content">
-      <div class="fundraising-images fundraising-image-module" :class="fieldClass('images')"><button v-for="item in application.images" :key="item.id" type="button" class="fundraising-image-button" :aria-label="'查看筹款图片大图：' + item.alt" @click="openImage(item)"><img v-if="imageSource(item)" class="organization-avatar" :src="imageSource(item)" :alt="item.alt" /><span v-else class="image-unavailable">图片不可用</span></button><strong v-if="!application.images.length">暂无</strong></div>
+      <div class="fundraising-images fundraising-image-module"><button v-for="item in application.images" :key="item.id" type="button" class="fundraising-image-button" :aria-label="'查看筹款图片大图：' + item.alt" @click="openImage(item)"><img v-if="imageSource(item)" class="organization-avatar" :src="imageSource(item)" :alt="item.alt" /><span v-else class="image-unavailable">图片不可用</span></button><strong v-if="!application.images.length">暂无</strong></div>
       </div>
     </section>
     <section id="detail-attachments" class="panel detail-section">
@@ -126,6 +126,18 @@ export default {
           if (saved.auditForm) this.auditForm = Object.assign({}, this.auditForm, saved.auditForm)
         } else this.application = clone(example)
       } catch (error) { this.$message.warning('本地示例记录无法读取，已保留当前资料') }
+      // Replace only legacy demo placeholders; retain authored HTML, paragraphs and comments.
+      const demoKeys = ['experience', 'purpose', 'goal', 'importance', 'executionPlan', 'donationUsePlan']
+      this.application.content = this.application.content.map(section => {
+        if (demoKeys.indexOf(section.key) < 0 || !Array.isArray(section.paragraphs) || section.paragraphs.length !== 1 || section.paragraphs[0] !== '暂无') return section
+        const html = cleanFundraisingRichText(section.html || '')
+        if (html.replace(/<[^>]*>/g, '').replace(/&nbsp;|\s/g, '') || /<(img|video|audio|iframe|table|hr)\b/i.test(html) || (section.links || []).length) return section
+        const current = example.content.find(item => item.key === section.key)
+        if (!current) return section
+        const updated = Object.assign({}, section, { paragraphs: clone(current.paragraphs) })
+        delete updated.html
+        return updated
+      })
       this.loadImages()
     },
     hasRichHtml (section) { return Object.prototype.hasOwnProperty.call(section, 'html') },
@@ -214,17 +226,14 @@ export default {
 </script>
 
 <style scoped>
-.detail-module-content { padding: 24px; --detail-inner-padding: 0; --detail-inner-margin: 0; }
 .description-grid { --detail-inner-padding: 0 22px 22px; }
 .description-item { gap: 8px; }
-.attachment-list > div:first-child { padding-top: 0; align-items: start; }
 .rich-content > .rich-text-section { margin: 0; }
 .rich-content > .rich-text-section > h3 { margin: 0 0 12px; }
 .rich-content > .rich-text-section > h3::before, .rich-content > .rich-text-section > h3::after { content: none; }
 .rich-text-field > p:last-child { margin-bottom: 0; }
 .rich-content >>> .detail-rich-separator { position: relative; height: 1px; margin: 40px 0; background: linear-gradient(90deg, #b7dfcf 0%, #e4f2ec 42%, transparent 100%); }
 .rich-content >>> .detail-rich-separator-dot { position: absolute; left: -4px; top: 50%; width: 7px; height: 7px; transform: translateY(-50%); border: 2px solid #fff; border-radius: 50%; background: #18a66a; box-shadow: 0 0 0 2px #ccebdd; }
-#detail-audit > .detail-module-content { background: #fff; }
 .saved-rich-content >>> p:last-child { margin-bottom: 0; }
 .review-dialog-actions { display: flex; justify-content: space-between; align-items: center; }
 .review-dialog-actions-right { margin-left: auto; display: flex; gap: 8px; }
@@ -251,20 +260,16 @@ export default {
 .saved-rich-content >>> table { max-width: 100%; border-collapse: collapse; }
 .saved-rich-content >>> td, .saved-rich-content >>> th { border: 1px solid #e6ebf2; padding: 6px 8px; }
 .application-amounts { padding: 0; }
-.review-label-trigger { padding: 3px 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .description-item[role=button], .review-row-trigger { cursor: pointer; }
 .description-item[role=button]:hover, .review-row-trigger:hover > td { background: #f8fbff; }
-.review-has-comment { background: #fff1f0 !important; }
 .detail-table tr.review-row-has-comment > td { background: #fff1f0; }
 .detail-table tr.review-row-has-comment:hover > td { background: #ffe7e5; }
-.review-label-trigger:focus-visible, .description-item[role=button]:focus-visible, .review-row-trigger:focus-visible { outline: 2px solid #ff7875; outline-offset: -2px; }
-.review-label-trigger:hover { color: #cf1322; }
+.description-item[role=button]:focus-visible, .review-row-trigger:focus-visible { outline: 2px solid #ff7875; outline-offset: -2px; }
 .multiline { white-space: pre-wrap; }
 .attachment-list > .review-row-has-comment { background: #fff1f0; }
 .attachment-list > .review-row-has-comment:hover { background: #ffe7e5; }
 .application-history-empty { margin: 0; color: #718095; }
 
-.detail-table .ant-btn-link { padding: 0 4px; height: 32px; }
 .audit-upload-item { border-radius: 6px; }
 .audit-upload-field + .audit-upload-field { margin-top: 28px; }
 .review-dialog-actions-right > .ant-btn + .ant-btn { margin-left: 0; }

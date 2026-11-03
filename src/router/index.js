@@ -29,7 +29,7 @@ const router = new VueRouter({
     { path: '/organizations', name: 'organization-list', component: () => import('../views/OrganizationList.vue') },
     { path: '/organizations/:id/edit', name: 'organization-form', component: () => import('../views/OrganizationForm.vue'), props: route => ({ organizationId: route.params.id }) },
     { path: '/organizations/:id', name: 'organization-detail', component: () => import('../views/OrganizationDetail.vue'),
-      props: route => ({ organizationId: route.params.id, mode: route.query.mode === 'audit' ? 'audit' : 'view' })
+      props: route => ({ organizationId: route.params.id, mode: route.query.mode === 'audit' ? 'audit' : 'view', registrationUpdate: route.query.registrationUpdate === '1' })
     },
     { path: '/projects/recruitment-summary', name: 'recruitment-summary', component: () => import('../views/RecruitmentSummary.vue') },
     { path: '/projects/available', name: 'available-projects', component: () => import('../views/AvailableProjects.vue') },

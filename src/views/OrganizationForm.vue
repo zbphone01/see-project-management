@@ -6,35 +6,34 @@
       <div class="detail-section-header"><span class="detail-section-icon green"><a-icon :type="group.icon" /></span><div><h2>{{ group.title }}</h2><p v-if="hasComments(group.fields)">请检查并修改标红的机构信息，点击信息小标题可查看具体审核意见</p></div></div>
       <div :class="[group.key === 'evaluation' ? 'editor-content' : 'organization-fields description-grid', { 'overview-fields': group.key === 'overview' }]">
         <div v-for="field in group.fields" :key="field.key" class="organization-field" :class="[field.kind === 'rich' ? {} : reviewClass(field.key), { full: ['textarea', 'rich', 'avatar'].includes(field.kind) }]">
-          <label :for="'organization-' + field.key"><review-comment-label :comment="fieldComment(field)">{{ field.label }}</review-comment-label></label>
-          <span v-if="field.kind === 'readonly' || (isChangeMode && field.key === 'inviterDepartment') || inherited(field) || (!isEdit && draft.nameChecked && field.key === 'name')" class="basic-field-value">{{ draft.fields[field.key] || '—' }}</span>
-          <template v-else-if="field.kind === 'name'"><div class="inline-controls"><a-input :id="'organization-' + field.key" v-model="draft.fields.name" placeholder="请填写机构名称" @change="draft.nameChecked = false" /><a-button @click="queryName">查询</a-button></div><small v-if="draft.nameChecked">{{ draft.parentOrganizationId ? '已沿用注册机构信息，请填写二级组织名称' : '机构名称已确认（本地演示查询）' }}</small></template>
+          <label :for="'organization-' + field.key"><review-comment-label overlay-class-name="standard-edit-review-comment" :comment="fieldComment(field)">{{ field.label }}</review-comment-label></label>
+          <span v-if="field.kind === 'readonly' || (isChangeMode && field.key === 'inviterDepartment') || inherited(field) || (field.key === 'name' && (isEdit || draft.nameChecked))" class="basic-field-value">{{ draft.fields[field.key] || '—' }}</span>
           <a-select dropdown-class-name="standard-edit-dropdown" v-else-if="field.kind === 'select'" :id="'organization-' + field.key" :value="draft.fields[field.key] || undefined" placeholder="请选择" @change="changeSelect(field, $event)"><a-select-option v-for="option in field.options" :key="option" :value="option">{{ option }}</a-select-option></a-select>
           <div v-else-if="field.kind === 'credit'" class="inline-controls"><a-input :id="'organization-' + field.key" v-model="draft.fields.creditCode" placeholder="请填写统一社会信用代码" /><a-select dropdown-class-name="standard-edit-dropdown" v-model="draft.fields.creditRegion" aria-label="统一社会信用代码所属地区"><a-select-option value="国内">国内</a-select-option><a-select-option value="国外">国外</a-select-option></a-select></div>
-          <div v-else-if="field.kind === 'range'" class="inline-controls"><input v-model="draft.fields.validStart" type="date" aria-label="有效期限开始日期"><span>至</span><input v-model="draft.fields.validEnd" type="date" aria-label="有效期限结束日期"></div>
+          <div v-else-if="field.kind === 'range'" class="inline-controls"><a-date-picker class="organization-date-picker" :value="draft.fields['validStart'] || null" value-format="YYYY-MM-DD" format="YYYY-MM-DD" :locale="datePickerLocale" :month-cell-content-render="renderDateMonth" dropdown-class-name="standard-edit-dropdown" aria-label="有效期限开始日期" placeholder="请选择开始日期" @change="setDate('validStart', $event)" /><span>至</span><a-date-picker class="organization-date-picker" :value="draft.fields['validEnd'] || null" value-format="YYYY-MM-DD" format="YYYY-MM-DD" :locale="datePickerLocale" :month-cell-content-render="renderDateMonth" dropdown-class-name="standard-edit-dropdown" aria-label="有效期限结束日期" placeholder="请选择结束日期" @change="setDate('validEnd', $event)" /></div>
           <span v-else-if="field.kind === 'date' && restricted && qualificationDateDisabled(field.key)" class="basic-field-value">—</span>
-          <input v-else-if="field.kind === 'date'" :id="'organization-' + field.key" v-model="draft.fields[field.key]" type="date" :aria-label="field.label" :disabled="qualificationDateDisabled(field.key)">
+          <a-date-picker class="organization-date-picker" :value="draft.fields[field.key] || null" value-format="YYYY-MM-DD" format="YYYY-MM-DD" :locale="datePickerLocale" :month-cell-content-render="renderDateMonth" dropdown-class-name="standard-edit-dropdown" v-else-if="field.kind === 'date'" :id="'organization-' + field.key" :aria-label="field.label" :disabled="qualificationDateDisabled(field.key)" :placeholder="'请选择' + field.label" @change="setDate(field.key, $event)" />
           <div v-else-if="field.key === 'otherLegalRoles'" class="legal-role-control"><a-checkbox :checked="draft.fields.otherLegalRoles === '是'" @change="draft.fields.otherLegalRoles = $event.target.checked ? '是' : '否'">是</a-checkbox><a-input v-if="draft.fields.otherLegalRoles === '是'" v-model="draft.fields.otherLegalOrganizations" placeholder="请填写机构名称" aria-label="担任法人其他机构名称" /><span v-else class="legal-role-hint">勾选是后填写</span></div>
-          <div v-else-if="field.kind === 'qualification-date'" class="legal-role-control"><template v-if="restricted"><span class="basic-field-value">否</span></template><template v-else><a-checkbox :checked="draft.fields[field.key] === '是'" @change="draft.fields[field.key] = $event.target.checked ? '是' : '否'">是</a-checkbox><input v-if="draft.fields[field.key] === '是'" v-model="draft.fields[field.dateKey]" type="date" :aria-label="field.label"><span v-else class="legal-role-hint">勾选是后填写时间</span></template></div>
+          <div v-else-if="field.kind === 'qualification-date'" class="legal-role-control"><template v-if="restricted"><span class="basic-field-value">否</span></template><template v-else><a-checkbox :checked="draft.fields[field.key] === '是'" @change="draft.fields[field.key] = $event.target.checked ? '是' : '否'">是</a-checkbox><a-date-picker class="organization-date-picker" :value="draft.fields[field.dateKey] || null" value-format="YYYY-MM-DD" format="YYYY-MM-DD" :locale="datePickerLocale" :month-cell-content-render="renderDateMonth" dropdown-class-name="standard-edit-dropdown" v-if="draft.fields[field.key] === '是'" :aria-label="field.label" placeholder="请选择日期" @change="setDate(field.dateKey, $event)" /><span v-else class="legal-role-hint">勾选是后填写时间</span></template></div>
           <template v-else-if="['binary', 'qualification'].includes(field.kind)"><span v-if="field.kind === 'qualification' && restricted" class="basic-field-value">否</span><a-select dropdown-class-name="standard-edit-dropdown" v-else :id="'organization-' + field.key" v-model="draft.fields[field.key]" placeholder="请选择"><a-select-option value="是">是</a-select-option><a-select-option value="否">否</a-select-option></a-select></template>
           <a-textarea v-else-if="field.kind === 'textarea'" :id="'organization-' + field.key" v-model="draft.fields[field.key]" :rows="2" :placeholder="field.key === 'registeredAddress' ? '请填写登记证书的“住所”地址' : field.key === 'businessScope' ? '请填写登记证书的内容' : '请填写' + field.label" />
           <template v-else-if="field.kind === 'address'"><a-textarea :id="'organization-' + field.key" v-model="draft.fields.officeAddress" :rows="2" placeholder="请填写现办公地址" /><a-input v-model="draft.fields.postalCode" placeholder="请填写邮政编码" aria-label="邮政编码" /></template>
           <div v-else-if="field.kind === 'avatar'" class="avatar-editor"><div v-if="draft.fields.avatar" class="avatar-item"><button type="button" class="avatar-image-button" aria-label="预览机构头像" @click="avatarPreview = true"><img :src="draft.fields.avatar" alt="机构头像" /></button><div class="avatar-mask"><button type="button" class="avatar-delete" aria-label="删除机构头像" @click.stop="draft.fields.avatar = ''; avatarPreview = false"><a-icon type="delete" /> 删除</button></div></div><a-upload v-else accept="image/png,image/jpeg,image/webp" :multiple="false" :disabled="readingAvatar" :show-upload-list="false" :before-upload="selectAvatar"><button type="button" class="avatar-upload" :disabled="readingAvatar" aria-label="上传机构头像"><a-icon :type="readingAvatar ? 'loading' : 'plus'" /><span>{{ readingAvatar ? '上传中' : '上传' }}</span></button></a-upload><a-upload v-if="draft.fields.avatar" accept="image/png,image/jpeg,image/webp" :multiple="false" :disabled="readingAvatar" :show-upload-list="false" :before-upload="selectAvatar"><a-button type="link" :disabled="readingAvatar">更换头像</a-button></a-upload></div>
           <rich-editor v-else-if="field.kind === 'rich'" v-model="draft.fields[field.key]" :label="field.label" :class="{ 'rich-review-has-comment': !!comment(field.key) }" @input="markRich(field.key)" @busy="setEditorBusy(field.key, $event)" />
-          <a-input v-else :id="'organization-' + field.key" v-model="draft.fields[field.key]" :placeholder="field.key === 'secondLoginPhone' ? '非必填，可在第一手机号不可用时登录修改' : field.key === 'organizationName' ? '非必填，不填时贵机构其他组织注册时将只能作为二级组织账号' : '请填写' + field.label" />
+          <a-input v-else :id="'organization-' + field.key" v-model="draft.fields[field.key]" :placeholder="field.key === 'secondLoginPhone' ? '非必填，可在第一手机号不可用时登录修改' : field.key === 'organizationName' ? '非必填（同一机构，最早注册的账号将作为主账号负责机构信息的更新）' : '请填写' + field.label" />
         </div>
       </div>
       <div v-if="group.key === 'overview'" class="editor-content member-sections">
         <div v-for="section in draft.members" :key="section.key" class="member-content">
           <h3>{{ section.title }}</h3>
           <div class="detail-table-wrap"><table class="detail-table members-table"><colgroup><col style="width:70px"><col style="width:140px"><col style="width:200px"><col><col style="width:130px"></colgroup><thead><tr><th>序号</th><th>姓名</th><th>身份证号</th><th>关联公司及对应的统一信用代码</th><th>操作</th></tr></thead><tbody>
-            <tr v-for="(row, index) in section.rows" :key="row.id" :class="{ 'review-row-has-comment': rowComment(section.key, row) }" :role="rowComment(section.key, row) ? 'button' : undefined" :tabindex="rowComment(section.key, row) ? 0 : undefined" @click="showRowComment(section.key, row)" @keydown.enter.prevent="showRowComment(section.key, row)" @keydown.space.prevent="showRowComment(section.key, row)"><td><a-popover v-if="rowComment(section.key, row)" :visible="rowReview === section.key + '.' + row.id" trigger="click" placement="topLeft" @visibleChange="visible => changeRowReviewVisibility(section.key, row, visible)"><template slot="content"><div class="row-review-content"><div><a-icon type="exclamation-circle" theme="filled" /><p>{{ rowComment(section.key, row) }}</p></div><a-button size="small" type="primary" @click.stop="rowReview = ''">关闭</a-button></div></template><span class="row-review-anchor">{{ index + 1 }}</span></a-popover><template v-else>{{ index + 1 }}</template></td><td>{{ row.name }}</td><td>{{ row.identityNumber }}</td><td>{{ row.relatedCompanies }}</td><td class="row-actions" @click.stop @keydown.stop><a-button type="link" @click="openMember(section, row)">编辑</a-button><a-button type="link" class="danger-link" @click="removeMember(section, row)">删除</a-button></td></tr>
+            <tr v-for="(row, index) in section.rows" :key="row.id" :class="{ 'review-row-has-comment': rowComment(section.key, row) }" :role="rowComment(section.key, row) ? 'button' : undefined" :tabindex="rowComment(section.key, row) ? 0 : undefined" @click="showRowComment(section.key, row)" @keydown.enter.prevent="showRowComment(section.key, row)" @keydown.space.prevent="showRowComment(section.key, row)"><td><a-popover overlay-class-name="standard-edit-review-comment" v-if="rowComment(section.key, row)" :visible="rowReview === section.key + '.' + row.id" trigger="click" placement="topLeft" @visibleChange="visible => changeRowReviewVisibility(section.key, row, visible)"><template slot="content"><div class="row-review-content"><div><a-icon type="exclamation-circle" theme="filled" /><p>{{ rowComment(section.key, row) }}</p></div><a-button size="small" type="primary" @click.stop="rowReview = ''">关闭</a-button></div></template><span class="row-review-anchor">{{ index + 1 }}</span></a-popover><template v-else>{{ index + 1 }}</template></td><td>{{ row.name }}</td><td>{{ row.identityNumber }}</td><td>{{ row.relatedCompanies }}</td><td class="row-actions" @click.stop @keydown.stop><a-button type="link" @click="openMember(section, row)">编辑</a-button><a-button type="link" class="danger-link" @click="removeMember(section, row)">删除</a-button></td></tr>
             <tr><td>{{ section.rows.length + 1 }}</td><td></td><td></td><td></td><td class="row-actions"><a-button type="link" @click="openMember(section)">新增</a-button></td></tr>
           </tbody></table></div>
         </div>
       </div>
     </section>
-    <form v-if="!showFullForm" class="registration-query-bar" @submit.prevent="queryName"><a-input v-model="draft.fields.name" aria-label="要注册的机构名称" placeholder="请输入您要注册的机构名称，查询后如果机构已存在将预填机构注册信息" /><a-button type="primary" html-type="submit">查询</a-button></form>
+    <form v-if="!showFullForm" class="registration-query-bar" @submit.prevent="queryName"><a-input v-model="draft.fields.name" aria-label="要注册的机构名称" placeholder="请输入您要注册的机构名称，查询后如果机构已存在将预填机构注册信息" /><a-button class="shared-list-filter-button" type="primary" html-type="submit" icon="search">查询</a-button></form>
     <section v-for="section in visibleAttachments" :key="section.key" class="panel attachment-section">
       <div class="detail-section-header"><span class="detail-section-icon blue"><a-icon type="paper-clip" /></span><div><h2>{{ section.title }}</h2></div></div>
       <div class="editor-content attachment-content">
@@ -73,7 +72,8 @@ import { draftFile } from '../mock/project-drafts'
 import AvatarCropModal from '../components/AvatarCropModal.vue'
 import ReviewCommentLabel from '../components/ReviewCommentLabel.vue'
 import RichEditor from '../components/FundraisingRichEditor.vue'
-import { accountFields, overviewFields, evaluationFields, registrationFields, restrictedTypes, loadOrganizationForm, setOrganizationType, findOrganizationByName, saveOrganizationForm, validateOrganizationForm } from '../mock/organization-form'
+import datePickerZhCN from 'ant-design-vue/es/date-picker/locale/zh_CN'
+import { accountFields, overviewFields, evaluationFields, registrationFields, restrictedTypes, loadOrganizationForm, setOrganizationType, saveOrganizationForm, validateOrganizationForm } from '../mock/organization-form'
 import { cleanFundraisingRichText, paragraphsToRichText } from '../utils/fundraising-rich-text'
 
 let sequence = 0
@@ -84,6 +84,7 @@ export default {
   props: { organizationId: { type: String, default: 'new' } },
   data () { return { draft: loadOrganizationForm(this.organizationId, this.$route.query.review), errors: [], readingAvatar: false, avatarPreview: false, editorBusy: {}, memberVisible: false, memberSection: null, editingMemberId: '', memberDraft: { name: '', identityNumber: '', companies: [] }, dialogError: '', uploadVisible: false, uploadSection: null, uploadDraft: { year: undefined, civilStatus: undefined }, selectedFiles: [], uploadError: '', uploading: false, previewVisible: false, previewName: '', previewType: '', previewUrl: '', rowReview: '', existingAttachmentKeys: [], baseline: '' } },
   computed: {
+    datePickerLocale () { return Object.assign({}, datePickerZhCN, { lang: Object.assign({}, datePickerZhCN.lang, { monthFormat: 'M月' }) }) },
     isEdit () { return this.organizationId !== 'new' },
     isChangeMode () { return this.isEdit && this.$route.query.change === '1' },
     dirty () { return JSON.stringify(this.draft) !== this.baseline },
@@ -91,15 +92,17 @@ export default {
     visibleGroups () { return this.showFullForm ? this.groups : this.groups.filter(group => group.key === 'account') },
     visibleAttachments () { return this.showFullForm ? this.draft.attachments : [] },
     restricted () { return restrictedTypes.includes(this.draft.fields.registrationType) },
-    groups () { return [{ key: 'account', title: '账号信息', icon: 'user', fields: accountFields }, { key: 'registration', title: '机构注册信息', icon: 'bank', fields: registrationFields(this.draft.fields.registrationType, true).filter(field => !this.draft.isPrimaryAccount || field.key !== 'organizationName') }, { key: 'overview', title: '机构概况', icon: 'read', fields: overviewFields }, { key: 'evaluation', title: '社会评价信息', icon: 'star', fields: evaluationFields }] },
+    groups () { return [{ key: 'account', title: '账号信息', icon: 'user', fields: accountFields }, { key: 'registration', title: '机构注册信息', icon: 'bank', fields: registrationFields(this.draft.fields.registrationType, true) }, { key: 'overview', title: '机构概况', icon: 'read', fields: overviewFields }, { key: 'evaluation', title: '社会评价信息', icon: 'star', fields: evaluationFields }] },
     reportYears () { const year = new Date().getFullYear() - 1; return [0, 1, 2, 3, 4].map(offset => year - offset) },
     busy () { return this.uploading || this.readingAvatar || Object.keys(this.editorBusy).some(key => this.editorBusy[key]) }
   },
   created () { this.prepareDraft() },
   watch: { '$route.query.review' () { this.draft = loadOrganizationForm(this.organizationId, this.$route.query.review); this.rowReview = ''; this.prepareDraft() }, organizationId () { if (this.$refs.avatarCrop) this.$refs.avatarCrop.cancel(); this.draft = loadOrganizationForm(this.organizationId, this.$route.query.review); this.errors = []; this.memberVisible = false; this.uploadVisible = false; this.previewVisible = false; this.clearPreview(); this.avatarPreview = false; this.rowReview = ''; this.prepareDraft() } },
   beforeDestroy () { this.clearPreview() },
-  beforeRouteLeave (to, from, next) { if (this.uploading) { this.$message.info('附件正在保存，请稍候。'); next(false); return } if (JSON.stringify(this.draft) === this.baseline) { next(); return } this.$confirm({ title: '离开机构编辑页？', content: '尚未保存的内容将丢失。', maskClosable: false, okText: '离开', cancelText: '继续编辑', onOk: () => next(), onCancel: () => next(false) }) },
+  beforeRouteLeave (to, from, next) { if (this.uploading) { this.$message.info('附件正在保存，请稍候。'); next(false); return } if (JSON.stringify(this.draft) === this.baseline) { next(); return } this.$confirm({ title: '填写内容尚未保存', content: '是否保存为本地草稿后离开？', maskClosable: false, keyboard: false, okText: '保存并离开', cancelText: '放弃填写', onOk: () => { this.save(false); next(!this.dirty) }, onCancel: () => { this.draft = JSON.parse(this.baseline); next() } }) },
   methods: {
+    setDate (key, value) { this.$set(this.draft.fields, key, value || '') },
+    renderDateMonth (value) { return value.format('M月') },
     prepareDraft () {
       if (!this.draft) return
       this.existingAttachmentKeys = this.draft.attachments.reduce((keys, section) => keys.concat(section.files.map(file => section.key + '.' + file.id)), [])
@@ -120,11 +123,11 @@ export default {
     qualificationDateDisabled (key) { return (key === 'charityRegisteredAt' && this.draft.fields.isCharity !== '是') || (key === 'fundraisingQualifiedAt' && this.draft.fields.hasFundraisingQualification !== '是') },
     changeSelect (field, value) { if (field.key === 'registrationType') setOrganizationType(this.draft, value); else this.$set(this.draft.fields, field.key, value) },
     queryName () {
-      if (!this.draft.fields.name.trim()) { this.$message.warning('请先填写机构名称'); return }
-      if (!this.isEdit) { this.draft.fields.name = this.draft.fields.name.trim(); this.draft.nameChecked = true; return }
-      const match = findOrganizationByName(this.draft.fields.name)
-      if (!match || (this.isEdit && (match.id === this.organizationId || match.fields.name === this.draft.fields.name))) { this.draft.nameChecked = true; this.$info({ title: '该机构可注册', content: '本地示例名称查询通过，尚未调用真实查重接口。', maskClosable: false, okText: '关闭' }); return }
-      this.$confirm({ title: '该机构已注册，确认申请其二级组织', content: '请先确认机构名称无误，继续将沿用机构信息且无法修改。', maskClosable: false, okText: '继续', cancelText: '取消', onOk: () => { const parent = loadOrganizationForm(match.id); registrationFields(parent.fields.registrationType).forEach(field => { if (field.key !== 'organizationName') this.$set(this.draft.fields, field.key, parent.fields[field.key] || '') }); ['validStart', 'validEnd', 'creditRegion', 'otherLegalOrganizations', 'organizer', 'establishedAt'].forEach(key => { this.$set(this.draft.fields, key, parent.fields[key] || '') }); this.draft.parentOrganizationId = match.id; this.draft.nameChecked = true } })
+      if (this.isEdit) return
+      const name = this.draft.fields.name.trim()
+      if (!name) { this.$message.warning('请先填写机构名称'); return }
+      this.draft.fields.name = name
+      this.draft.nameChecked = true
     },
     markRich (key) { if (!this.draft.richTextFields.includes(key)) this.draft.richTextFields.push(key) },
     setEditorBusy (key, busy) { this.$set(this.editorBusy, key, busy) },
@@ -192,7 +195,6 @@ export default {
 .registration-query-bar { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 18px 24px; border: 1px solid #e6ebf2; border-radius: 12px; background: rgba(255,255,255,.98); box-shadow: 0 -4px 22px rgba(23,56,92,.07); }
 .registration-query-bar .ant-input { min-width: 0; flex: 1; height: 40px; padding: 0 12px; }
 .registration-query-bar .ant-input::placeholder { color: #5b8ff9; opacity: 1; }
-.registration-query-bar .ant-btn { flex: none; min-width: 100px; height: 40px; }
 .organization-fields { padding: 0 22px 22px; }
 .organization-field { min-width: 0; min-height: 76px; padding: 17px 18px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid #edf1f5; }
 .organization-field.full { grid-column: 1 / -1; }
@@ -203,7 +205,7 @@ export default {
 .organization-field > .ant-input {  }
 .legal-role-control { display: flex; align-items: center; gap: 16px; min-height: 40px; }
 .legal-role-control > .ant-checkbox-wrapper { flex: none; }
-.legal-role-control > input[type="date"] { flex: 1; width: 0; }
+.legal-role-control > .organization-date-picker, .inline-controls > .organization-date-picker { flex: 1; min-width: 0; width: 0; }
 .legal-role-control > .ant-input { flex: 1; min-width: 0; height: 40px; }
 .legal-role-hint { color: #718095; }
 .inline-controls { display: flex; align-items: center; gap: 12px; min-width: 0; }
@@ -211,11 +213,10 @@ export default {
 .inline-controls > .ant-select { width: 100px; flex: none; }
 .inline-controls > .ant-select >>> .ant-select-selection--single { height: 40px; }
 .inline-controls > .ant-select >>> .ant-select-selection__rendered { line-height: 38px; }
-input[type="date"] { min-width: 0; width: 100%; height: 40px; border: 1px solid transparent; border-radius: 4px; padding: 0 12px; color: #27384e; }
-.organization-field >>> .ant-input, .organization-field input[type="date"], .organization-field >>> .ant-select-selection { border-color: transparent; background: transparent; box-shadow: none; }
-.organization-field input[type="date"]:disabled { color: #718095; background: #f5f5f5; cursor: not-allowed; }
-.organization-field >>> .ant-input:hover, .organization-field input[type="date"]:not(:disabled):hover, .organization-field >>> .ant-select-selection:hover { border-color: #d9e1eb; }
-.organization-field >>> .ant-input:focus, .organization-field input[type="date"]:focus { outline: none; border-color: #1677ff; box-shadow: 0 0 0 2px rgba(22,119,255,.12); }
+.organization-date-picker { width: 100%; min-width: 0; }
+.organization-field >>> .ant-input, .organization-field >>> .ant-select-selection { border-color: transparent; background: transparent; box-shadow: none; }
+.organization-field >>> .ant-input:hover, .organization-field >>> .ant-select-selection:hover { border-color: #d9e1eb; }
+.organization-field >>> .ant-input:focus { outline: none; border-color: #1677ff; box-shadow: 0 0 0 2px rgba(22,119,255,.12); }
 .organization-field >>> .ant-select-focused .ant-select-selection, .organization-field >>> .ant-select-open .ant-select-selection { border-color: #1677ff; box-shadow: 0 0 0 2px rgba(22,119,255,.12); }
 .organization-field small { color: #718095; }
 .avatar-editor { display: flex; align-items: flex-start; }
@@ -248,8 +249,8 @@ input[type="date"] { min-width: 0; width: 100%; height: 40px; border: 1px solid 
 .row-review-anchor { display: block; width: 100%; }
 .row-review-content { width: 300px; max-width: 60vw; }
 .row-review-content > div { display: flex; align-items: flex-start; gap: 10px; }
-.row-review-content .anticon { flex: none; margin-top: 3px; color: #faad14; }
-.row-review-content p { flex: 1; min-width: 0; margin: 0 0 14px; line-height: 1.6; overflow-wrap: anywhere; white-space: pre-wrap; }
+.row-review-content .anticon { flex: none; display: inline-flex; align-items: center; justify-content: center; height: var(--review-comment-line-height); margin-top: var(--review-comment-icon-offset); color: #faad14; font-size: var(--review-comment-icon-size); }
+.row-review-content p { flex: 1; min-width: 0; margin: 0 0 14px; font-size: var(--review-comment-font-size); line-height: var(--review-comment-line-height); overflow-wrap: anywhere; white-space: pre-wrap; }
 .row-review-content .ant-btn { display: block; margin-left: auto; }
 .detail-table td { white-space: pre-wrap; overflow-wrap: anywhere; }
 .members-table th:first-child, .members-table td:first-child, .detail-table th:last-child, .detail-table td:last-child { text-align: center; }
@@ -277,7 +278,6 @@ input[type="date"] { min-width: 0; width: 100%; height: 40px; border: 1px solid 
 .attachment-section .detail-section-header > div { display: flex; min-height: 40px; align-items: center; }
 .attachment-content .attachment-list, .attachment-content .attachment-empty-add { padding: 0; margin: 0; }
 .form-attachment-list > div { grid-template-columns: minmax(0, 1fr) auto auto auto; }
-.form-attachment-list > div:first-child { padding-top: 0; align-items: start; }
 .form-attachment-list strong { overflow-wrap: anywhere; }
 .form-attachment-list .ant-btn { padding: 0 6px; }
 .attachment-empty-add { cursor: pointer; border-radius: 8px; }

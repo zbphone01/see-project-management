@@ -1,6 +1,5 @@
 // 机构申请本地演示：不连接注册、查重、文件或审批服务器。
 import { organizationFieldGroups, loadOrganizationDetail, saveOrganizationDetail } from './organization-detail'
-import { createOrganizations } from './organizations'
 
 export const organizationTypes = ['基金会', '政府部门 / 事业单位', '科研院所', '民办非企业', '社会团体', '工商注册的公益组织', '企业', '未注册']
 const certificates = { '基金会': '基金会法人登记证书', '科研院所': '事业单位法人证书', '民办非企业': '民办非企业单位（法人）登记证书', '社会团体': '社会团体法人登记证书', '工商注册的公益组织': '营业执照', '企业': '营业执照' }
@@ -71,16 +70,10 @@ export function loadOrganizationForm (id, reviewMode) {
   } catch (error) { /* 存储不可用时使用当前机构资料。 */ }
   ;['isCharity', 'hasFundraisingQualification'].forEach(key => { if (!['是', '否'].includes(draft.fields[key])) draft.fields[key] = '否' })
   draft.fields.certificateType = certificates[draft.fields.registrationType] || ''
-  if (draft.isPrimaryAccount) draft.fields.organizationName = ''
   if (id !== 'new') {
     if (reviewMode === 'none') draft.reviewComments = {}
   }
   return draft
-}
-
-export function findOrganizationByName (name) {
-  const item = createOrganizations().find(row => row.name === name.trim() || loadOrganizationDetail(row.id).fields.name === name.trim())
-  return item ? loadOrganizationDetail(item.id) : null
 }
 
 export function saveOrganizationForm (draft, submitted) {
@@ -107,7 +100,7 @@ export function validateOrganizationForm (draft) {
   evaluationFields.forEach(item => {
     if (draft.fields[item.key] && !draft.fields[item.key].replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim() && !/<img\b/i.test(draft.fields[item.key])) errors.push('请填写' + item.label + '正文')
   })
-  if (!draft.nameChecked) errors.push('请查询并确认机构名称')
+  if (draft.id === 'new' && !draft.nameChecked) errors.push('请查询并确认机构名称')
   if (draft.fields.registrationType !== '未注册' && !['工商注册的公益组织', '企业'].includes(draft.fields.registrationType)) {
     if (!draft.fields.validStart || !draft.fields.validEnd) errors.push('请选择完整有效期限')
     else if (draft.fields.validStart > draft.fields.validEnd) errors.push('有效期限结束日期不得早于开始日期')

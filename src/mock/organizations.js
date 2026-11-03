@@ -28,6 +28,8 @@ export function createOrganizations () {
     status,
     reports: []
   }))
+    .concat([{ id: 'org-7', name: '青岛西海岸新区碧源环保公益服务中心', organizationName: '碧源环保', image: '/assets/organization-biyuan-logo.png', isSubAccount: true, isPrimaryAccount: false, registrationUpdate: true, registrationType: '民办非企业', charityQualification: '否 / 否', projectCount: 2, contactName: '陈海霞', contactPhone: '15866880977', status: '待审', reports: [] },
+      { id: 'org-8', name: '青岛西海岸新区碧源环保公益服务中心', organizationName: '碧源环保', image: '/assets/organization-biyuan-logo.png', isSubAccount: true, isPrimaryAccount: false, registrationSnapshotExample: true, registrationType: '民办非企业', charityQualification: '否 / 否', projectCount: 2, contactName: '陈海霞', contactPhone: '15866880977', status: '通过', reports: [] }])
 }
 
 export function filterOrganizations (organizations, filters) {
