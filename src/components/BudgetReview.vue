@@ -4,12 +4,13 @@
     <a-tabs v-else v-model="activeTab" :animated="false">
       <a-tab-pane v-for="tab in tabs" :key="tab.key" :tab="tab.title">
         <div v-if="tab.key === 'detail'" class="budget-review-scroll" tabindex="0" :aria-label="tab.title + '，可左右滚动'">
-          <project-budget-table :metadata="review.budget.metadata" :rows="review.rows" :widths="widths" :donation-project="donationProject" :audit="audit && !reportMode" readonly black-amounts show-execution />
+          <project-budget-table :metadata="review.budget.metadata" :rows="review.rows" :widths="widths" :progress-report="reportMode && progressReport" :donation-project="donationProject" :audit="audit && !reportMode" readonly black-amounts show-execution />
         </div>
         <div v-else-if="tab.key === 'personnel' && review.budget.personnel.length" class="budget-review-scroll" tabindex="0" :aria-label="tab.title + '，可左右滚动'">
-          <project-personnel-table :rows="review.budget.personnel" :project-name="review.budget.metadata.projectName" readonly black-amounts show-execution />
+          <project-personnel-table :rows="review.budget.personnel" :project-name="review.budget.metadata.projectName" :audit="audit && !reportMode" readonly black-amounts show-execution />
         </div>
-        <div v-else-if="reportMode && tab.key === 'summary'" class="budget-review-scroll" tabindex="0" :aria-label="tab.title + '，可左右滚动'"><budget-summary :rows="review.rows" /></div>
+        <budget-summary v-else-if="tab.key === 'summary'" :budget="review.budget" :audit="audit && !reportMode" />
+        <budget-generated-table v-else-if="tab.key === 'cost' || tab.key === 'adjustments'" :budget="review.budget" :kind="tab.key" :audit="audit && !reportMode && tab.key === 'cost'" />
         <a-empty v-else class="budget-review-empty" :description="tab.title + '暂无示例数据'" />
       </a-tab-pane>
     </a-tabs>
@@ -20,16 +21,18 @@
 import ProjectBudgetTable, { measureBudgetWidths } from './ProjectBudgetTable.vue'
 import ProjectPersonnelTable from './ProjectPersonnelTable.vue'
 import BudgetSummary from './BudgetSummary.vue'
+import BudgetGeneratedTable from './BudgetGeneratedTable.vue'
 import { createBudgetReviewData } from '../utils/budget-review-data'
 
 export default {
   name: 'BudgetReview',
-  components: { ProjectBudgetTable, ProjectPersonnelTable, BudgetSummary },
+  components: { ProjectBudgetTable, ProjectPersonnelTable, BudgetSummary, BudgetGeneratedTable },
   props: {
     budget: { type: Object, required: true },
     projectName: { type: String, default: '' },
     audit: { type: Boolean, default: false },
     reportMode: { type: Boolean, default: false },
+    progressReport: { type: Boolean, default: false },
     donationProject: { type: Boolean, default: false }
   },
   data () { return { activeTab: 'detail' } },
@@ -37,7 +40,7 @@ export default {
     review () {
       try { return createBudgetReviewData(this.budget, this.projectName) } catch (error) { return { error: error.message } }
     },
-    widths () { return this.review.error ? [] : measureBudgetWidths(this.review.rows) },
+    widths () { return this.review.error ? [] : measureBudgetWidths(this.review.rows, this.reportMode && this.progressReport) },
     tabs () {
       if (this.reportMode) return [{ key: 'detail', title: '预算及执行明细表' }, { key: 'personnel', title: '人力成本分摊表' }, { key: 'summary', title: '预算及执行汇总表' }]
       if (this.donationProject) return [{ key: 'detail', title: '北京市企业家环保基金会联合公益项目预算表' }]

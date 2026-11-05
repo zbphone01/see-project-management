@@ -4,16 +4,16 @@
           <a-button class="detail-back" @click="goBack"><a-icon type="arrow-left" /> 返回</a-button>
         </div>
 
-        <section v-if="!snapshotEntry" class="privacy-reminder" role="note" aria-label="信息安全提醒">
+        <section v-if="!snapshotEntry" class="privacy-reminder" :style="isPendingApplicationView ? { minHeight: '0' } : null" role="note" aria-label="信息安全提醒">
           <div class="privacy-reminder-head">
-            <span class="privacy-icon" :class="{ 'audit-notice-icon': mode === 'audit' }"><a-icon :type="mode === 'audit' ? 'info-circle' : 'warning'" theme="filled" /></span>
+            <span class="privacy-icon" :class="{ 'audit-notice-icon': mode === 'audit' || isPendingApplicationView }"><a-icon :type="mode === 'audit' || isPendingApplicationView ? 'info-circle' : 'warning'" theme="filled" /></span>
             <div>
-              <strong>{{ mode === 'audit' ? '请注意' : '请注意保护信息安全' }}</strong>
-              <span>{{ mode === 'audit' ? '完成审核表示您代表SEE进行了项目申请书的审核，对审核结果负责' : '当前页面内容可能包含不适合公开的隐私资料' }}</span>
+              <strong>{{ mode === 'audit' || isPendingApplicationView ? '请注意' : '请注意保护信息安全' }}</strong>
+              <span>{{ isPendingApplicationView ? '该项目申请为待审，这不是最终确认的内容' : mode === 'audit' ? '完成审核表示您代表SEE进行了项目申请书的审核，对审核结果负责' : '当前页面内容可能包含不适合公开的隐私资料' }}</span>
             </div>
             <a-icon class="privacy-watermark" type="exclamation-circle" />
           </div>
-          <div class="privacy-reminder-body">
+          <div v-if="!isPendingApplicationView" class="privacy-reminder-body">
             <div class="privacy-reminder-copy">
               <template v-if="mode === 'audit'">
                 <p>这是待审核的项目申请书，内容在审核通过前不会入库存档，下载用于线下审核时，资料会带有“待审核”相关标注。</p>
@@ -290,8 +290,8 @@
 
 <script>
 import { budgetKey, readBudgetProject, readSavedBudget, normalizeBudget } from '../utils/project-budget'
+import reportExamples from '../mock/report-examples'
 import defaultTableData from '../mock/project-tables.json'
-import auditBudget0258 from '../mock/project-1764740258-budget.json'
 import greenHomeTableData from '../mock/project-green-home-detail.json'
 import grassTableData from '../mock/project-grass-detail.json'
 import monthlyDonationTableData from '../mock/project-monthly-donation-detail.json'
@@ -400,6 +400,7 @@ export default {
     projectId: { type: Number, required: true },
     snapshotEntry: { type: Object, default: null },
     mode: { type: String, default: 'view' },
+    applicationStatus: { type: String, default: '' },
     auditType: { type: String, default: 'default' },
     detailType: { type: String, default: 'default' },
     // 接口返回同结构 JSON 后可通过路由容器传入，或在此接入请求。
@@ -437,9 +438,10 @@ export default {
     auditExecutingFundingTotal: 5000
   } },
   computed: {
+    isPendingApplicationView () { return this.mode === 'view' && !this.snapshotEntry && (this.applicationStatus ? this.applicationStatus === 'pending' : this.detailProject.status === '申请待审') },
     displayBudget () {
+      if (this.mode === 'view' && !this.tableData && !this.snapshotEntry && this.projectId === 1 && this.detailType === 'default') return reportExamples.find(report => report.id === 'P-001010').budget
       if (this.budgetProject) return this.budgetProject.budget
-      if (!this.tableData && !this.snapshotEntry && this.projectId === 6 && this.detailType === 'default') return auditBudget0258
       return this.detailTableData.budget
     },
     isDonationProject () { return ['one-time-donation', 'monthly-donation'].includes(this.detailType) },

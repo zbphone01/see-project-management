@@ -1,6 +1,6 @@
 <template>
   <section class="panel detail-section form-section">
-    <div class="detail-section-header"><span class="detail-section-icon green"><a-icon :type="part === 'goals' ? 'flag' : 'team'" /></span><div><h2>{{ part === 'community' ? '社群参与情况反馈' : part === 'goals' ? '项目目标及完成' : '人员分工' }}</h2><p v-if="part === 'organization' && !editing">人员为橙色时，表示该人员为新增或有属性变更</p><p v-if="hasComments && (!editing || part !== 'organization') && (editing || report.type === '结项报告')">{{ editing ? '请检查并修改标红的内容，点击信息小标题或行可查看审核意见' : '点击信息小标题或人员行可添加或编辑审核意见' }}</p></div></div>
+    <div class="detail-section-header"><span class="detail-section-icon green"><a-icon :type="part === 'goals' ? 'flag' : 'team'" /></span><div><h2>{{ part === 'community' ? '社群参与情况反馈' : part === 'goals' ? '项目目标及完成' : '人员分工' }}</h2><p v-if="part === 'organization' && !editing">人员为橙色时，表示该人员为新增或有属性变更</p><p v-if="hasComments && (editing || report.type === '结项报告')">{{ editing ? '请检查并修改标红的内容，点击信息小标题或行可查看审核意见' : '点击信息小标题或人员行可添加或编辑审核意见' }}</p></div></div>
     <div class="detail-module-content" :class="{ 'green-report-organization': part === 'organization', 'community-report-content': part === 'community' }">
       <div v-if="part === 'community'" class="description-grid">
         <div v-for="field in visibleSections" :key="field.key" class="description-item wide" :class="{ 'review-has-comment': (audit || editing) && !!comment('communitySections.' + field.key), 'review-label-trigger': audit }" v-bind="attrs(audit)" v-on="events('communitySections.' + field.key, audit)">
@@ -19,8 +19,8 @@
         </template>
       </article>
       <template v-else>
-        <div class="description-grid green-report-counts"><div v-for="item in staffCounts" :key="item.id" class="description-item" :class="{ 'review-has-comment': (audit || editing) && !!comment('staffCounts.' + item.id) }" v-bind="attrs(audit)" v-on="events('staffCounts.' + item.id, audit)"><span><review-comment-label v-if="editing" :comment="comment('staffCounts.' + item.id)">{{ item.label }}</review-comment-label><template v-else>{{ item.label }}</template></span><strong>{{ item.count }}</strong></div></div>
-        <div class="detail-table-wrap"><table class="detail-table team-table green-report-members" :class="{ 'green-report-members-editing': editing }"><colgroup><col class="project-detail-index-col" /><col class="team-col-name" /><col class="team-col-role" /><col /><col class="organization-work-type-col" /><col v-if="editing" class="green-member-operation-col" /></colgroup><thead><tr><th>序号</th><th>姓名</th><th>职位</th><th>团队分工</th><th>工作性质</th><th v-if="editing" class="green-member-actions">操作</th></tr></thead><tbody><tr v-for="(member, index) in report.members" :key="member.id" :class="{ 'member-changed': isMemberChanged(member), 'review-row-has-comment': (audit || editing) && !!memberComment(member), 'review-row-trigger': audit || (editing && !!memberComment(member)) }" v-bind="attrs(audit || (editing && !!memberComment(member)))" v-on="events('members.' + member.id, audit || (editing && !!memberComment(member)))"><td>{{ index + 1 }}</td><td v-for="key in memberKeys" :key="key">{{ member[key] }}</td><td v-if="editing" class="green-member-actions" @click.stop @keydown.stop><a-button type="link" @click="openMember(member)">编辑</a-button><a-button v-if="!isOriginalMember(member)" type="link" class="danger-link" @click="removeMember(member)">删除</a-button></td></tr><tr v-if="editing"><td>{{ report.members.length + 1 }}</td><td v-for="key in memberKeys" :key="key"></td><td class="green-member-actions"><a-button type="link" @click="openMember()">新增</a-button></td></tr></tbody></table></div>
+        <div class="description-grid green-report-counts"><div v-for="item in staffCounts" :key="item.id" class="description-item" :class="{ 'review-has-comment': (audit || editing) && !!comment('staffCounts.' + item.id) }" v-bind="attrs(audit)" v-on="events('staffCounts.' + item.id, audit)"><span><review-comment-label v-if="editing" overlay-class-name="report-edit-review-comment" :comment="comment('staffCounts.' + item.id)">{{ item.label }}</review-comment-label><template v-else>{{ item.label }}</template></span><strong>{{ item.count }}</strong></div></div>
+        <div class="detail-table-wrap"><table class="detail-table team-table green-report-members" :class="{ 'green-report-members-editing': editing }"><colgroup><col class="project-detail-index-col" /><col class="team-col-name" /><col class="team-col-role" /><col /><col class="organization-work-type-col" /><col v-if="editing" class="green-member-operation-col" /></colgroup><thead><tr><th>序号</th><th>姓名</th><th>职位</th><th>团队分工</th><th>工作性质</th><th v-if="editing" class="green-member-actions">操作</th></tr></thead><tbody><tr v-for="(member, index) in report.members" :key="member.id" :class="{ 'member-changed': isMemberChanged(member), 'review-row-has-comment': (audit || editing) && !!memberComment(member), 'review-row-trigger': audit || (editing && !!memberComment(member)) }" v-bind="attrs(audit || (editing && !!memberComment(member)))" v-on="events('members.' + member.id, audit || (editing && !!memberComment(member)))"><td><review-comment-label v-if="editing" overlay-class-name="report-edit-review-comment" :comment="memberComment(member)" :open="reviewKey === 'members.' + member.id" @open-change="value => reviewKey = value ? 'members.' + member.id : ''">{{ index + 1 }}</review-comment-label><template v-else>{{ index + 1 }}</template></td><td v-for="key in memberKeys" :key="key">{{ member[key] }}</td><td v-if="editing" class="green-member-actions" @click.stop @keydown.stop><a-button type="link" @click="openMember(member)">编辑</a-button><a-button v-if="!isOriginalMember(member)" type="link" class="danger-link" @click="removeMember(member)">删除</a-button></td></tr><tr v-if="editing"><td>{{ report.members.length + 1 }}</td><td v-for="key in memberKeys" :key="key"></td><td class="green-member-actions"><a-button type="link" @click="openMember()">新增</a-button></td></tr></tbody></table></div>
       </template>
     </div>
     <a-modal v-if="editing" v-model="memberVisible" wrap-class-name="standard-form-modal standard-edit-scope standard-edit-modal" :title="memberId ? '编辑人员' : '增加人员'" :width="550" :mask-closable="false" @ok="saveMember" :ok-text="memberId ? '保存' : '添加'" cancel-text="取消">
@@ -30,7 +30,6 @@
         <div v-if="memberDraft.workType !== '离职'" class="area-picker-row"><label for="report-member-paid">是否领薪</label><a-select id="report-member-paid" v-model="memberDraft.paid" dropdown-class-name="standard-edit-dropdown" placeholder="请选择" style="width: 100%"><a-select-option value="是">是</a-select-option><a-select-option value="否">否</a-select-option></a-select><p v-if="memberErrors.paid" class="green-member-error" role="alert">{{ memberErrors.paid }}</p></div>
       </div>
     </a-modal>
-    <a-modal v-if="editing" v-model="reviewVisible" title="审核意见" :width="560" :mask-closable="false" :footer="null"><p class="green-review-text">{{ reviewContent }}</p><div class="green-review-actions"><a-button type="primary" @click="reviewVisible = false">关闭</a-button></div></a-modal>
   </section>
 </template>
 
@@ -45,7 +44,7 @@ export default {
   name: 'GreenHomeReportSections',
   components: { RichEditor, ReviewCommentLabel },
   props: { report: { type: Object, required: true }, comments: { type: Object, default: () => ({}) }, audit: Boolean, editing: Boolean, part: { type: String, default: 'goals' } },
-  data () { return { memberVisible: false, memberId: '', memberDraft: {}, memberErrors: {}, workTypes: ['全职', '兼职', '实习生', '核心志愿者', '离职'], reviewVisible: false, reviewContent: '', memberKeys: ['name', 'position', 'responsibilities', 'workType'], memberLabels: { name: '姓名', position: '职位', responsibilities: '团队分工', workType: '工作性质' } } },
+  data () { return { memberVisible: false, memberId: '', memberDraft: {}, memberErrors: {}, workTypes: ['全职', '兼职', '实习生', '核心志愿者', '离职'], reviewKey: '', memberKeys: ['name', 'position', 'responsibilities', 'workType'], memberLabels: { name: '姓名', position: '职位', responsibilities: '团队分工', workType: '工作性质' } } },
   computed: {
     staffCounts () { return this.editing ? reportStaffCounts(this.report.members) : this.report.staffCounts },
     sectionKey () { return this.part === 'community' ? 'communitySections' : 'organizationSections' },
@@ -95,8 +94,8 @@ export default {
     openReview (key) {
       if (this.audit) { this.$emit('review', key); return }
       if (!this.editing) return
-      this.reviewContent = key.indexOf('members.') === 0 ? rowReviewText(this.comments, key, this.memberKeys) : this.comment(key)
-      if (this.reviewContent) this.reviewVisible = true
+      const text = key.indexOf('members.') === 0 ? rowReviewText(this.comments, key, this.memberKeys) : this.comment(key)
+      if (text) this.reviewKey = key
     }
   }
 }
@@ -131,6 +130,4 @@ export default {
 .green-report-members tr:focus-visible { outline: 2px solid #ff7875; outline-offset: -2px; }
 .review-has-comment { background: #fff1f0; }
 .review-has-comment >>> .rich-editable { background: #fff1f0; }
-.green-review-text { font-size: var(--text-16); line-height: 24px; white-space: pre-wrap; overflow-wrap: anywhere; }
-.green-review-actions { display: flex; justify-content: flex-end; }
 </style>

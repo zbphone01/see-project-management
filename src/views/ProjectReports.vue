@@ -35,9 +35,9 @@
                 <a-menu-item key="审核">审核</a-menu-item><a-menu-item key="查看">查看</a-menu-item><a-menu-item key="驳回编辑">驳回编辑</a-menu-item><a-menu-item key="全新编辑">全新编辑</a-menu-item>
               </template>
               <template v-else>
-              <a-menu-item v-if="report.status === '进展待审'" key="审核">审核</a-menu-item>
-              <a-menu-item :key="report.reportType === '进展报告' ? '查看进展报告' : '查看报告'">{{ report.reportType === '进展报告' ? '查看进展报告' : '查看报告' }}</a-menu-item>
-              <a-menu-item v-if="report.reportCode === 'P-001006'" key="编辑示例">编辑示例</a-menu-item>
+              <a-menu-item v-if="report.status === '进展待审' || (report.reportCode === 'P-001010' && report.status === '结项待审')" key="审核">审核</a-menu-item>
+              <a-menu-item :key="report.reportType === '进展报告' ? '查看进展报告' : report.reportType === '结项报告' ? '查看结项报告' : '查看报告'">{{ report.reportType === '进展报告' ? '查看进展报告' : report.reportType === '结项报告' ? '查看结项报告' : '查看报告' }}</a-menu-item>
+              <a-menu-item v-if="report.reportCode === 'P-001006'" key="驳回后修改示例">驳回后修改示例</a-menu-item><a-menu-item v-if="report.reportCode === 'P-001006'" key="全新修改示例">全新修改示例</a-menu-item>
               <a-menu-item v-if="report.status === '草稿'" key="编辑报告">编辑报告</a-menu-item>
               </template>
             </a-menu>
@@ -82,7 +82,7 @@ export default {
         (!f.reportType || report.reportType === f.reportType) &&
         (!f.status || report.status === f.status) &&
         (!f.outcome || report.outcome === f.outcome)
-      ).sort((a, b) => b.reportCode.localeCompare(a.reportCode))
+      ).sort((a, b) => (b.sortCode || b.reportCode).localeCompare(a.sortCode || a.reportCode))
     },
     pagination () {
       return { current: this.page, pageSize: this.pageSize, pageSizeOptions: ['10', '50', '100'], showSizeChanger: true, showTotal: total => `共有 ${total} 条数据` }
@@ -100,8 +100,9 @@ export default {
     showDemo (action, report) {
       const type = report.reportType === '结项报告' || report.reportType === '结项' ? 'completion' : 'progress'
       if (['green-home', 'grass'].includes(report.detailType) && ['驳回编辑', '全新编辑'].includes(action)) { this.$router.push({ name: 'report-form', params: { id: String(report.projectId) }, query: { type, example: report.reportCode, ...(action === '全新编辑' ? { draftId: report.detailType + '-fresh' } : {}) } }); return }
-      if (action === '编辑示例') { this.$router.push({ name: 'report-form', params: { id: String(report.projectId) }, query: { type, example: report.reportCode } }); return }
-      if (action === '审核' || action === '查看' || action === '查看进展报告' || action === '查看报告') {
+      if (action === '全新修改示例' && report.reportCode === 'P-001006') { this.$router.push({ name: 'report-form', params: { id: String(report.projectId) }, query: { type: 'progress', example: report.reportCode, draftId: 'p001006-fresh' } }); return }
+      if (action === '驳回后修改示例') { this.$router.push({ name: 'report-form', params: { id: String(report.projectId) }, query: { type, example: report.reportCode, rejectedExample: '1', draftId: 'p001006-rejected-v1' } }); return }
+      if (action === '审核' || action === '查看' || action === '查看进展报告' || action === '查看结项报告' || action === '查看报告') {
         this.$router.push({ name: 'report-detail', params: { id: report.reportCode }, query: action === '审核' ? { mode: 'audit', type } : { type } })
         return
       }

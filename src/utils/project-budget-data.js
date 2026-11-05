@@ -9,6 +9,7 @@ export function budgetNumber (value) {
 }
 export const budgetQuarterTotal = row => budgetMoney((row.quarters || []).reduce((sum, value) => sum + budgetMoney(value), 0))
 export const budgetPersonnelAmount = row => budgetMoney(Number(row.monthly) * Number(row.months))
+export const budgetBaseAmount = row => row.previousBudget == null ? (row.monthly != null && row.months != null ? budgetPersonnelAmount(row) : budgetQuarterTotal(row)) : budgetMoney(row.previousBudget)
 const statuses = ['pending', 'editing', 'completed']
 const quarters = row => {
   if (row.quarters !== undefined && (!Array.isArray(row.quarters) || row.quarters.length !== 4)) throw new Error('预算分期必须为四期')
@@ -19,6 +20,7 @@ export function normalizeBudget (value = {}, project = {}) {
   if (value.schemaVersion !== undefined && value.schemaVersion !== 1) throw new Error('不支持的预算数据版本')
   if (value.rows !== undefined && !Array.isArray(value.rows)) throw new Error('费用明细格式无效')
   if (value.personnel !== undefined && !Array.isArray(value.personnel)) throw new Error('人力明细格式无效')
+  if (value.adjustmentHistory !== undefined && !Array.isArray(value.adjustmentHistory)) throw new Error('预算调整历史格式无效')
   const source = copyBudgetData(value)
   const adjustmentDetailsByRow = { ...((source.metadata || {}).adjustmentDetailsByRow || {}) }
   const groups = [], rows = [], legacyPersonnel = [], legacyPlaceholders = []
@@ -48,6 +50,7 @@ export function normalizeBudget (value = {}, project = {}) {
       return
     }
     const item = { adjustmentDetail: null, ...row, quarters: quarters(row) }
+    if (row.previousBudget !== undefined) item.previousBudget = budgetNumber(row.previousBudget)
     if (!item.id) throw new Error('费用明细缺少稳定 ID')
     // 旧示例用“无”费用行表示无预算活动，保留原记录但不再作为费用明细展示。
     if (row.kind === 'detail' && row.name === '无' && (row.detail || row.description) === '无' && row.type === '/' && item.quarters.every(value => !value) && ['price', 'quantity', 'adjustment', 'adjustedBudget', 'executed'].every(field => budgetNumber(row[field]) === null || budgetNumber(row[field]) === 0)) {
@@ -78,6 +81,7 @@ export function normalizeBudget (value = {}, project = {}) {
     if (!row.id) throw new Error('人员明细缺少稳定 ID')
     const memberId = row.memberId || row.id
     const item = { adjustmentDetail: null, ...row, memberId, quarters: quarters(row) }
+    if (row.previousBudget !== undefined) item.previousBudget = budgetNumber(row.previousBudget)
     ;['monthly', 'months', 'ratio', 'adjustment', 'adjustedBudget', 'executed'].forEach(field => { item[field] = budgetNumber(row[field]) })
     item.nature = row.nature || null; item.remark = row.remark || null
     delete item.total; delete item.adjustmentRatio; delete item.executionRatio
@@ -93,6 +97,7 @@ export function normalizeBudget (value = {}, project = {}) {
     personnelStatus: statuses.includes(source.personnelStatus) ? source.personnelStatus : source.personnelUpdatedAt ? 'completed' : 'pending',
     updatedAt: source.updatedAt || '', personnelUpdatedAt: source.personnelUpdatedAt || '',
     rows, personnel,
+    adjustmentHistory: source.adjustmentHistory || [],
     groups: groups.length ? groups : source.groups || [],
     legacyPersonnel: legacyPersonnel.length ? legacyPersonnel : (source.legacyPersonnel || []).map(row => { const item = { adjustmentDetail: null, adjustedBudget: null, ...row }; delete item.total; delete item.adjustmentRatio; delete item.executionRatio; return item }),
     legacyPlaceholders: (source.legacyPlaceholders || []).concat(legacyPlaceholders).map(row => { const item = { ...row }; delete item.total; delete item.adjustmentRatio; delete item.executionRatio; return item }),
@@ -147,18 +152,58 @@ export function budgetDetailParts (row) {
   const expression = /^(\d[\d,]*(?:\.\d+)?)\s*元\s*[*×]\s*(\d[\d,]*(?:\.\d+)?)\s*([^\r\n]*)$/.exec(parts[0])
   return expression ? { price: budgetNumber(expression[1]), quantity: budgetNumber(expression[2]), unit: expression[3], description: parts.slice(1).join('\n\n') } : { text }
 }
+export function budgetAdjustmentParts (row) {
+  const cost = row.cost || {}
+  return budgetDetailParts({ cost: cost.adjustmentInput, description: row.adjustmentDetail || cost.adjustmentDetail || '' })
+}
+// 进展表的整列补齐只作用于派生展示行，保留 cost 中的原始未填状态。
+export function progressBudgetDisplayRows (rows) {
+  const hasAdjustment = rows.some(row => row.hasBudgetAdjustment)
+  const hasExecution = rows.some(row => row.executed != null)
+  return rows.map(row => {
+    if (row.kind === 'action') return row
+    const adjustedBudget = hasAdjustment ? (row.adjustedBudget == null ? row.total : row.adjustedBudget) : null
+    const executed = hasExecution ? (row.executed == null ? 0 : row.executed) : null
+    const base = adjustedBudget == null ? row.total : adjustedBudget
+    return { ...row, adjustment: row.hasBudgetAdjustment ? row.adjustment : null,
+      adjustmentRatio: row.hasBudgetAdjustment ? row.adjustmentRatio : null,
+      adjustmentDetail: row.hasBudgetAdjustment ? row.adjustmentDetail : null,
+      adjustedBudget, executed,
+      executionRatio: executed == null || !base ? null : (executed / base * 100).toFixed(1) + '%' }
+  })
+}
+export function hasBudgetAdjustment (row) {
+  if (!row) return false
+  const note = String(row.adjustmentDetail || '').trim()
+  const total = budgetBaseAmount(row)
+  return (row.adjustment != null && budgetNumber(row.adjustment) !== 0) || (note !== '' && note !== '/') || !!row.adjustmentInput || (row.adjustedBudget != null && budgetNumber(row.adjustedBudget) !== total)
+}
 export function buildBudgetRows (project, value, editable = false) {
   const budget = normalizeBudget(value, project), costs = budget.rows, result = []
   const personnel = budget.personnel.length ? budget.personnel : budget.legacyPersonnel
+  const previousDetails = new Map()
+  // 历史按时间正序包含本轮快照；预算明细使用本轮之前最后生效的内容。
+  if (budget.adjustmentHistory.length > 1) {
+    budget.adjustmentHistory.slice(0, -1).forEach(round => {
+      normalizeBudget(round.budget).rows.forEach(cost => {
+        if (!previousDetails.has(cost.id)) previousDetails.set(cost.id, budgetDetailParts({ cost }))
+        if (hasBudgetAdjustment(cost)) {
+          const parts = budgetAdjustmentParts({ cost })
+          if (parts.price !== undefined || parts.text) previousDetails.set(cost.id, parts)
+        }
+      })
+    })
+  }
   const aggregate = (key, kind, code, name, records, outputId) => {
     const sums = [0, 1, 2, 3].map(index => budgetMoney(records.reduce((sum, row) => sum + Number(row.quarters[index] || 0), 0)))
-    const row = { key, id: key, kind, code, name, quarters: sums, total: budgetQuarterTotal({ quarters: sums }), outputId }
-    ;['adjustment', 'adjustedBudget', 'executed'].forEach(field => { row[field] = records.some(item => item[field] != null) ? budgetMoney(records.reduce((sum, item) => sum + Number(item[field] || 0), 0)) : null })
+    const row = { key, id: key, kind, code, name, quarters: sums, initialTotal: budgetQuarterTotal({ quarters: sums }), total: budgetMoney(records.reduce((sum, item) => sum + budgetBaseAmount(item), 0)), hasInitialBudget: records.some(item => item.previousBudget != null), outputId }
+    row.hasBudgetAdjustment = records.some(hasBudgetAdjustment)
+    ;['adjustment', 'adjustedBudget', 'executed'].forEach(field => { row[field] = records.some(item => item[field] != null) ? budgetMoney(records.reduce((sum, item) => sum + (field === 'adjustedBudget' && item[field] == null ? budgetBaseAmount(item) : Number(item[field] || 0)), 0)) : null })
     row.adjustmentRatio = row.adjustment === null || !row.total ? null : (row.adjustment / row.total * 100).toFixed(1) + '%'
     row.executionRatio = row.executed === null || !(row.adjustedBudget === null ? row.total : row.adjustedBudget) ? null : (row.executed / (row.adjustedBudget === null ? row.total : row.adjustedBudget) * 100).toFixed(1) + '%'
     return row
   }
-  const detail = (row, code) => ({ ...aggregate(row.id, 'detail', row.code || code, row.name, [row]), type: row.type, cost: row, description: row.description })
+  const detail = (row, code) => ({ ...aggregate(row.id, 'detail', row.code || code, row.name, [row]), type: row.type, cost: row, description: row.description, previousDetailParts: row.previousBudget == null ? undefined : previousDetails.get(row.id) })
   const support = costs.filter(row => row.kind === 'support')
   result.push(aggregate('total', 'total', '', '', costs.concat(personnel)))
   result.push(aggregate('support', 'group', '1-支撑', '项目支撑费用', support))

@@ -12,7 +12,7 @@
         <div class="field" :class="reviewClass('targets')"><label><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment('targets')">项目目标板块（多选）</review-comment-label></label><a-select dropdown-class-name="standard-edit-dropdown" id="application-targets" v-model="draft.targets" class="target-select" mode="multiple" placeholder="请选择项目目标板块"><a-select-option v-for="target in targetOptions" :key="target">{{ target }}</a-select-option></a-select></div>
         <div class="field" :class="reviewClass('organization')"><label><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment('organization')">{{ isOrganizationProject ? '申请机构' : '执行机构' }}</review-comment-label></label><span v-if="isOrganizationProject" class="basic-field-value">{{ draft.organization }}</span><a-select dropdown-class-name="standard-edit-dropdown" v-else id="application-organization" v-model="draft.organization" placeholder="请选择执行机构"><a-select-option value="青海省三江源生态环境保护协会">青海省三江源生态环境保护协会</a-select-option><a-select-option value="重庆江北飞地猫盟生态科普保护中心">重庆江北飞地猫盟生态科普保护中心</a-select-option></a-select></div>
           <div v-if="isOrganizationProject" class="field"><span class="basic-field-label">机构信息编码</span><span class="basic-field-value">{{ draft.organizationCode }}</span></div>
-        <div class="field" :class="reviewClass('thirdParties')"><label><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment('thirdParties')">第三方</review-comment-label></label><project-third-parties id="application-third-parties" :value="draft.thirdParties" :expanded="thirdVisible" @click="openThirdParties" /></div>
+        <div class="field" :class="reviewClass('thirdParties')"><label><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment('thirdParties')">第三方</review-comment-label></label><project-third-parties id="application-third-parties" :value="draft.thirdParties" :expanded="thirdVisible" :placeholder="['12', '13', '14'].includes($route.params.id) ? '无' : undefined" @click="openThirdParties" /></div>
         <div class="field execution-period" :class="reviewClass('executionPeriod')"><label><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment('executionPeriod')">{{ isOrganizationProject ? '资助周期' : '执行周期' }}</review-comment-label></label><project-date-range :start.sync="draft.start" :end.sync="draft.end" /></div>
         <div class="field rural-field" :class="reviewClass('rural')"><label><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment('rural')">是否在国家乡村振兴重点帮扶县开展项目</review-comment-label></label><project-binary-choice id="application-rural" v-model="draft.rural" /></div>
         <div class="field" :class="reviewClass('aid')"><label><review-comment-label overlay-class-name="project-review-comment" :comment="reviewComment('aid')">直接或委托其他组织资助给受益人款物</review-comment-label></label><project-binary-choice id="application-aid" v-model="draft.aid" /></div>
@@ -35,7 +35,7 @@
           <span v-else-if="field.readonly" class="basic-field-value">{{ field.money ? money(draft[field.key]) + ' 元（' + uppercaseMoney(draft[field.key]) + '）' : draft[field.key] || '—' }}</span>
           <a-select dropdown-class-name="standard-edit-dropdown" v-else-if="field.key === 'targets'" v-model="draft.targets" mode="multiple" class="target-select" placeholder="请选择项目目标板块"><a-select-option v-for="option in targetOptions" :key="option">{{ option }}</a-select-option></a-select>
           <a-select dropdown-class-name="standard-edit-dropdown" v-else-if="field.key === 'organization'" v-model="draft.organization" placeholder="请选择执行机构"><a-select-option :value="donationOrganization">{{ donationOrganization }}</a-select-option></a-select>
-          <project-third-parties v-else-if="field.key === 'thirdParties'" :value="draft.thirdParties" :expanded="thirdVisible" @click="openThirdParties" />
+          <project-third-parties v-else-if="field.key === 'thirdParties'" :value="draft.thirdParties" :expanded="thirdVisible" :placeholder="['12', '13', '14'].includes($route.params.id) ? '无' : undefined" @click="openThirdParties" />
           <a-select dropdown-class-name="standard-edit-dropdown" v-else-if="field.key === 'onlineFundraisingPlatform'" v-model="draft.onlineFundraisingPlatform" placeholder="请选择" allow-clear><a-select-option v-for="option in donationPlatformOptions" :key="option">{{ option }}</a-select-option></a-select>
           <project-date-range v-else-if="field.start" :start.sync="draft[field.start]" :end.sync="draft[field.end]" :label="field.label" />
           <project-binary-choice v-else-if="field.key === 'rural' || field.key === 'aid'" v-model="draft[field.key]" />
@@ -148,7 +148,7 @@ function cleanRichText (html) {
     if (['SCRIPT', 'STYLE', 'IFRAME', 'OBJECT'].includes(element.tagName)) element.remove()
     else if (!allowed.includes(element.tagName)) element.replaceWith(...element.childNodes)
     else if (element.tagName === 'IMG') {
-      if (!/^data:image\/(png|jpeg|gif|webp);base64,/i.test(element.getAttribute('src') || '') && element.getAttribute('src') !== '/assets/grass-governance-example.svg') element.remove()
+      if (!/^data:image\/(png|jpeg|gif|webp);base64,/i.test(element.getAttribute('src') || '') && !['/assets/grass-governance-example.svg', '/assets/project-suosuo.png'].includes(element.getAttribute('src'))) element.remove()
       else Array.from(element.attributes).forEach(attribute => { if (!['src', 'alt'].includes(attribute.name)) element.removeAttribute(attribute.name) })
     } else Array.from(element.attributes).forEach(attribute => element.removeAttribute(attribute.name))
   })
@@ -426,7 +426,7 @@ export default {
     organizationStaffCounts () { if (this.isGrass) return ['全职', '兼职', '实习生和核心志愿者'].map((type, index) => ({ key: ['fullTimeStaff', 'partTimeStaff', 'internAndVolunteers'][index], label: ['全职领薪（人数）', '兼职领薪（人数）', '实习生和核心志愿者（人数）'][index], count: this.draft.organizationMembers.filter(member => index < 2 ? String(member.workType).indexOf(type) === 0 && member.usesLingxi === '是' : /实习|志愿者/.test(member.workType)).length })); return ['全职', '兼职', '实习'].map((type, index) => ({ label: ['全职领薪（人数）', '兼职领薪（人数）', '实习生（人数）'][index], count: this.draft.organizationMembers.filter(member => index < 2 ? String(member.workType || '').indexOf(type) === 0 && member.usesLingxi === '是' : /实习/.test(member.workType)).length })) },
     savedDraft () { return this.savedSnapshot ? JSON.parse(this.savedSnapshot) : null },
     dirty () { return !sameDraftValue(this.draft, this.savedDraft) },
-    fundingSourceText () { const fundraising = String(this.draft.fundraising || '').trim(); return fundraising ? `资助+筹款（${fundraising}）` : '资助' },
+    fundingSourceText () { if (['12', '13', '14'].includes(this.$route.params.id)) return this.draft.funding; const fundraising = String(this.draft.fundraising || '').trim(); return fundraising ? `资助+筹款（${fundraising}）` : '资助' },
     hasBasicReviewComments () { if (this.isDonationProject) return this.donationBasicFields.some(field => !field.readonly && !!this.reviewComment(field.key)); return ['name', 'targets', 'organization', 'thirdParties', 'executionPeriod', 'rural', 'aid', 'beneficiaries', 'publicBenefit', 'total', 'requested', 'matching', 'leader', 'phone', 'organizationCode', 'environmentalFields', 'otherLocalFunding', 'email', 'mailingAddress'].filter(key => this.isGrass || !['email', 'mailingAddress'].includes(key)).some(key => !!this.reviewComment(key)) },
     hasAdditionalReviewComments () { return this.richFields.some(field => !!this.reviewComment(field.key)) },
     hasAreaReviewComments () { return this.hasReviewCommentsFor('areas') },
@@ -520,10 +520,11 @@ export default {
         if (!(team || []).length) missing.push(this.isOrganizationProject ? '组织人员' : '执行团队')
         if (missing.length) { this.$info({ title: '请先完善项目信息', content: '需要先添加' + missing.join('、') + '，再编辑预算表。', maskClosable: false, okText: '知道了' }); return }
       }
-      if (!detail && title !== '人力成本分摊表') { this.$message.info(title + action + '功能暂未开放'); return }
+      const generatedSheet = { '预算及执行汇总表': 'summary', '费用类型分析表': 'cost', '预算调整历史': 'adjustments' }[title]
+      if (!detail && title !== '人力成本分摊表' && !generatedSheet) { this.$message.info(title + action + '功能暂未开放'); return }
       try {
         prepareBudgetContext(this.$route, this.draft, this.isDonationProject, this.savedSnapshot, action === '编辑')
-        this.$router.push({ name: detail ? 'project-budget-form' : 'project-personnel-form', params: { id: this.$route.params.id }, query: { ...this.$route.query, budgetType: this.isDonationProject ? 'donation' : 'project', mode: action === '查看' ? 'view' : 'edit' } })
+        this.$router.push({ name: detail || generatedSheet ? 'project-budget-form' : 'project-personnel-form', params: { id: this.$route.params.id }, query: { ...this.$route.query, sheet: generatedSheet, budgetType: this.isDonationProject ? 'donation' : 'project', mode: generatedSheet || action === '查看' ? 'view' : 'edit' } })
       } catch (error) { this.$message.error('无法保留当前项目信息，请检查浏览器存储后重试') }
     },
     saveAndRemind () { if (this.save()) this.$message.info('草稿已保存；提醒SEE填写为演示操作，尚未发送通知') },
@@ -556,7 +557,7 @@ export default {
     money, uppercaseMoney,
     uid () { return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 9) },
     beforeUnload (event) { if (this.dirty || this.uploading || this.fundraisingEdit.id) { event.preventDefault(); event.returnValue = '' } },
-    goBack () { this.$router.push({ name: this.isOrganizationProject || this.isDonationProject ? 'applied-projects' : 'dashboard' }) },
+    goBack () { this.$router.push({ name: this.isOrganizationProject || this.isDonationProject || ['12', '13', '14'].includes(this.$route.params.id) ? 'applied-projects' : 'dashboard' }) },
     filterOption (input, option) { return option.componentOptions.children[0].text.includes(input) },
     resetRegion () { this.modal.value.city = ''; this.modal.value.district = '' },
     riskTargetLabel (row) {

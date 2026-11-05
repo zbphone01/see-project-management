@@ -1,9 +1,9 @@
-import { normalizeBudget, buildBudgetRows, budgetQuarterTotal, budgetPersonnelAmount } from './project-budget-data'
+import { normalizeBudget, buildBudgetRows, budgetQuarterTotal, budgetPersonnelAmount, budgetBaseAmount, hasBudgetAdjustment } from './project-budget-data'
 
 export function reportBudgetStatus (rows) {
   const filled = value => value !== null && value !== undefined && String(value).trim() !== '' && Number.isFinite(Number(value))
   const execution = rows.some(row => filled(row.executed))
-  const adjustment = rows.some(row => filled(row.adjustment))
+  const adjustment = rows.some(hasBudgetAdjustment)
   return [execution ? '已填写执行金额' : '', adjustment ? '已调整预算' : ''].filter(Boolean).join(' / ') || '未填写执行金额'
 }
 
@@ -20,7 +20,7 @@ export function createReportBudget (draft) {
 
 export function executionError (value, row, personnel = false) {
   if (value === null || value === undefined || value === '' || !Number.isFinite(Number(value)) || Number(value) < 0 || Number(value) > 1000000000 || Number(Number(value).toFixed(2)) !== Number(value)) return '请填写 0 至 10 亿元的执行额，最多两位小数'
-  const total = personnel ? budgetPersonnelAmount(row) : budgetQuarterTotal(row)
+  const total = budgetBaseAmount(row)
   const limit = row.adjustedBudget == null ? total : row.adjustedBudget
   if (Number(value) < Number(row.executed || 0)) return '新执行额不能低于原执行额'
   if (Number(value) > Math.round(limit * (personnel || row.kind === 'support' ? 1 : 1.2) * 100) / 100) return personnel || row.kind === 'support' ? '支撑和人力的执行额不能超过对应的预算，请检查' : '产出活动执行额超过对应预算的120%'
@@ -30,7 +30,7 @@ export function executionError (value, row, personnel = false) {
 export function activityAdjustmentError (row, form) {
   const valid = value => value !== null && value !== undefined && value !== '' && Number.isFinite(Number(value)) && Math.abs(Number(value)) <= 1000000000 && Number(Number(value).toFixed(2)) === Number(value)
   if (!valid(form.amount)) return '请填写有效的预算调整金额，最多两位小数'
-  const total = budgetQuarterTotal(row), adjusted = Math.round((total + Number(form.amount)) * 100) / 100
+  const total = budgetBaseAmount(row), adjusted = Math.round((total + Number(form.amount)) * 100) / 100
   if (adjusted < 0) return '预算调整后金额不能为负，请检查修改'
   if (adjusted < Number(row.executed || 0)) return '预算调整后金额小于执行金额，请检查修改'
   if (Number(form.amount) > Math.round(total * 0.2 * 100) / 100) return '预算调整比例不能大于+20%，请检查修改'
@@ -57,8 +57,9 @@ export function applyReportBudgetChange (budget, row, personnel) {
   if (index < 0) throw new Error('预算明细不存在，请重新进入')
   records.splice(index, 1, row)
   // 一项发生调整后，其余项目仍以原预算作为有效预算，汇总不能只计调整过的项目。
-  if (result.rows.concat(result.personnel, result.legacyPersonnel).some(item => item.adjustment != null)) {
-    result.rows.concat(result.personnel, result.legacyPersonnel).forEach(item => { if (item.adjustedBudget == null) item.adjustedBudget = budgetQuarterTotal(item) })
-  }
+  const hasAdjustment = result.rows.concat(result.personnel, result.legacyPersonnel).some(hasBudgetAdjustment)
+  result.rows.concat(result.personnel, result.legacyPersonnel).forEach(item => {
+    if (!hasBudgetAdjustment(item)) item.adjustedBudget = hasAdjustment ? budgetBaseAmount(item) : null
+  })
   return normalizeBudget(result)
 }

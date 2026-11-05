@@ -85,21 +85,48 @@
               <a-dropdown placement="bottomRight" :trigger="['hover']">
                 <a-button class="operation-button">操作 <a-icon type="down" /></a-button>
                 <a-menu slot="overlay" @click="handleProjectAction($event, record)">
-                  <template v-if="record.status === '申请待审'">
+                  <template v-if="record.status === '草稿'">
+                    <a-menu-item key="edit-draft">编辑</a-menu-item>
+                  </template>
+                  <template v-else-if="record.status === '申请待审'">
                     <a-menu-item key="audit">审核</a-menu-item>
-                    <template v-if="record.id === appliedProjects[0].id">
+                    <template v-if="record.id === 6">
                       <a-menu-item key="audit-project-center">项目组或中心审核</a-menu-item>
                       <a-menu-item key="audit-functional-department">职能部门审核</a-menu-item>
                     </template>
                     <a-menu-item key="download-pdf">下载待审申请书pdf</a-menu-item>
                     <a-menu-item key="download-word">下载待审申请书word</a-menu-item>
                     <a-menu-item key="download-budget">下载待审预算表</a-menu-item>
+                    <a-menu-item key="detail">查看详情</a-menu-item>
                   </template>
                   <template v-else-if="record.status === '进展待审'">
                     <a-menu-item key="audit-progress">审核</a-menu-item>
+                    <a-menu-item key="view-progress-report">查看本进展报告</a-menu-item>
                     <a-menu-item key="project-detail">查看项目详情</a-menu-item>
                     <a-menu-item key="download-progress-pdf">下载进展报告pdf</a-menu-item>
                     <a-menu-item key="download-progress-word">下载进展报告word</a-menu-item>
+                  </template>
+                  <template v-else-if="record.status === '进展已审'">
+                    <a-menu-item key="change-reviewed-project-status">变更项目状态为</a-menu-item>
+                    <a-menu-item key="reject-progress-report">驳回该进展</a-menu-item>
+                    <a-menu-item key="project-detail">查看项目详情</a-menu-item>
+                    <a-menu-item key="view-progress-report">查看本进展报告</a-menu-item>
+                    <a-menu-item key="download-budget">下载预算表</a-menu-item>
+                    <a-menu-item key="upload-budget-scan">上传预算表扫描件</a-menu-item>
+                  </template>
+                  <template v-else-if="record.status === '异常结项'">
+                    <a-menu-item key="project-detail">查看项目详情</a-menu-item>
+                    <a-menu-item key="view-completion-report">查看结项报告</a-menu-item>
+                    <a-menu-item key="supplement-completion">补充结项</a-menu-item>
+                  </template>
+                  <template v-else-if="record.status === '请求修订'">
+                    <a-menu-item key="agree-revision">同意</a-menu-item>
+                    <a-menu-item key="reject-revision">驳回</a-menu-item>
+                    <a-menu-item key="withdraw-revision">撤回请求</a-menu-item>
+                  </template>
+                  <template v-else-if="record.status === '修订中'">
+                    <a-menu-item key="complete-revision">完成修订</a-menu-item>
+                    <a-menu-item key="edit-revision">修订</a-menu-item>
                   </template>
                   <template v-else-if="record.id === 1 && record.status === '执行中'">
                     <a-menu-item key="detail">查看详情</a-menu-item>
@@ -111,17 +138,20 @@
                     <a-menu-item key="download-project-files">下载项目资料</a-menu-item>
                     <a-menu-item key="abnormal-completion"><span style="color: #bfbfbf">*异常结项*</span></a-menu-item>
                   </template>
-                  <template v-else-if="record.id === 2 && record.status === '审核流程中①'">
+                  <template v-else-if="['审核流程中①', '审核流程中②', '审核流程中③'].includes(record.status)">
                     <a-menu-item key="detail">查看详情</a-menu-item>
                     <a-menu-item key="download-project-files">下载项目资料</a-menu-item>
                     <a-sub-menu key="project-status" title="变更项目状态 ">
-                      <a-menu-item key="status-application-review">申请待审</a-menu-item>
-                      <a-menu-item key="status-application-edit">申请待修改</a-menu-item>
-                      <a-menu-item key="status-application-pending">申请待定</a-menu-item>
-                      <a-menu-item key="status-application-rejected">申请淘汰</a-menu-item>
+                      <template v-if="record.status !== '审核流程中②'">
+                        <a-menu-item key="status-application-review">申请待审</a-menu-item>
+                        <a-menu-item key="status-application-edit">申请待修改</a-menu-item>
+                        <a-menu-item key="status-application-pending">申请待定</a-menu-item>
+                        <a-menu-item key="status-application-rejected">申请淘汰</a-menu-item>
+                      </template>
+                      <a-menu-item v-else key="status-revising">修订中</a-menu-item>
                       <a-menu-item key="status-executing">执行中</a-menu-item>
                     </a-sub-menu>
-                    <a-menu-item key="upload-agreement-scan">上传协议扫描件</a-menu-item>
+                    <a-menu-item v-if="record.status === '审核流程中③'" key="upload-agreement-scan">上传协议扫描件</a-menu-item>
                     <a-menu-item key="abnormal-completion"><span style="color: #bfbfbf">*异常结项*</span></a-menu-item>
                   </template>
                   <template v-else-if="record.detailType === 'green-home'">
@@ -152,15 +182,18 @@
             </template>
           </a-table>
         </section>
+        <revision-request-modal ref="revisionModal" @confirm="confirmRevision" />
       </section>
 </template>
 
 <script>
 import { appliedProjects } from '../mock/projects'
+import RevisionRequestModal from '../components/RevisionRequestModal.vue'
 export default {
   name: 'AppliedProjects',
+  components: { RevisionRequestModal },
   data () { return {
-    appliedProjects,
+    appliedProjects: appliedProjects.filter(project => project.status !== '正常结项'),
     selectedProjectKeys: [],
     appliedPage: 1,
     appliedFilters: {
@@ -170,7 +203,7 @@ export default {
         projectName: '',
         recruitmentName: ''
       },
-    appliedStatuses: ['审核流程中①', '申请待审', '进展待审', '执行中', '修订中', '正常结项', '异常结项'],
+    appliedStatuses: ['草稿', '审核流程中①', '审核流程中③', '审核流程中②', '申请待审', '进展待审', '进展已审', '执行中', '请求修订', '修订中', '异常结项'],
     appliedColumns: [
         { title: '项目名称', dataIndex: 'name', key: 'project', scopedSlots: { customRender: 'project' } },
         { title: '项目类型', dataIndex: 'type', key: 'type', width: 110, align: 'center', scopedSlots: { customRender: 'type' } },
@@ -215,12 +248,16 @@ export default {
     appliedStatusTone (status) {
       const statusRoles = {
         '审核流程中①': 'neutral',
+        '审核流程中③': 'neutral',
+        '审核流程中②': 'neutral',
         '执行中': 'active-approved',
         '修订中': 'action-rejected',
         '正常结项': 'neutral',
-        '异常结项': 'action-rejected',
+        '异常结项': 'neutral',
         '申请待审': 'pending-review',
-        '进展待审': 'pending-review'
+        '请求修订': 'pending-review',
+        '进展待审': 'pending-review',
+        '进展已审': 'active-approved'
       }
       return statusRoles[status] || 'neutral'
     },
@@ -241,6 +278,18 @@ export default {
     handleAppliedTableChange (pagination) { this.appliedPage = pagination.current },
     exportSelected (type) { this.$message.info(`已选择 ${this.selectedProjectKeys.length} 个项目，准备导出${type}`) },
     handleProjectAction ({ key }, record) {
+      if (key === 'edit-revision') {
+        this.$router.push({ name: 'project-form', params: { id: String(record.id) }, query: { revisionMode: 'normal' } })
+        return
+      }
+      if (record.status === '请求修订' && ['agree-revision', 'reject-revision'].includes(key)) {
+        this.$refs.revisionModal.open(record, key === 'agree-revision' ? '同意' : '驳回')
+        return
+      }
+      if (key === 'edit-draft') {
+        this.$router.push({ name: 'project-form', params: { id: String(record.id) } })
+        return
+      }
       if ([2, 3].includes(record.id) && key === 'detail') {
         this.$message.info('待后续开发')
         return
@@ -261,19 +310,8 @@ export default {
         this.$message.info('待后续开发')
         return
       }
-      const labels = {
-        detail: '查看详情',
-        edit: '修改申请',
-        history: '变更记录',
-        'audit-progress': '审核进展',
-        'project-detail': '查看项目详情',
-        'download-project-files': '下载项目资料',
-        'download-pdf': '下载待审申请书pdf',
-        'download-word': '下载待审申请书word',
-        'download-budget': '下载待审预算表'
-      }
-      if (key === 'audit-progress') {
-        this.$router.push({ name: 'report-detail', params: { id: record.reportId }, query: { mode: 'audit' } })
+      if (key === 'audit-progress' || key === 'view-progress-report') {
+        this.$router.push({ name: 'report-detail', params: { id: record.reportId }, query: key === 'audit-progress' ? { mode: 'audit' } : {} })
         return
       }
       const auditTypes = {
@@ -282,12 +320,19 @@ export default {
       }
       if (key === 'detail' || key === 'project-detail' || key === 'audit' || auditTypes[key]) {
         const query = key === 'audit' || auditTypes[key] ? { mode: 'audit' } : {}
+        if (record.status === '申请待审') query.applicationStatus = 'pending'
         if (auditTypes[key]) query.auditType = auditTypes[key]
         if (record.detailType) query.detailType = record.detailType
         this.$router.push({ name: 'project-detail', params: { id: String(record.id) }, query })
         return
       }
-      this.$message.info(`${labels[key]}：${record.name}`)
+      this.$message.info('待后续开发')
+    },
+    confirmRevision ({ project, result, remark, operation }) {
+      if (!project || project.status !== '请求修订') return
+      this.$set(project, 'revisionReview', { result, remark, operation })
+      if (result === '同意') project.status = '修订中'
+      this.$message.success('本地演示：已记录审核结果，未提交服务器')
     },
     notify (label) { this.$message.info(label) }
   },

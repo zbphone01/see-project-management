@@ -5,6 +5,7 @@ import { reportMemberChanged, reportStaffCounts } from '../utils/report-members'
 
 const storageKey = (projectId, type, draftId) => `see-report-draft-example-v4-${projectId}-${type}${draftId ? '-' + draftId : ''}`
 const reviewedExampleKey = reportId => `see-reviewed-report-draft-example-${reportId}`
+const rejectedExampleKey = reportId => `see-rejected-report-draft-example-v1-${reportId}`
 const clone = value => JSON.parse(JSON.stringify(value))
 const today = () => {
   const date = new Date()
@@ -130,16 +131,19 @@ function withoutProgressHistory (draft) {
   return { ...draft, outputs: draft.outputs.map(output => ({ ...output, progressHistory: [], activities: output.activities.map(activity => ({ ...activity, progressHistory: [] })) })) }
 }
 
-export function loadReviewedReportExample (projectId, reportId = 'P-001006', fresh = false) {
+export function loadReviewedReportExample (projectId, reportId = 'P-001006', fresh = false, rejected = false) {
   const source = reportExamples.find(report => report.id === reportId)
   if (!source) return loadReportDraft(projectId, 'progress')
   const basic = source, isCompletion = source.type === '结项报告'
+  const rejectedDemo = rejected && reportId === 'P-001006'
   const dateValue = value => value.replace(/年|月/g, '-').replace(/日/g, '')
   const escape = value => value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   const draft = {
     ...createReportDraft(projectId, isCompletion ? 'completion' : 'progress'),
     exampleReportId: reportId, reportCode: reportId,
+    ...(rejectedDemo ? { rejectedDemo: true, draftId: 'p001006-rejected-v1' } : {}),
     projectName: basic.projectName, projectCode: basic.projectCode,
+    ...(reportId === 'P-001006' ? { projectExampleVersion: source.projectExampleVersion, budgetExampleVersion: source.budgetExampleVersion, rejectedExampleVersion: source.rejectedExampleVersion, budget: clone(source.budget), attachments: source.attachments.map((file, index) => ({ id: 'P-001006-attachment-' + (index + 1), name: file.name, category: file.type, size: 0, time: dateValue(basic.filledAt), example: true })) } : {}),
     projectType: basic.projectType, strategy: basic.strategy, issue: basic.issue,
     organization: basic.organization, projectPeriod: basic.projectPeriod,
     ...(['green-home', 'grass'].includes(source.detailType) ? { detailType: source.detailType, projectArea: source.projectArea, organizationCode: source.organizationCode, total: source.totalCents / 100, otherLocalFunding: source.otherLocalFunding, budget: clone(source.budget), organizationSections: source.organizationSections.map(field => ({ ...clone(field), content: field.paragraphs.map(text => '<p>' + escape(text) + '</p>').join('') })), communitySections: (source.communitySections || []).map(field => ({ ...clone(field), content: field.paragraphs.map(text => '<p>' + escape(text) + '</p>').join('') })), members: clone(source.members), staffCounts: clone(source.staffCounts) } : {}),
@@ -153,26 +157,30 @@ export function loadReviewedReportExample (projectId, reportId = 'P-001006', fre
     requested: basic.requestedCents / 100, paid: basic.paidCents / 100,
     reporter: basic.reporter, contact: basic.contact,
     outputs: source.outputs.map(output => ({
-      ...clone(output), id: 'output-' + output.id, standard: output.standard.join('\n'),
+      ...clone(output), id: output.sourceId || 'output-' + output.id, standard: output.standard.join('\n'),
       progressHistory: clone(output.progress.slice(0, -1)),
       progress: output.progress.length ? output.progress[output.progress.length - 1].content : '',
       activities: output.activities.map(activity => ({
-        ...clone(activity), id: 'activity-' + activity.id.replace(/\./g, '-'),
+        ...clone(activity), id: activity.sourceId || 'activity-' + activity.id.replace(/\./g, '-'),
         progressHistory: clone(activity.progress.slice(0, -1)),
         progress: activity.progress.length ? activity.progress[activity.progress.length - 1].content : ''
       }))
     })),
     auditHistory: source.auditHistory.map(entry => ({ ...entry, id: reportId + '-' + entry.time })),
     reviewComments: { ...(source.reviewComments || {}),
-      ...(!isCompletion && !['green-home', 'grass'].includes(source.detailType) ? { 'outputs.output-1': '请补充最新产出进展对应的监测资料、核查结果及成果归档情况。',
+      ...(!isCompletion && reportId !== 'P-001006' && !['green-home', 'grass'].includes(source.detailType) ? { 'outputs.output-1': '请补充最新产出进展对应的监测资料、核查结果及成果归档情况。',
       'activities.activity-1-1': '请补充最新活动进展的执行记录及设备维护问题处理结果。' } : {})
     }
   }
-  if (fresh && ['green-home', 'grass'].includes(source.detailType)) {
-    Object.assign(draft, { fresh: true, draftId: source.detailType + '-fresh', projectArea: '', projectAreaPath: [], projectAreaAddress: '', periodStart: '', periodEnd: '', filledAt: today(), requestNeeded: false, requested: 0, reporter: '', contact: '', executed: 0, communication: '', followup: '', risks: '', summary: '', benefits: [], attachments: [], auditHistory: [], reviewComments: {} })
+  if (fresh && (reportId === 'P-001006' || ['green-home', 'grass'].includes(source.detailType))) {
+    Object.assign(draft, { fresh: true, draftId: reportId === 'P-001006' ? 'p001006-fresh' : source.detailType + '-fresh', projectArea: '', projectAreaPath: [], projectAreaAddress: '', periodStart: '', periodEnd: '', filledAt: today(), requestNeeded: false, requested: 0, reporter: '', contact: '', executed: 0, communication: '', followup: '', risks: '', summary: '', benefits: [], attachments: [], auditHistory: [], reviewComments: {} })
     draft.outputs.forEach(output => { output.progress = ''; output.activities.forEach(activity => { activity.progress = '' }) })
-    draft.organizationSections.forEach(field => { if (field.editable) field.content = '' })
-    draft.communitySections.forEach(field => { field.content = '' })
+    ;(draft.organizationSections || []).forEach(field => { if (field.editable) field.content = '' })
+    ;(draft.communitySections || []).forEach(field => { field.content = '' })
+    if (reportId === 'P-001006') {
+      draft.budget.rows.concat(draft.budget.personnel, draft.budget.legacyPersonnel || []).forEach(row => { row.executed = null; row.adjustment = null; row.adjustedBudget = null; row.adjustmentDetail = null; delete row.adjustmentInput })
+      draft.budget.adjustmentHistory = []; draft.budget.metadata.adjustmentDetailsByRow = {}
+    }
     draft.emptyExecutionUsesNull = true
     draft.budget.rows.concat(draft.budget.personnel).forEach(row => { row.executed = null })
     draft.budget.updatedAt = ''; draft.budget.personnelUpdatedAt = ''
@@ -190,14 +198,47 @@ export function loadReviewedReportExample (projectId, reportId = 'P-001006', fre
     } catch (error) { return withoutProgressHistory(restoreMemberChangeFlags(draft, source)) }
   }
   let result = draft
+  let refreshRejectedExample = reportId === 'P-001006'
   try {
-    const saved = JSON.parse(localStorage.getItem(reviewedExampleKey(reportId)))
+    const saved = JSON.parse(localStorage.getItem(rejectedDemo ? rejectedExampleKey(reportId) : reviewedExampleKey(reportId)))
     if (saved && saved.exampleReportId === reportId) result = { ...draft, ...saved, projectId, benefits: saved.benefitsInitialized || (Array.isArray(saved.benefits) && saved.benefits.length) ? saved.benefits : draft.benefits, reviewComments: { ...draft.reviewComments, ...(saved.reviewComments || {}) } }
+    if (reportId === 'P-001006' && saved && saved.exampleReportId === reportId) {
+      refreshRejectedExample = saved.rejectedExampleVersion !== source.rejectedExampleVersion
+      for (const key of ['projectName', 'projectCode', 'projectType', 'strategy', 'issue', 'organization', 'projectPeriod', 'funding', 'beneficiaryAid']) result[key] = draft[key]
+      if (saved.projectExampleVersion !== source.projectExampleVersion) {
+        for (const key of ['projectExampleVersion', 'outputs', 'budget', 'executed']) result[key] = clone(draft[key])
+      }
+      if (saved.budgetExampleVersion !== source.budgetExampleVersion) {
+        for (const key of ['budgetExampleVersion', 'budget', 'executed']) result[key] = clone(draft[key])
+      }
+      if (refreshRejectedExample) {
+        result.rejectedExampleVersion = source.rejectedExampleVersion
+        for (const key of ['periodStart', 'periodEnd', 'filledAt', 'reporter', 'contact']) if (!result[key]) result[key] = draft[key]
+        for (const key of ['followup', 'risks', 'summary', 'communication']) {
+          const content = String(result[key] || '')
+          if (!content.replace(/<[^>]*>/g, '').trim() && !/<(?:img|table)\b/i.test(content)) result[key] = draft[key]
+        }
+        result.outputs = draft.outputs.map(output => {
+          const previous = (result.outputs || []).find(item => item.id === output.id) || {}
+          return { ...output, progress: previous.progress || output.progress,
+            progressHistory: previous.progressHistory && previous.progressHistory.length ? previous.progressHistory : output.progressHistory,
+            activities: output.activities.map(activity => {
+              const old = (previous.activities || []).find(item => item.id === activity.id) || {}
+              return { ...activity, progress: old.progress || activity.progress, progressHistory: old.progressHistory && old.progressHistory.length ? old.progressHistory : activity.progressHistory }
+            }) }
+        })
+        if (!Array.isArray(result.attachments) || !result.attachments.length) result.attachments = clone(draft.attachments)
+        if (!Array.isArray(result.benefits) || !result.benefits.length) { result.benefits = clone(draft.benefits); result.benefitsInitialized = true }
+        const rejection = draft.auditHistory[0]
+        result.auditHistory = [rejection].concat((result.auditHistory || []).filter(entry => entry.id !== rejection.id && !(entry.time === rejection.time && entry.result === rejection.result)))
+      }
+    }
   } catch (error) { /* Invalid local draft falls back to the example. */ }
   try {
-    const audit = JSON.parse(localStorage.getItem('see-report-review-example-' + reportId))
+    const audit = rejectedDemo ? null : JSON.parse(localStorage.getItem('see-report-review-example-' + reportId))
     if (audit && audit.reviewComments && typeof audit.reviewComments === 'object' && !Array.isArray(audit.reviewComments)) result.reviewComments = { ...audit.reviewComments }
   } catch (error) { /* Retain example comments if local audit data is invalid. */ }
+  if (refreshRejectedExample) result.reviewComments = { ...draft.reviewComments, ...result.reviewComments }
   if (['green-home', 'grass'].includes(source.detailType)) result.organizationCode = source.organizationCode
   return restoreMemberChangeFlags(result, source)
 }
@@ -205,7 +246,7 @@ export function loadReviewedReportExample (projectId, reportId = 'P-001006', fre
 export function saveReportDraft (draft) {
   normalizeReportArea(draft)
   const savedAt = new Date().toLocaleString('zh-CN', { hour12: false })
-  const key = draft.exampleReportId && !draft.fresh ? reviewedExampleKey(draft.exampleReportId) : storageKey(draft.projectId, draft.type === '结项报告' ? 'completion' : 'progress', draft.draftId)
+  const key = draft.rejectedDemo && draft.exampleReportId === 'P-001006' ? rejectedExampleKey(draft.exampleReportId) : draft.exampleReportId && !draft.fresh ? reviewedExampleKey(draft.exampleReportId) : storageKey(draft.projectId, draft.type === '结项报告' ? 'completion' : 'progress', draft.draftId)
   localStorage.setItem(key, JSON.stringify({ ...draft, ...(['green-home', 'grass'].includes(draft.detailType) ? { staffCounts: reportStaffCounts(draft.members || []) } : {}), savedAt }))
   return savedAt
 }

@@ -83,6 +83,7 @@ export function emptyBudget (budget, project = {}) {
   return normalizeBudget(budget || {}, project)
 }
 export function validateCostValues (row) {
+  if (row.kind === 'support' && row.name === '增值税税费' && row.type !== '税费') return '增值税税费的费用类型只能为税费'
   for (const field of ['price', 'quantity']) {
     const value = row[field]
     if (value === null || value === undefined || String(value).trim() === '') continue
@@ -137,7 +138,8 @@ export function validatePersonnel (row, draft) {
   for (const field of ['monthly', 'months', 'ratio']) {
     if (row[field] === null || row[field] === '' || !Number.isFinite(Number(row[field])) || Number(row[field]) < 0) return '请填写有效的月成本、月份数和人力占比'
   }
-  if (row.ratio > 100 || row.monthly > 1000000000 || row.months > 1200 || !Number.isInteger(Number(row.months))) return '人力占比须为 0–100%，月份数须为 0–1200 的整数，月成本不得超过 10 亿元'
+  if (!Number.isInteger(Number(row.ratio))) return '本项目人力占比仅支持整数百分比'
+  if (row.ratio > 100 || row.monthly > 1000000000 || row.months > 1200 || !Number.isInteger(Number(row.months))) return '人力占比须为 0–100% 的整数，月份数须为 0–1200 的整数，月成本不得超过 10 亿元'
   if (draft) {
     const months = executionMonths(draft)
     if (months === null) return '请先在项目信息中填写有效的执行周期'

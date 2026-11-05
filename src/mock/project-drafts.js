@@ -1,8 +1,9 @@
-import { buildBudgetRows, budgetPersonnelAmount, budgetMoney } from '../utils/project-budget-data'
+import { buildBudgetRows, budgetPersonnelAmount, budgetMoney, snapshotBudget } from '../utils/project-budget-data'
+import projectExample from './project-tables.json'
 // 独立的本地演示草稿，不改变已申请项目与审核页的数据。
 export const draftId = 3
 export const revisionDraftId = 5
-export const editableDraftIds = [draftId, revisionDraftId, 506306]
+export const editableDraftIds = [draftId, revisionDraftId, 506306, 12, 13, 14]
 export const clone = value => JSON.parse(JSON.stringify(value))
 export const money = value => (Number(value) || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 export const roundMoney = value => Math.round((Number(value) || 0) * 100) / 100
@@ -26,6 +27,7 @@ export function createFreshOrganizationDraft (example) {
 }
 
 export function createDraft (id = draftId) {
+  if ([13, 14].includes(id)) return { ...createDraft(12), id }
   const draft = {
     id, name: '', code: '草稿 · 尚未提交', recruitment: '',
     type: '项目', strategy: '荒漠化防治', issue: '荒漠生态保护', funding: '资助+筹款', fundraising: '月捐',
@@ -38,6 +40,36 @@ export function createDraft (id = draftId) {
     attachments: [], savedAt: '', reviewComments: {}, auditHistory: []
   }
   if (id === 506306) return { ...draft, recruitment: '大熊猫国家公园四川片区药用植物保护与可持续利用项目招募', strategy: '生态保护与自然教育', issue: '生态系统保护', funding: '资助', fundraising: '-' }
+  if (id === 12) {
+    const basic = projectExample.basic
+    const amount = value => Number(String(value).split('元')[0].replace(/[,\s]/g, ''))
+    const dates = basic.period.match(/\d{4}年\d{2}月\d{2}日/g) || []
+    const date = value => (value || '').replace('年', '-').replace('月', '-').replace('日', '')
+    Object.assign(draft, basic, {
+      id, fundraising: '-', targets: basic.targets.split(/[、，,]/).filter(Boolean),
+      thirdParties: basic.thirdParties === '无' ? [] : basic.thirdParties.split(/[、，,]/).filter(Boolean),
+      start: date(dates[0]), end: date(dates[1]),
+      total: amount(basic.total), requested: amount(basic.requested), matching: amount(basic.matching),
+      outputs: clone(projectExample.outputs), team: clone(projectExample.team),
+      areas: clone(projectExample.areas), stakeholders: clone(projectExample.stakeholders),
+      risks: clone(projectExample.risks), monitoring: clone(projectExample.monitoring),
+      overview: '<p>本项目拟通过对青海省玉树州治多县扎河乡牧户进行入户调研、宣传并指导零废弃家庭建设，推广高海拔地区零废弃社区建设经验，指导牧民研发资源再生利用产品。</p><p>项目将从源头减少三江源环境脆弱地区不可降解垃圾的产生，缓解经济发展与生态保护之间的矛盾，<strong>调动牧民参与零废弃行动的积极性</strong>。</p>',
+      background: '<p><strong>一、现状和问题</strong></p><p>三江源是长江、黄河、澜沧江的发源地，被称为“中华水塔”。当地自然条件艰苦、基础设施薄弱，基本不具备完善的垃圾清理、转运和处理能力。<em>过度消耗资源的现代生活方式快速涌入后，塑料垃圾与生活垃圾可能长期无法降解。</em></p><p>扎河乡平均海拔约 4750 米，社区居民以放牧为生且居住分散。当前社区缺少零废弃处理示范点、负责人和稳定的动员机制，生产生活垃圾正在对水源、草场和野生动物构成潜在威胁。</p><p><img src="/assets/project-suosuo.png" alt="三江源高原生态环境示例" /></p><p><strong>二、机构背景</strong></p><p>青海省三江源生态环境保护协会长期围绕环保骨干培养、水源保护行动、零废弃社区与乡村生态文明建设开展工作。协会愿景是<u>传承青藏高原独特的生态智慧，使丰富的生命和多样的文化生生不息</u>。</p>',
+      goal: '<p>在三江源国家公园长江园区扎河乡口前村建立 20 户管护员家庭作为示范，使每户每年生活垃圾减少到 10 公斤以内，并共同制定和持续遵守禁塑减废制度。</p>',
+      experience: '<p>团队曾持续推动三江源地区零废弃家庭建设，具备<strong>社区动员、环境教育、物资管理与项目监测</strong>等综合经验。</p><p>核心成员熟悉高海拔地区项目执行环境，能够协调当地社区与合作机构，并依据项目计划完成过程记录、风险跟踪和成果复盘。</p>',
+      examplePrefillVersion: 1
+    })
+    const budget = clone(projectExample.budget)
+    for (const rows of [budget.rows, budget.personnel, budget.legacyPersonnel || [], budget.legacyPlaceholders || []]) {
+      rows.forEach(row => {
+        for (const key of ['previousBudget', 'adjustment', 'adjustmentDetail', 'adjustedBudget', 'executed']) delete row[key]
+      })
+    }
+    Object.assign(budget, { revision: 0, editStatus: 'editing', updatedAt: '', personnelUpdatedAt: '', adjustmentHistory: [] })
+    budget.metadata = { ...budget.metadata, executionCutoff: '无', adjustmentDetailsByRow: {} }
+    draft.budget = snapshotBudget(budget, draft)
+    return draft
+  }
   if (id !== revisionDraftId) return draft
   return {
     ...draft,
@@ -87,10 +119,30 @@ export function createDashboardDraft (id) {
 const storageKey = (id, dashboardExample = false) => `see-project-draft-example-v3-${id}` + (dashboardExample ? '-dashboard-filled' : '')
 export function loadDraft (id = draftId, dashboardExample = false) {
   const defaults = dashboardExample ? createDashboardDraft(id) : createDraft(id)
+  if (id === 12) {
+    // 仅替换原示例名，保留用户自定义名称及预算数据、版本。
+    for (const key of [storageKey(id, dashboardExample), 'see-project-budget-document-v1:12:project:existing:default', 'see-budget-sheet:12:project:existing:default']) {
+      const saved = localStorage.getItem(key)
+      if (!saved) continue
+      const value = JSON.parse(saved), project = value.project || value
+      let changed = false
+      if (project.name === '加速绿色低碳铝采购实践项目 —— 通用项目示例') { project.name = defaults.name; changed = true }
+      const budget = project.budget || project
+      if (budget.metadata && budget.metadata.projectName === '加速绿色低碳铝采购实践项目 —— 通用项目示例') { budget.metadata.projectName = defaults.name; changed = true }
+      if (changed) localStorage.setItem(key, JSON.stringify(value))
+    }
+  }
   const raw = localStorage.getItem(storageKey(id, dashboardExample))
   if (!raw) return defaults
   const draft = JSON.parse(raw)
   if (draft.id !== id || !['areas', 'team', 'outputs', 'stakeholders', 'risks', 'monitoring', 'attachments', 'targets', 'thirdParties'].every(key => Array.isArray(draft[key])) || !draft.budget || !Array.isArray(draft.budget.rows) || !Array.isArray(draft.budget.personnel)) throw new Error('草稿格式无法读取')
+  // 只迁移旧版示例遗漏的空字段；已填写内容和预算原样保留。
+  if (id === 12 && !draft.examplePrefillVersion) {
+    for (const key of ['overview', 'background', 'goal', 'experience']) if (!draft[key]) draft[key] = defaults[key]
+    for (const key of ['areas', 'stakeholders', 'risks', 'monitoring']) if (!draft[key].length) draft[key] = clone(defaults[key])
+    draft.examplePrefillVersion = 1
+    localStorage.setItem(storageKey(id, dashboardExample), JSON.stringify(draft))
+  }
   return { ...defaults, ...draft, auditHistory: Array.isArray(draft.auditHistory) ? draft.auditHistory : defaults.auditHistory, reviewComments: { ...defaults.reviewComments, ...(draft.reviewComments || {}) } }
 }
 export function saveDraft (draft, dashboardExample = false) {

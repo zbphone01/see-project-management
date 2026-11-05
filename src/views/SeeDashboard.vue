@@ -57,13 +57,7 @@
         <div class="revision-field"><label>选择文件</label><a-upload :before-upload="selectAgreementScan" :file-list="agreementScan.files" @remove="agreementScan.files = []"><a-button icon="upload">选择文件</a-button></a-upload></div>
       </div>
     </a-modal>
-    <a-modal v-model="revision.visible" title="请求修订" wrap-class-name="standard-form-modal" :width="550" :mask-closable="false" ok-text="确定" cancel-text="取消" @ok="confirmRevision">
-      <div class="revision-form">
-        <div class="revision-field"><label for="revision-result">审核结果</label><a-select id="revision-result" v-model="revision.result" placeholder="请选择" @change="revision.operation = '正常修订'"><a-select-option value="同意">同意</a-select-option><a-select-option value="驳回">驳回</a-select-option></a-select></div>
-        <div v-if="revision.result === '同意'" class="revision-field"><label for="revision-operation">修订操作</label><a-select v-if="canSelectRevisionOperation" id="revision-operation" v-model="revision.operation" placeholder="请选择"><a-select-option value="正常修订">正常修订</a-select-option><a-select-option value="修订并发布进展">修订并发布进展</a-select-option></a-select><span v-else class="revision-readonly">正常修订</span></div>
-        <div class="revision-field"><label for="revision-remark">审核备注</label><a-textarea id="revision-remark" v-model="revision.remark" :rows="3" placeholder="请填写备注" /></div>
-      </div>
-    </a-modal>
+    <revision-request-modal ref="revisionModal" @confirm="confirmRevision" />
     <a-modal v-model="dialog.visible" :title="dialog.title" :mask-closable="false" :footer="null" :width="560">
       <div class="see-dialog">
         <time v-if="dialog.date">{{ dialog.date }}</time>
@@ -79,10 +73,11 @@
 import seeDashboardContent from '../mock/see-dashboard-content.json'
 import systemNotices from '../mock/system-notices.json'
 import FundraisingPlanModal from '../components/FundraisingPlanModal.vue'
+import RevisionRequestModal from '../components/RevisionRequestModal.vue'
 
 export default {
   name: 'SeeDashboard',
-  components: { FundraisingPlanModal },
+  components: { FundraisingPlanModal, RevisionRequestModal },
   data () { return {
     statistics: seeDashboardContent.statistics,
     shortcuts: [{ label: '发起招募', icon: 'notification', tone: 'see-blue' }, { label: '发起筹款规划', icon: 'file-add', tone: 'see-green' }, { label: '申请筹款规划', icon: 'form', tone: 'see-orange' }, { label: '募捐申请待审', icon: 'audit', tone: 'see-pending' }],
@@ -94,27 +89,18 @@ export default {
       { title: '项目列表为什么看不到驳回的进展或结项？', content: '项目状态与单次进展、结项报告的审核状态可能不同。请进入对应项目详情，查看进展或结项记录及审核意见；具体显示规则以业务系统为准。' }
     ],
     dialog: { visible: false, title: '', content: '', date: '', project: '' },
-    revision: { visible: false, project: null, result: '同意', remark: '', operation: '正常修订' },
     agreementScan: { visible: false, files: [] }
   } },
-  computed: {
-    canSelectRevisionOperation () {
-      return !['项目组', '项目中心'].includes((this.revision.project || {}).reviewDepartment)
-    }
-  },
   methods: {
     selectAgreementScan (file) { this.agreementScan.files = [file]; return false },
-    confirmRevision () {
-      const { project, result, remark, operation } = this.revision
+    confirmRevision ({ project, result, remark, operation }) {
       if (!project || project.status !== '请求修订') return
-      const revisionOperation = result === '同意' ? (this.canSelectRevisionOperation ? operation : '正常修订') : ''
-      this.$set(project, 'revisionReview', { result, remark: remark.trim(), operation: revisionOperation })
+      this.$set(project, 'revisionReview', { result, remark: remark.trim(), operation })
       if (result === '同意') {
         project.status = '修订中'
         project.tone = 'revision-active'
         project.actions = []
       }
-      this.revision.visible = false
       this.$message.success('本地演示：已记录审核结果，未提交服务器')
     },
     openInformation (title, content, date = '') { this.dialog = { visible: true, title, content, date, project: '' } },
@@ -132,7 +118,7 @@ export default {
         return
       }
       if (project && project.status === '请求修订' && (action === '同意' || action === '驳回')) {
-        this.revision = { visible: true, project, result: action, remark: '', operation: '正常修订' }
+        this.$refs.revisionModal.open(project, action)
         return
       }
       if (action === '发起筹款规划') {

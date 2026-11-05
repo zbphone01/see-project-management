@@ -1,3 +1,4 @@
+import reportExamples from './report-examples'
 import { appliedProjects } from './projects'
 import greenHomeReport from './report-green-home'
 import grassReport from './report-grass'
@@ -30,3 +31,6 @@ export const projectReports = examples.map(([reportType, status], index) => {
 }).concat([{ id: 'green-home-progress', projectId: 8, detailType: 'green-home', name: greenHomeReport.projectName, code: greenHomeReport.projectCode, reportCode: greenHomeReport.id, reportType: '进展报告', status: '进展待审', periodStart: '2025-01-01', periodEnd: '2025-11-23', submittedAt: greenHomeReport.editedAt, outcome: '-', cover: 'forest-table', icon: 'team' }])
 
 projectReports.push({ id: 'grass-progress', projectId: 9, detailType: 'grass', name: grassReport.projectName, code: grassReport.projectCode, reportCode: grassReport.id, reportType: '进展报告', status: '进展待审', periodStart: '2024-06-15', periodEnd: '2024-12-31', submittedAt: grassReport.editedAt, outcome: '-', cover: 'plateau', icon: 'team' })
+
+const completion = reportExamples.find(report => report.id === 'P-001010')
+projectReports.push({ ...appliedProjects.find(project => project.id === 1), id: 'completion-1764740216', projectId: 1, reportCode: completion.id, reportType: '结项报告', status: '结项待审', periodStart: '2026-06-01', periodEnd: '2026-08-31', submittedAt: completion.editedAt, outcome: '-', sortCode: 'P-001006.1' })

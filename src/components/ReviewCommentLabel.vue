@@ -1,6 +1,6 @@
 <template>
-  <a-popover v-if="text" v-model="visible" :overlay-class-name="overlayClassName" trigger="click" placement="topLeft">
-    <template slot="content"><div class="review-comment-bubble"><div><a-icon type="exclamation-circle" theme="filled" /><p>{{ text }}</p></div><a-button size="small" type="primary" @click="visible = false">关闭</a-button></div></template>
+  <a-popover v-if="text" v-model="popupVisible" :overlay-class-name="overlayClassName" trigger="click" placement="topLeft">
+    <template slot="content"><div class="review-comment-bubble"><div><a-icon type="exclamation-circle" theme="filled" /><p>{{ text }}</p></div><a-button size="small" type="primary" @click="popupVisible = false">关闭</a-button></div></template>
     <button type="button" class="review-comment-label"><slot /></button>
   </a-popover>
   <span v-else><slot /></span>
@@ -8,10 +8,10 @@
 <script>
 export default {
   name: 'ReviewCommentLabel',
-  props: { comment: { default: '' }, overlayClassName: { type: String, default: '' } },
+  props: { comment: { default: '' }, overlayClassName: { type: String, default: '' }, open: { type: Boolean, default: undefined } },
   data () { return { visible: false } },
-  computed: { text () { return typeof this.comment === 'string' ? this.comment.trim() : '' } },
-  watch: { text () { this.visible = false } }
+  computed: { text () { return typeof this.comment === 'string' ? this.comment.trim() : '' }, popupVisible: { get () { return this.open === undefined ? this.visible : this.open }, set (value) { this.visible = value; this.$emit('open-change', value) } } },
+  watch: { text () { this.popupVisible = false } }
 }
 </script>
 <style scoped>

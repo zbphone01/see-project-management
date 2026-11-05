@@ -76,7 +76,7 @@
     <section id="report-budget" class="panel detail-section">
       <div class="detail-section-header"><span class="detail-section-icon gold"><a-icon type="fund" /></span><div><h2>在线预算表</h2></div></div>
       <div class="detail-module-content">
-      <budget-review report-mode :audit="isAudit" :project-name="report.projectName" :budget="report.budget || reportBudgetTemplate" />
+      <budget-review report-mode :progress-report="!isCompletion" :audit="isAudit" :project-name="report.projectName" :budget="report.budget || reportBudgetTemplate" />
       </div>
     </section>
 

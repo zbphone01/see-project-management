@@ -75,7 +75,7 @@
     <section class="panel form-section benefits-section">
       <div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="environment" /></span><div><h2>收益指标成果</h2><p v-if="hasBenefitReviewComments">请检查并修改标红的项目信息，点击行任意位置可查看具体审核意见</p></div></div>
       <div class="detail-module-content report-module-content">
-      <div class="benefit-groups"><a-button class="add-benefit-type" type="dashed" icon="plus" @click="addBenefitType">新增收益</a-button><section v-for="section in benefitSections" :key="section.key" class="benefit-group"><table class="detail-table benefits-table"><colgroup><col class="benefit-indicator" /><col v-for="column in section.columns" :key="column.key" /><col class="benefit-actions" /></colgroup><thead><tr><th>收益指标</th><th v-for="column in section.columns" :key="column.key">{{ column.label }}</th><th>操作</th></tr></thead><tbody><tr v-for="row in section.rows" :key="row.id" :class="{ 'review-row-has-comment': !!benefitReviewComment(section, row) }" v-bind="benefitReviewAttrs(section, row)" @click="openBenefitReview(section, row)" @keydown.enter.self.prevent="openBenefitReview(section, row)" @keydown.space.self.prevent="openBenefitReview(section, row)"><td>{{ section.title }}</td><td v-for="column in section.columns" :key="column.key">{{ section.key === 'document' && column.key === 'file' ? [row.file, row.edition].filter(Boolean).join(' / ') || '—' : row[column.key] === 0 ? 0 : row[column.key] || '—' }}{{ ['amount', 'distance'].includes(section.key) && column.key === section.key && row[column.key] !== null && row[column.key] !== undefined && row[column.key] !== '' ? (section.key === 'amount' ? ' 万元' : ' 公里') : '' }}{{ section.key === 'area' && column.key === 'area' ? ' ' + (row.areaUnit || '平方公里') : section.key === 'weight' && column.key === 'weight' ? ' ' + (row.weightUnit || '吨') : '' }}</td><td><a-button v-if="['roster', 'document'].includes(section.key)" type="link" @click.stop="$message.info('待后续技术开发')" @keydown.stop>查看</a-button><a-button v-else type="link" @click.stop="editBenefitExample(section, row)" @keydown.stop>编辑</a-button><a-button type="link" class="danger-link" @click.stop="removeBenefitExample(section, row)" @keydown.stop>删除</a-button></td></tr><tr class="benefit-add-row"><td :colspan="section.columns.length + 2"><a-button type="link" @click="addBenefitExample(section)">添加更多成果</a-button></td></tr></tbody></table></section></div>
+      <div class="benefit-groups"><a-button class="add-benefit-type" type="dashed" icon="plus" @click="addBenefitType">新增收益</a-button><section v-for="section in benefitSections" :key="section.key" class="benefit-group"><table class="detail-table benefits-table"><colgroup><col class="benefit-indicator" /><col v-for="column in section.columns" :key="column.key" /><col class="benefit-actions" /></colgroup><thead><tr><th>收益指标</th><th v-for="column in section.columns" :key="column.key">{{ column.label }}</th><th>操作</th></tr></thead><tbody><tr v-for="row in section.rows" :key="row.id" :class="{ 'review-row-has-comment': !!benefitReviewComment(section, row) }" v-bind="benefitReviewAttrs(section, row)" @click="openBenefitReview(section, row)" @keydown.enter.self.prevent="openBenefitReview(section, row)" @keydown.space.self.prevent="openBenefitReview(section, row)"><td><review-comment-label overlay-class-name="report-edit-review-comment" :comment="benefitReviewComment(section, row)" :open="benefitReviewKey === row.id" @open-change="value => benefitReviewKey = value ? row.id : ''">{{ section.title }}</review-comment-label></td><td v-for="column in section.columns" :key="column.key">{{ section.key === 'document' && column.key === 'file' ? [row.file, row.edition].filter(Boolean).join(' / ') || '—' : row[column.key] === 0 ? 0 : row[column.key] || '—' }}{{ ['amount', 'distance'].includes(section.key) && column.key === section.key && row[column.key] !== null && row[column.key] !== undefined && row[column.key] !== '' ? (section.key === 'amount' ? ' 万元' : ' 公里') : '' }}{{ section.key === 'area' && column.key === 'area' ? ' ' + (row.areaUnit || '平方公里') : section.key === 'weight' && column.key === 'weight' ? ' ' + (row.weightUnit || '吨') : '' }}</td><td><a-button v-if="['roster', 'document'].includes(section.key)" type="link" @click.stop="$message.info('待后续技术开发')" @keydown.stop>查看</a-button><a-button v-else type="link" @click.stop="editBenefitExample(section, row)" @keydown.stop>编辑</a-button><a-button type="link" class="danger-link" @click.stop="removeBenefitExample(section, row)" @keydown.stop>删除</a-button></td></tr><tr class="benefit-add-row"><td :colspan="section.columns.length + 2"><a-button type="link" @click="addBenefitExample(section)">添加更多成果</a-button></td></tr></tbody></table></section></div>
       </div>
     </section>
 
@@ -100,7 +100,6 @@
 
     <footer class="form-footer"><span><a-icon type="info-circle" /> {{ draft.savedAt ? '草稿内容已保留' : `请填写${draft.type}，可随时存为草稿` }}</span><div><a-button @click="goBack">取消</a-button><a-button icon="save" @click="save">存为草稿</a-button><a-button type="primary" @click="submit">提交{{ draft.type.replace('报告', '') }}</a-button></div></footer>
 
-    <a-modal v-model="benefitReviewVisible" title="审核意见" :width="560" :mask-closable="false" :footer="null"><p class="benefit-review-text">{{ benefitReviewText }}</p><div class="benefit-review-actions"><a-button type="primary" @click="benefitReviewVisible = false">关闭</a-button></div></a-modal>
     <a-modal v-model="attachmentVisible" wrap-class-name="standard-form-modal standard-edit-scope standard-edit-modal" title="添加附件" :width="550" :mask-closable="false" :keyboard="false" :body-style="{ maxHeight: '65vh', overflowY: 'auto' }" @ok="confirmAttachment" ok-text="上传" cancel-text="取消">
       <div class="area-picker attachment-picker"><div class="area-picker-row"><label for="report-attachment-category">附件类型</label><a-select dropdown-class-name="standard-edit-dropdown" id="report-attachment-category" v-model="attachmentDraft.category" placeholder="请选择附件类型"><a-select-option value="传播信息附件">传播信息附件</a-select-option><a-select-option value="财务票据">财务票据</a-select-option><a-select-option value="预算表">预算表</a-select-option><a-select-option value="其他附件">其他附件</a-select-option></a-select></div><div class="area-picker-row"><label>选择文件</label><div class="attachment-file-picker"><a-upload :before-upload="selectAttachment" :show-upload-list="false" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"><a-button icon="upload">选择文件</a-button></a-upload><span v-if="attachmentDraft.file">{{ attachmentDraft.file.name }}</span></div></div><p v-if="attachmentDraft.error" class="form-error" role="alert">{{ attachmentDraft.error }}</p></div>
     </a-modal>
@@ -128,7 +127,7 @@ import { reviewText, rowReviewText } from '../utils/report-review'
 import ReviewCommentLabel from '../components/ReviewCommentLabel.vue'
 import GreenHomeReportSections from '../components/GreenHomeReportSections.vue'
 import ProjectBudgetEditor from '../components/ProjectBudgetEditor.vue'
-import { budgetKey, readBudgetContext, normalizeBudget } from '../utils/project-budget'
+import { budgetKey, readBudgetContext, clearBudgetContext, normalizeBudget } from '../utils/project-budget'
 import { reportRequiredErrors, reportOtherFields } from '../utils/report-validation'
 import { createRegionOptions, parseRegionText, normalizeRegionPath, formatRegionPath, regionPathComplete } from '../utils/administrative-regions'
 import datePickerZhCN from 'ant-design-vue/es/date-picker/locale/zh_CN'
@@ -234,16 +233,16 @@ export default {
   name: 'ReportForm',
   components: { ProjectBudgetEditor, RichEditor, ReviewCommentLabel, GreenHomeReportSections },
   props: { projectId: { type: [String, Number], required: true }, type: { type: String, default: 'progress' } },
-  data () { return { savedSnapshot: '', errors: [], draft: ['P-001006', 'P-001007', 'P-001008', 'P-001009'].includes(this.$route.query.example) ? loadReviewedReportExample(this.projectId, this.$route.query.example, ['green-home-fresh', 'grass-fresh'].includes(this.$route.query.draftId)) : loadReportDraft(this.projectId, this.type, this.$route.query.draftId), benefitSections: JSON.parse(JSON.stringify(benefitSections)), attachmentVisible: false, attachmentDraft: { category: undefined, file: null, error: '' }, benefitVisible: false, benefitMode: 'new', benefitErrors: {}, benefitOriginal: null, benefitSectionKey: null, benefitDraft: emptyBenefit(), benefitReviewVisible: false, benefitReviewText: '' } },
+  data () { return { savedSnapshot: '', errors: [], draft: ['P-001006', 'P-001007', 'P-001008', 'P-001009'].includes(this.$route.query.example) ? loadReviewedReportExample(this.projectId, this.$route.query.example, ['green-home-fresh', 'grass-fresh', 'p001006-fresh'].includes(this.$route.query.draftId), this.$route.query.rejectedExample === '1') : loadReportDraft(this.projectId, this.type, this.$route.query.draftId), benefitSections: JSON.parse(JSON.stringify(benefitSections)), attachmentVisible: false, attachmentDraft: { category: undefined, file: null, error: '' }, benefitVisible: false, benefitMode: 'new', benefitErrors: {}, benefitOriginal: null, benefitSectionKey: null, benefitDraft: emptyBenefit(), benefitReviewKey: '' } },
   created () {
     this.draft.type = this.type === 'completion' ? '结项报告' : '进展报告'
     if (this.draft.benefitsInitialized || this.draft.exampleReportId || this.draft.benefits.length) this.benefitSections.forEach(section => { section.rows = this.draft.benefits.filter(row => row.sectionKey === section.key || (!row.sectionKey && row.indicator === section.title)) })
     this.captureSavedSnapshot()
   },
   activated () {
-    if (String(this.draft.projectId) !== String(this.projectId) || this.draft.draftId !== this.$route.query.draftId || this.draft.type !== (this.type === 'completion' ? '结项报告' : '进展报告') || this.draft.exampleReportId !== this.$route.query.example) {
+    if (String(this.draft.projectId) !== String(this.projectId) || this.draft.draftId !== this.$route.query.draftId || this.draft.type !== (this.type === 'completion' ? '结项报告' : '进展报告') || this.draft.exampleReportId !== this.$route.query.example || !!this.draft.rejectedDemo !== (this.$route.query.rejectedExample === '1')) {
       this.errors = []
-      this.draft = ['P-001006', 'P-001007', 'P-001008', 'P-001009'].includes(this.$route.query.example) ? loadReviewedReportExample(this.projectId, this.$route.query.example, ['green-home-fresh', 'grass-fresh'].includes(this.$route.query.draftId)) : loadReportDraft(this.projectId, this.type, this.$route.query.draftId)
+      this.draft = ['P-001006', 'P-001007', 'P-001008', 'P-001009'].includes(this.$route.query.example) ? loadReviewedReportExample(this.projectId, this.$route.query.example, ['green-home-fresh', 'grass-fresh', 'p001006-fresh'].includes(this.$route.query.draftId), this.$route.query.rejectedExample === '1') : loadReportDraft(this.projectId, this.type, this.$route.query.draftId)
       this.benefitSections = JSON.parse(JSON.stringify(benefitSections))
       if (this.draft.benefitsInitialized || this.draft.exampleReportId || this.draft.benefits.length) this.benefitSections.forEach(section => { section.rows = this.draft.benefits.filter(row => row.sectionKey === section.key || (!row.sectionKey && row.indicator === section.title)) })
       this.captureSavedSnapshot()
@@ -255,13 +254,19 @@ export default {
         if (audit && audit.reviewComments && typeof audit.reviewComments === 'object' && !Array.isArray(audit.reviewComments)) this.$set(this.draft, 'reviewComments', { ...audit.reviewComments })
       } catch (error) { /* 无有效本地审核数据时保留草稿意见。 */ }
     }
-    const context = readBudgetContext(budgetKey({ params: { id: this.projectId }, query: { ...this.$route.query, reportBudget: '1' } }))
-    if (context && context.report) { this.draft.budget = normalizeBudget(context.draft.budget); this.draft.executed = context.draft.executed; this.captureSavedSnapshot() }
+    if (this.$route.query.budgetReturn === '1') {
+      const key = budgetKey({ params: { id: this.projectId }, query: { ...this.$route.query, reportBudget: '1' } })
+      const context = readBudgetContext(key)
+      if (context && context.report && String(context.draft.projectId) === String(this.projectId) && context.draft.exampleReportId === this.draft.exampleReportId && !!context.draft.rejectedDemo === !!this.draft.rejectedDemo) {
+        this.draft.budget = normalizeBudget(context.draft.budget); this.draft.executed = context.draft.executed; this.captureSavedSnapshot()
+      }
+      clearBudgetContext(key)
+    }
   },
   beforeRouteUpdate (to, from, next) {
-    if (to.query.draftId !== from.query.draftId || to.params.id !== from.params.id || to.query.type !== from.query.type || to.query.example !== from.query.example) {
+    if (to.query.draftId !== from.query.draftId || to.params.id !== from.params.id || to.query.type !== from.query.type || to.query.example !== from.query.example || to.query.rejectedExample !== from.query.rejectedExample) {
       this.errors = []
-      this.draft = ['P-001006', 'P-001007', 'P-001008', 'P-001009'].includes(to.query.example) ? loadReviewedReportExample(to.params.id, to.query.example, ['green-home-fresh', 'grass-fresh'].includes(to.query.draftId)) : loadReportDraft(to.params.id, to.query.type === 'completion' ? 'completion' : 'progress', to.query.draftId)
+      this.draft = ['P-001006', 'P-001007', 'P-001008', 'P-001009'].includes(to.query.example) ? loadReviewedReportExample(to.params.id, to.query.example, ['green-home-fresh', 'grass-fresh', 'p001006-fresh'].includes(to.query.draftId), to.query.rejectedExample === '1') : loadReportDraft(to.params.id, to.query.type === 'completion' ? 'completion' : 'progress', to.query.draftId)
       if (['progress', 'completion'].includes(to.query.type)) this.draft.type = to.query.type === 'completion' ? '结项报告' : '进展报告'
       this.benefitSections = JSON.parse(JSON.stringify(benefitSections))
       if (this.draft.benefitsInitialized || this.draft.exampleReportId || this.draft.benefits.length) this.benefitSections.forEach(section => { section.rows = this.draft.benefits.filter(row => row.sectionKey === section.key || (!row.sectionKey && row.indicator === section.title)) })
@@ -278,7 +283,7 @@ export default {
     executionDateLocale () { return { ...datePickerZhCN, lang: { ...datePickerZhCN.lang, monthFormat: 'M月' } } },
     hasBasicReviewComments () { return ['reportPeriod', 'request', 'reporter', 'contact', 'filledAt'].concat(this.isOrganizationReport ? ['projectArea'] : []).concat(this.isCompletion && this.draft.beneficiaryAid === '是' ? ['aidCompleted'] : []).some(key => !!this.reviewComment(key)) },
     richFields () { return reportOtherFields(this.isOrganizationReport).filter(field => this.isOrganizationReport || field.key !== 'communication') },
-    hasOtherReviewComments () { return this.richFields.some(field => !!this.reviewComment('otherInformation.' + field.key)) },
+    hasOtherReviewComments () { return this.richFields.some(field => !!this.reviewComment(field.reviewKey)) },
     hasBenefitReviewComments () { return this.benefitSections.some(section => section.rows.some(row => !!this.benefitReviewComment(section, row))) },
     hasProgressReviewComments () { return this.draft.outputs.some(output => !!this.progressReviewComment('outputs', output) || output.activities.some(activity => !!this.progressReviewComment('activities', activity))) },
     activeBenefitFields () { return benefitSchemas[this.benefitSectionKey] || [] },
@@ -307,7 +312,7 @@ export default {
       try {
         this.draft.savedAt = saveReportDraft(this.draft)
         this.captureSavedSnapshot()
-        sessionStorage.setItem('see-budget-context:' + key, JSON.stringify({ report: true, draft: this.draft, returnTo: { name: 'report-form', params: { id: this.projectId }, query: { ...this.$route.query } } }))
+        sessionStorage.setItem('see-budget-context:' + key, JSON.stringify({ report: true, draft: this.draft, returnTo: { name: 'report-form', params: { id: this.projectId }, query: { ...this.$route.query, budgetReturn: '1' } } }))
         this.$router.push({ name: 'project-budget-form', params: { id: this.projectId }, query })
       } catch (error) { this.$message.error('无法保存报告预算上下文，请保留当前页面后重试') }
     },
@@ -316,10 +321,10 @@ export default {
     reviewClass (key) { return { 'review-has-comment': !!this.reviewComment(key) } },
     benefitReviewComment (section, row) { return rowReviewText(this.draft.reviewComments, 'benefits.' + row.id, ['indicator'].concat(section.columns.map(column => column.key))) },
     benefitReviewAttrs (section, row) { return this.benefitReviewComment(section, row) ? { role: 'button', tabindex: 0 } : {} },
-    openBenefitReview (section, row) { const text = this.benefitReviewComment(section, row); if (text) { this.benefitReviewText = text; this.benefitReviewVisible = true } },
+    openBenefitReview (section, row) { const text = this.benefitReviewComment(section, row); if (text) this.benefitReviewKey = row.id },
     progressReviewComment (section, row) { return this.reviewComment(section + '.' + row.id) },
     progressReviewClass (section, row) { return { 'review-has-comment': !!this.progressReviewComment(section, row) } },
-    goBack () { this.$router.go(-1) },
+    goBack () { this.$router.push({ name: 'project-reports' }) },
     money (value) { return (Number(value) || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) },
     ratio (value, total) { return Number(total) ? (Number(value || 0) / Number(total) * 100).toFixed(1) + ' %' : '—' },
     changeRequestNeeded (event) { if (!event.target.checked) this.draft.requested = 0 },
@@ -487,8 +492,6 @@ export default {
 .benefits-table tr.review-row-has-comment > td { background: #fff1f0; }
 .benefits-table tr.review-row-has-comment:hover > td { background: #ffe7e5; }
 .benefits-table tr.review-row-has-comment:focus-visible { outline: 2px solid #ff7875; outline-offset: -2px; }
-.benefit-review-text { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 16px; line-height: 24px; }
-.benefit-review-actions { display: flex; justify-content: flex-end; }
 </style>
 
 <style>

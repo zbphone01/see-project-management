@@ -1,6 +1,37 @@
+import { createCompletionExample } from './report-completion'
 import progressReportDetails from './report-progress-detail.json'
 import greenHomeReport from './report-green-home'
 import grassReport from './report-grass'
+import projectTableData from './project-tables.json'
+import { buildBudgetRows } from '../utils/project-budget-data'
+
+const progressProjectBudget = JSON.parse(JSON.stringify(projectTableData.budget))
+progressProjectBudget.metadata = { ...progressProjectBudget.metadata,
+  projectName: projectTableData.basic.name, projectCode: projectTableData.basic.code,
+  organization: projectTableData.basic.organization, period: projectTableData.basic.period,
+  partners: projectTableData.basic.thirdParties, executionCutoff: '2026-02-28'
+}
+// P-001006 的报告执行示例使用项目预算的独立副本，不回写项目原预算。
+const progressExecutions = { 'budget-3': 200, 'budget-8': 220, 'budget-9': 180, 'budget-14': 100, 'budget-15': 80, 'cost-activity-2-1-other': 180, 'personnel-team-1': 110, 'personnel-team-2': 90 }
+const progressAdjustments = {
+  'budget-8': { amount: 60, price: 115, detail: '增加入户宣讲往返交通安排，交通差旅费调增60元。' },
+  'cost-activity-2-1-other': { amount: -40, price: 90, detail: '活动2.1.3使用社区提供的临时存放空间，场地整理费用调减40元。' },
+  'personnel-team-1': { amount: 20, detail: '增加项目统筹协调工作安排，分摊人力成本调增20元。' },
+  'personnel-team-2': { amount: -20, detail: '优化活动组织工作安排，分摊人力成本调减20元。' }
+}
+progressProjectBudget.rows.concat(progressProjectBudget.personnel).forEach(row => {
+  const adjustment = progressAdjustments[row.id]
+  row.executed = progressExecutions[row.id]
+  row.adjustment = adjustment ? adjustment.amount : 0
+  row.adjustmentDetail = adjustment ? adjustment.detail : null
+  row.adjustedBudget = Math.round((row.quarters.reduce((sum, amount) => sum + amount, 0) + row.adjustment) * 100) / 100
+  if (adjustment && adjustment.price != null) {
+    row.adjustmentInput = { price: adjustment.price, quantity: 4, unit: '次', description: adjustment.detail, quarters: [adjustment.price, adjustment.price, adjustment.price, adjustment.price] }
+    row.adjustmentDetail = adjustment.price.toFixed(2) + '元 × 4.00次\n\n' + adjustment.detail
+  }
+})
+const progressBudgetRows = buildBudgetRows({}, progressProjectBudget).filter(row => row.kind === 'group')
+  .map(row => ({ name: row.name, budgetCents: Math.round(row.total * 100), executedCents: row.executed == null ? 0 : Math.round(row.executed * 100) }))
 
 const project = {
   projectName: '大熊猫栖息地生态监测与社区保护项目', projectCode: 'ZZ-1234567895',
@@ -37,12 +68,13 @@ const otherInformation = [
 const reports = [
   greenHomeReport, grassReport,
   { ...project, ...progressReportDetails['P-001006'].basic, id: 'P-001006', type: '进展报告',
+    projectExampleVersion: 1, budgetExampleVersion: 4, rejectedExampleVersion: 1, budget: progressProjectBudget,
     aiInitialReview: progressReportDetails['P-001006'].aiInitialReview, outputs: progressReportDetails['P-001006'].outputs, otherInformation,
     communication: '本阶段围绕栖息地监测、社区巡护和公众保护参与开展传播，累计发布12篇项目动态，获得地方媒体报道3篇。相关活动图片、报道链接及传播记录已整理为附件。',
     benefits: progressReportDetails['P-001006'].benefits,
     reviewComments: progressReportDetails['P-001006'].reviewComments || {},
-    budgetRows: [{ name: '栖息地监测与巡护', budgetCents: 30000000, executedCents: 12000000 }, { name: '社区培训与保护行动', budgetCents: 12000000, executedCents: 4400000 }, { name: '人力成本', budgetCents: 8000000, executedCents: 3000000 }],
-    staffRows: [{ role: '项目协调员', work: '巡护安排、数据汇总与项目协调', share: '50%', cents: 1800000 }, { role: '社区协调员', work: '培训组织与社区沟通', share: '40%', cents: 1200000 }],
+    budgetRows: progressBudgetRows,
+    staffRows: progressProjectBudget.personnel.map(row => ({ role: row.position, work: row.responsibilities, share: row.ratio + '%', cents: row.executed == null ? 0 : Math.round(row.executed * 100) })),
     auditHistory: progressReportDetails['P-001006'].auditHistory
   },
   { ...project, id: 'P-001007', type: '结项报告', reportPeriod: '2026年06月01日 至 2026年08月31日', filledAt: '2026年09月01日', editedAt: '2026-09-01 17:00:00', requestedCents: 0, paidCents: 25000000,
@@ -54,5 +86,7 @@ const reports = [
     staffRows: [{ role: '项目协调员', work: '巡护安排、数据汇总与项目协调', share: '50%', cents: 4800000 }, { role: '社区协调员', work: '培训组织与社区沟通', share: '40%', cents: 3200000 }], auditHistory: [], reviewComments: {}
   }
 ]
+
+reports.push(createCompletionExample(reports.find(report => report.id === 'P-001006')))
 
 export default reports

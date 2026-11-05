@@ -1,12 +1,13 @@
 <template>
-  <div class="budget-edit-page" :style="context ? { minWidth: (tableWidth + 50) + 'px' } : null">
+  <div class="budget-edit-page" :style="context && !generatedSheet ? { minWidth: (tableWidth + 50) + 'px' } : null">
     <div class="detail-back-row"><a-button class="detail-back" @click="goBack"><a-icon type="arrow-left" /> 返回</a-button></div>
     <section v-if="context" class="panel budget-edit-panel">
       <header class="budget-page-header"><div><h1>{{ draft.name || draft.projectName || '项目名称' }}</h1><span>{{ draft.code || draft.projectCode }}</span></div><span class="budget-state">{{ status }}</span></header>
       <div class="budget-editor-scroll">
-        <budget-summary v-if="reportMode && $route.query.sheet === 'summary'" :rows="tableRows" />
+        <budget-summary v-if="generatedSheet === 'summary'" :budget="budget" />
+        <budget-generated-table v-else-if="generatedSheet" :budget="budget" :kind="generatedSheet" />
         <project-personnel-table v-else-if="reportMode && $route.query.sheet === 'personnel'" :rows="budget.personnel" :project-name="draft.projectName" readonly show-execution :black-amounts="reportMode" :execution-mode="executionMode" :adjustment-mode="adjustmentMode" @edit-execution="openPerson($event, false)" @edit-adjustment="openPerson($event, true)" />
-        <project-budget-table v-else ref="budgetTable" :metadata="budget.metadata" :rows="tableRows" :widths="widths" :donation-project="donationProject" :readonly="readonly || reportMode" :show-execution="reportMode" :black-amounts="reportMode" :execution-mode="executionMode" :adjustment-mode="adjustmentMode" :mismatch-visible="budgetMismatchVisible" @cutoff-change="$set(budget.metadata, 'executionCutoff', $event)" @edit-execution="openExecution($event, false)" @edit-adjustment="openExecution($event, true)" @add-cost="addCost" @edit-cost="editCost" @dismiss-mismatch="budgetMismatchVisible = false" />
+        <project-budget-table v-else ref="budgetTable" :metadata="budget.metadata" :rows="tableRows" :widths="widths" :donation-project="donationProject" :readonly="readonly || reportMode" :show-execution="reportMode" :progress-report="progressReport" :black-amounts="reportMode" :execution-mode="executionMode" :adjustment-mode="adjustmentMode" :mismatch-visible="budgetMismatchVisible" @cutoff-change="$set(budget.metadata, 'executionCutoff', $event)" @edit-execution="openExecution($event, false)" @edit-adjustment="openExecution($event, true)" @add-cost="addCost" @edit-cost="editCost" @dismiss-mismatch="budgetMismatchVisible = false" />
       </div>
       <footer v-if="!readonly" class="budget-page-actions"><a-button @click="save('editing')">暂存</a-button><a-button type="primary" @click="save('completed')">完成</a-button></footer>
     </section>
@@ -22,24 +23,27 @@ import BudgetCostModal from '../components/BudgetCostModal.vue'
 import BudgetExecutionModal from '../components/BudgetExecutionModal.vue'
 import ProjectPersonnelTable from '../components/ProjectPersonnelTable.vue'
 import BudgetSummary from '../components/BudgetSummary.vue'
+import BudgetGeneratedTable from '../components/BudgetGeneratedTable.vue'
 import { executionError, applyReportBudgetChange } from '../utils/report-budget'
 import ProjectBudgetTable, { measureBudgetWidths } from '../components/ProjectBudgetTable.vue'
 import { money, roundMoney, clone } from '../mock/project-drafts'
 import { budgetStatus, canViewBudget, budgetKey, readBudgetContext, readSavedBudget, saveBudgetSheet, emptyBudget, validateCost, validatePersonnel, readBudgetWorking, writeBudgetWorking, clearBudgetWorking, buildBudgetRows, normalizeBudget, snapshotBudget } from '../utils/project-budget'
 export default {
   name: 'ProjectBudgetForm',
-  components: { BudgetCostModal, ProjectBudgetTable, BudgetExecutionModal, ProjectPersonnelTable, BudgetSummary },
+  components: { BudgetCostModal, ProjectBudgetTable, BudgetExecutionModal, ProjectPersonnelTable, BudgetSummary, BudgetGeneratedTable },
   data () { return { context: null, budget: { rows: [], personnel: [] }, snapshot: '', loadError: '', budgetMismatchVisible: false } },
   computed: {
     key () { return budgetKey(this.$route) },
     draft () { return this.context ? this.context.draft : {} },
     donationProject () { return this.$route.query.budgetType === 'donation' },
     reportMode () { return this.$route.query.reportBudget === '1' },
+    progressReport () { return this.reportMode && this.$route.query.type !== 'completion' },
+    generatedSheet () { return !this.donationProject && ['summary', 'cost', 'adjustments'].includes(this.$route.query.sheet) ? this.$route.query.sheet : '' },
     executionMode () { return this.reportMode && this.$route.query.mode === 'execution' },
     adjustmentMode () { return this.reportMode && this.$route.query.mode === 'adjustment' },
-    readonly () { return this.$route.query.mode === 'view' || (this.reportMode && !['execution', 'adjustment'].includes(this.$route.query.mode)) },
-    status () { return this.reportMode ? (this.$route.query.sheet === 'summary' ? '自动生成' : this.executionMode ? '填写执行' : this.adjustmentMode ? '预算调整' : '查看') : budgetStatus(this.budget) },
-    widths () { return measureBudgetWidths(this.tableRows) },
+    readonly () { return !!this.generatedSheet || this.$route.query.mode === 'view' || (this.reportMode && !['execution', 'adjustment'].includes(this.$route.query.mode)) },
+    status () { return this.generatedSheet ? '自动生成（只读）' : this.reportMode ? (this.executionMode ? '填写执行' : this.adjustmentMode ? '预算调整' : '查看') : budgetStatus(this.budget) },
+    widths () { return measureBudgetWidths(this.tableRows, this.progressReport) },
     tableWidth () { return this.widths.reduce((sum, width) => sum + width, 0) },
     dirty () { return !this.readonly && !!this.context && JSON.stringify(this.budget) !== this.snapshot },
     tableRows () { return buildBudgetRows({}, this.budget, !this.readonly && !this.reportMode) }
@@ -56,7 +60,7 @@ export default {
     money,
     latestExecution (row, personnel = false) {
       if (!this.reportMode || !this.context) return row.executed
-      const report = this.draft.exampleReportId ? loadReviewedReportExample(this.draft.projectId, this.draft.exampleReportId) : loadReportDraft(this.draft.projectId, this.$route.query.type || 'progress', this.draft.draftId)
+      const report = this.draft.exampleReportId ? loadReviewedReportExample(this.draft.projectId, this.draft.exampleReportId, !!this.draft.fresh, !!this.draft.rejectedDemo) : loadReportDraft(this.draft.projectId, this.$route.query.type || 'progress', this.draft.draftId)
       const latest = ((report.budget || {})[personnel ? 'personnel' : 'rows'] || []).find(item => item.id === row.id)
       if (!latest || latest.executed == null) return row.executed
       return row.executed == null ? latest.executed : Math.max(row.executed, latest.executed)
@@ -70,9 +74,9 @@ export default {
         const context = readBudgetContext(this.key)
         if (!context) return
         const working = !this.readonly && readBudgetWorking(this.key)
-        const source = this.reportMode ? normalizeBudget(context.draft.budget) : working ? normalizeBudget(working.budget) : readSavedBudget(this.key) || emptyBudget(context.draft.budget)
+        const source = this.reportMode || this.generatedSheet ? normalizeBudget(context.draft.budget) : working ? normalizeBudget(working.budget) : readSavedBudget(this.key) || emptyBudget(context.draft.budget)
         const budget = this.readonly || this.reportMode ? source : snapshotBudget(source, context.draft, this.donationProject)
-        if (this.readonly && !this.reportMode && !canViewBudget(budget)) { this.loadError = '预算表尚未暂存或完成，暂不可查看'; return }
+        if (this.readonly && !this.reportMode && !this.generatedSheet && !canViewBudget(budget)) { this.loadError = '预算表尚未暂存或完成，暂不可查看'; return }
         this.context = context; this.budget = budget; this.snapshot = working ? working.snapshot : JSON.stringify(budget)
         clearBudgetWorking(this.key)
       } catch (error) { this.loadError = '无法读取预算数据，请返回项目信息页重新进入。原保存内容尚未覆盖。' }
@@ -137,7 +141,7 @@ export default {
       } catch (error) { this.$message.error(error.message && error.message.indexOf('预算') === 0 ? error.message : '保存失败，请保留当前页面后重试') }
     },
     goBack () {
-      const query = { ...this.$route.query }; delete query.mode; delete query.budgetType
+      const query = { ...this.$route.query }; delete query.mode; delete query.budgetType; delete query.sheet
       this.$router.push(this.context ? this.context.returnTo : { name: 'project-form', params: { id: this.$route.params.id }, query })
     }
   }

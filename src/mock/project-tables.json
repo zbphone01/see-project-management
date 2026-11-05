@@ -258,9 +258,9 @@
     "schemaVersion": 1,
     "revision": 0,
     "editStatus": "pending",
-    "personnelStatus": "pending",
+    "personnelStatus": "completed",
     "updatedAt": "",
-    "personnelUpdatedAt": "",
+    "personnelUpdatedAt": "2026-11-04T02:00:00.000Z",
     "rows": [
       {
         "adjustmentDetail": null,
@@ -278,12 +278,12 @@
         "adjustment": null,
         "adjustedBudget": null,
         "executed": null,
-        "description": "100.00元*4.00\n\n季度运行费",
+        "description": "项目办公场地房租分四期承担，每期100元。",
         "outputId": null,
         "activityId": null,
-        "price": null,
-        "quantity": null,
-        "unit": ""
+        "price": 100,
+        "quantity": 4,
+        "unit": "期"
       },
       {
         "adjustmentDetail": null,
@@ -301,12 +301,12 @@
         "adjustment": null,
         "adjustedBudget": null,
         "executed": null,
-        "description": "860.00元*36.00\n\n交通费180元/百公里*2百公里*36天=12960，住宿费（2人）*36天*150=10800元，餐饮费2*36*100=7200元。",
-        "outputId": "budget-6",
-        "activityId": "budget-7",
-        "price": null,
-        "quantity": null,
-        "unit": ""
+        "description": "入户宣讲期间执行人员往返交通、住宿及餐饮补贴，每次100元，共4次。",
+        "outputId": "output-1",
+        "activityId": "activity-1-1",
+        "price": 100,
+        "quantity": 4,
+        "unit": "次"
       },
       {
         "adjustmentDetail": null,
@@ -314,7 +314,7 @@
         "kind": "activity",
         "code": "1.1.2",
         "name": "劳务费",
-        "type": "交通差旅费",
+        "type": "劳务费",
         "quarters": [
           100,
           100,
@@ -324,20 +324,20 @@
         "adjustment": null,
         "adjustedBudget": null,
         "executed": null,
-        "description": "200元*36\n\n劳务费每天100元*36天*2人=7200元",
-        "outputId": "budget-6",
-        "activityId": "budget-7",
-        "price": null,
-        "quantity": null,
-        "unit": ""
+        "description": "社区协助人员参与入户宣讲与家庭减废指导的劳务补贴，每次100元，共4次。",
+        "outputId": "output-1",
+        "activityId": "activity-1-1",
+        "price": 100,
+        "quantity": 4,
+        "unit": "次"
       },
       {
         "adjustmentDetail": null,
         "id": "budget-14",
         "kind": "activity",
         "code": "2.1.1",
-        "name": "产出报告",
-        "type": "资助款",
+        "name": "回收再利用活动材料",
+        "type": "物资费",
         "quarters": [
           50,
           50,
@@ -347,19 +347,19 @@
         "adjustment": null,
         "adjustedBudget": null,
         "executed": null,
-        "description": "65800.00元*1.00\n\n开展深圳湾区域鸟类调查与监测，形成调查报告，费用：65800元",
-        "outputId": "budget-12",
-        "activityId": "budget-13",
-        "price": null,
-        "quantity": null,
-        "unit": ""
+        "description": "采购旧衣物改造和环保袋制作所需的针线、辅料及工具，每批50元，共4批。",
+        "outputId": "output-2",
+        "activityId": "activity-2-1",
+        "price": 50,
+        "quantity": 4,
+        "unit": "批"
       },
       {
         "adjustmentDetail": null,
         "id": "budget-15",
         "kind": "activity",
         "code": "2.1.2",
-        "name": "行业交流",
+        "name": "回收再利用活动交通",
         "type": "交通差旅费",
         "quarters": [
           50,
@@ -370,42 +370,123 @@
         "adjustment": null,
         "adjustedBudget": null,
         "executed": null,
-        "description": "8225.00元*2.00\n\n2742元人次/处（交通费1242元，食宿500元/天*3天）*3人次*2处=16450元",
-        "outputId": "budget-12",
-        "activityId": "budget-13",
-        "price": null,
-        "quantity": null,
-        "unit": ""
+        "description": "执行团队组织回收再利用活动及运送回收物资的交通费用，每次50元，共4次。",
+        "outputId": "output-2",
+        "activityId": "activity-2-1",
+        "price": 50,
+        "quantity": 4,
+        "unit": "次"
+      },
+      {
+        "id": "cost-activity-2-1-other",
+        "kind": "activity",
+        "code": "2.1.3",
+        "name": "回收物资临时存放及场地整理费",
+        "type": "其他费用",
+        "otherCostDescription": "回收物资临时存放及活动场地整理费用",
+        "price": 100,
+        "quantity": 4,
+        "unit": "次",
+        "description": "垃圾回收再利用活动的回收物资临时存放及场地整理，每次100元，共4次。",
+        "quarters": [
+          100,
+          100,
+          100,
+          100
+        ],
+        "outputId": "output-2",
+        "activityId": "activity-2-1",
+        "adjustment": null,
+        "adjustmentDetail": null,
+        "adjustedBudget": null,
+        "executed": null
       }
     ],
-    "personnel": [],
+    "personnel": [
+      {
+        "id": "personnel-team-1",
+        "memberId": "team-1",
+        "name": "胡刚",
+        "position": "专家",
+        "responsibilities": "负责项目整体统筹与执行管理，组织需求调研和社区沟通，协调合作伙伴及项目资源，跟进阶段目标完成情况，汇总监测数据并撰写项目进展报告与结项报告。",
+        "nature": "项目人员",
+        "monthly": 50,
+        "months": 4,
+        "ratio": 10,
+        "quarters": [
+          50,
+          50,
+          50,
+          50
+        ],
+        "remark": "兼职",
+        "adjustment": null,
+        "adjustmentDetail": null,
+        "adjustedBudget": null,
+        "executed": null
+      },
+      {
+        "id": "personnel-team-2",
+        "memberId": "team-2",
+        "name": "张慧敏",
+        "position": "正式员工",
+        "responsibilities": "负责自然教育活动的策划、组织和参与者招募，维护活动记录与影像资料，并根据现场反馈持续优化课程内容和社区参与方式。",
+        "nature": "项目人员",
+        "monthly": 50,
+        "months": 4,
+        "ratio": 10,
+        "quarters": [
+          50,
+          50,
+          50,
+          50
+        ],
+        "remark": "兼职",
+        "adjustment": null,
+        "adjustmentDetail": null,
+        "adjustedBudget": null,
+        "executed": null
+      }
+    ],
     "groups": [
       {
-        "id": "budget-6",
+        "id": "output-1",
         "code": "产出1",
-        "name": "鸟类栖息地巡护-掌握地块基础信息",
+        "name": "建立 20 户零废弃家庭",
         "activities": [
           {
-            "id": "budget-7",
+            "id": "activity-1-1",
             "code": "产出活动1.1",
-            "name": "掌握地块基础信息，由于陆地的点位已经比较清楚了，拟探索一下境内的海岛。比如獐岛和大鹿岛。"
+            "name": "协会工作人员入户宣讲零废弃生活方式"
           },
           {
-            "id": "budget-10",
-            "code": "产出活动2.1",
-            "name": "该活动无需预算"
+            "id": "activity-1-2",
+            "code": "产出活动1.2",
+            "name": "发放零废弃物资"
           }
         ]
       },
       {
-        "id": "budget-12",
+        "id": "output-2",
         "code": "产出2",
-        "name": "鸟类调查-获得鸟类监测与调查数据",
+        "name": "垃圾减塑和减量——推动高原牧民家庭建立垃圾分类、称重记录与资源循环利用机制，结合入户指导、可重复使用物资发放和季度跟踪评估，持续减少一次性塑料使用及不可回收垃圾产生，形成可向周边社区推广的零废弃生活实践",
         "activities": [
           {
-            "id": "budget-13",
+            "id": "activity-2-1",
             "code": "产出活动2.1",
-            "name": "围绕湿地开展保育工作，提升湿地环境"
+            "name": "垃圾回收再利用"
+          }
+        ]
+      },
+      {
+        "id": "output-3",
+        "code": "产出3",
+        "name": "形成社区零废弃实践经验并开展周边推广",
+        "activities": [
+          {
+            "id": "activity-3-1",
+            "code": "产出活动3.1",
+            "name": "整理项目经验并开展社区分享"
           }
         ]
       }
@@ -437,7 +518,7 @@
       {
         "id": "budget-11",
         "kind": "detail",
-        "code": "1.1.1",
+        "code": "1.2.1",
         "name": "无",
         "detail": "无",
         "type": "/",
@@ -450,7 +531,9 @@
         "adjustment": null,
         "adjustmentDetail": null,
         "adjustedBudget": null,
-        "executed": null
+        "executed": null,
+        "outputId": "output-1",
+        "activityId": "activity-1-2"
       }
     ],
     "metadata": {
