@@ -1,4 +1,5 @@
 import { createBudgetReviewData } from './budget-review-data'
+import { createCharityBudgetReviewData, charityBudgetWidths } from './charity-budget-review-data'
 import { budgetMoney, budgetDetailParts, budgetAdjustmentParts } from './project-budget-data'
 
 export const generatedSheets = {
@@ -10,6 +11,7 @@ const amount = value => value == null ? '/' : Number(value).toLocaleString('zh-C
 const ratio = (value, base, signed = false) => value == null || !base ? '/' : (signed && value > 0 ? '+' : '') + (value / base * 100).toFixed(2) + '%'
 const effective = row => row.adjustedBudget == null ? row.total : row.adjustedBudget
 const cell = (value, role = '') => ({ value, role })
+const adjustmentRole = value => value > 0 ? 'increase' : value < 0 ? 'decrease' : ''
 const column = (title, width, role = '') => ({ title, width, role })
 
 export function summarySheet (rows) {
@@ -38,7 +40,7 @@ export function costSheet (budget) {
   const entries = Array.from(groups.entries()).map(([key, group]) => ({ key, group, total: sum(group) }))
     .filter(item => [item.total.total, item.total.adjustment, item.total.adjustedBudget, item.total.executed].some(value => value != null && value !== 0))
     .sort((left, right) => right.total.total - left.total.total || left.key.localeCompare(right.key))
-  const cells = (type, description, row) => [cell(type), cell(description), cell(amount(row.total)), cell(amount(hasAdjustment ? row.adjustment || 0 : null)), cell(amount(effective(row))), cell(amount(row.executed))]
+  const cells = (type, description, row) => [cell(type), cell(description), cell(amount(row.total)), cell((hasAdjustment && row.adjustment > 0 ? '+' : '') + amount(hasAdjustment ? row.adjustment || 0 : null)), cell(amount(effective(row))), cell(amount(row.executed))]
   const total = createBudgetReviewData(budget).rows[0]
   return {
     columns: [column('费用类型', 150), column('费用说明', 360, 'text'), column('预算合计金额', 160, 'total'), column('预算调整金额', 160), column('调整后预算', 160), column('执行金额', 160, 'executed')],
@@ -47,7 +49,8 @@ export function costSheet (budget) {
   }
 }
 
-export function historySheet (budget) {
+export function historySheet (budget, charityHistory = false) {
+  const reviewData = charityHistory ? createCharityBudgetReviewData : createBudgetReviewData
   // adjustmentHistory 按时间正序保存 { id, budget }，budget 为该次调整后的完整业务快照，
   // 原始四期金额保持不变；adjustedBudget 为该轮结果。汇总与比例仅在读取时计算。
   const rounds = budget.adjustmentHistory || []
@@ -55,40 +58,44 @@ export function historySheet (budget) {
   const snapshots = rounds.map(round => {
     if (!round || !round.id || ids.has(round.id) || !round.budget) throw new Error('预算调整历史缺少快照或稳定 ID 重复')
     ids.add(round.id)
-    return createBudgetReviewData(round.budget).rows
+    return reviewData(round.budget).rows
   })
-  const current = createBudgetReviewData(budget).rows
+  const current = reviewData(budget).rows
   const originals = new Map()
   current.concat(...snapshots).forEach(row => { if (!originals.has(row.key)) originals.set(row.key, row) })
   const maps = snapshots.map(rows => new Map(rows.map(row => [row.key, row])))
-  const columns = [column('预算编号', 90), column('预算科目', 120, 'text'), column('预算明细（单价*数量）', 210, 'text'), column('费用类型', 80), column('原始\n预算合计金额', 100)]
-  rounds.forEach((round, index) => columns.push(column('第' + (index + 1) + '次\n预算调整金额', 100), column('预算变动比例', 60), column('第' + (index + 1) + '次\n预算调整明细', 210, 'text'), column('第' + (index + 1) + '次\n调整后预算', 100)))
+  const columns = charityHistory
+    ? [column('预算科目', charityBudgetWidths[0], 'text'), column('费用类型', charityBudgetWidths[1]), column('数量', charityBudgetWidths[2]), column('单位', charityBudgetWidths[3]), column('单价', charityBudgetWidths[4]), column('上线筹款预算', charityBudgetWidths[5]), column('协议签署金额', charityBudgetWidths[6]), column('协议签署科目明细', charityBudgetWidths[7], 'text')]
+    : [column('预算编号', 90), column('预算科目', 120, 'text'), column('预算明细（单价*数量）', 210, 'text'), column('费用类型', 80), column('原始\n预算合计金额', 100)]
+  rounds.forEach((round, index) => columns.push(column('第' + (index + 1) + '次\n预算调整金额', charityHistory ? charityBudgetWidths[8] : 100), column('预算变动比例', charityHistory ? charityBudgetWidths[10] : 60), column('第' + (index + 1) + '次\n预算调整明细', charityHistory ? charityBudgetWidths[9] : 210, 'text'), column('第' + (index + 1) + '次\n调整后预算', charityHistory ? charityBudgetWidths[11] : 100)))
   return {
     columns,
     note: rounds.length ? '' : '暂无调整记录',
     rows: Array.from(originals.values()).map(row => {
       const parts = budgetDetailParts(row)
       const detail = parts.price == null ? cell(parts.text || '') : { ...cell(''), detail: { expression: amount(parts.price) + '元 × ' + amount(parts.quantity) + (parts.unit || ''), description: parts.description } }
-      const cells = [cell(row.kind === 'total' ? '合计金额' : row.code), cell(row.name), detail, cell(row.type || ''), cell(amount(row.initialTotal == null ? row.total : row.initialTotal))]
-      let previous = row.initialTotal == null ? row.total : row.initialTotal
+      const cells = charityHistory
+        ? [cell((row.code ? row.code + ' ' : '') + (row.name || '合计金额')), cell(row.type || '/'), cell(parts.quantity == null ? '/' : Number(parts.quantity).toFixed(2)), cell(parts.unit || '/'), cell(amount(parts.price)), cell(amount(row.initialTotal)), cell(amount(row.agreementAmount == null ? row.cost && row.cost.agreementAmount : row.agreementAmount)), detail]
+        : [cell(row.kind === 'total' ? '合计金额' : row.code), cell(row.name), detail, cell(row.type || ''), cell(amount(row.initialTotal == null ? row.total : row.initialTotal))]
+      let previous = row.historyBaseAmount == null ? (row.initialTotal == null ? row.total : row.initialTotal) : row.historyBaseAmount
       maps.forEach(map => {
         const next = map.get(row.key)
         if (!next) { cells.push(cell('/'), cell('/'), cell('/'), cell('/')); return }
         const after = effective(next), change = budgetMoney(after - previous)
         const parts = budgetAdjustmentParts(next)
         const detail = parts.price == null ? cell(parts.text || '/') : { ...cell(''), detail: { expression: amount(parts.price) + '元 × ' + amount(parts.quantity) + (parts.unit || ''), description: parts.description } }
-        if (next.hasBudgetAdjustment) cells.push(cell(amount(change)), cell(ratio(change, previous, true)), detail, cell(amount(after)))
+        if (next.hasBudgetAdjustment) cells.push(cell((change > 0 ? '+' : '') + amount(change), adjustmentRole(change)), cell(ratio(change, previous, true)), detail, cell(amount(after)))
         else cells.push(cell('/'), cell('/'), cell('/'), cell('/'))
         previous = after
       })
-      return { key: row.key, kind: row.kind, cells }
+      return { key: row.key, kind: row.kind, mergeLeading: row.mergeLeading, cells }
     })
   }
 }
 
-export function generatedBudgetSheet (value, kind) {
+export function generatedBudgetSheet (value, kind, charityHistory = false) {
   if (!generatedSheets[kind]) throw new Error('预算表类型无效')
   const review = createBudgetReviewData(value)
-  const sheet = kind === 'summary' ? summarySheet(review.rows) : kind === 'cost' ? costSheet(review.budget) : historySheet(review.budget)
+  const sheet = kind === 'summary' ? summarySheet(review.rows) : kind === 'cost' ? costSheet(review.budget) : historySheet(review.budget, charityHistory)
   return { ...sheet, metadata: review.budget.metadata }
 }

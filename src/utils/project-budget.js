@@ -88,7 +88,8 @@ export function validateCostValues (row) {
     const value = row[field]
     if (value === null || value === undefined || String(value).trim() === '') continue
     const number = Number(value), label = field === 'price' ? '单价' : '数量'
-    if (!Number.isFinite(number) || number <= 0 || number > 1000000000) return '请填写大于 0 且不超过 10 亿的' + label
+    const automaticZero = field === 'price' && row.charityAutomatic && row.type === '公募机构管理费' && number === 0
+    if (!Number.isFinite(number) || (number <= 0 && !automaticZero) || number > 1000000000) return '请填写大于 0 且不超过 10 亿的' + label
     if (Number(number.toFixed(2)) !== number) return label + '最多支持两位小数'
   }
   return ''

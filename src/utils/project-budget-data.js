@@ -114,6 +114,7 @@ export function snapshotBudget (value, project = {}, donationProject = false) {
     activities: (output.activities || []).map((activity, activityIndex) => ({ id: activity.id, code: '产出活动' + (index + 1) + '.' + (activityIndex + 1), name: activity.name }))
   }))
   budget.metadata = { ...metadata, snapshotVersion: 1,
+    ...(donationProject ? { fundraisingPeriod: project.fundraisingStart !== undefined || project.fundraisingEnd !== undefined ? (project.fundraisingStart || '未填写') + ' 至 ' + (project.fundraisingEnd || '未填写') : project.fundraisingPeriod || metadata.fundraisingPeriod || '' } : {}),
     projectName: project.name === undefined ? metadata.projectName : project.name,
     projectCode: project.code === undefined ? metadata.projectCode || '' : project.code,
     tableTitle: donationProject ? '北京市企业家环保基金会联合公益项目预算表' : '项目预算及执行情况明细表',

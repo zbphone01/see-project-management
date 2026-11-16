@@ -17,7 +17,7 @@ export function paymentStatus (record) {
 }
 
 export function createPaymentApplications () {
-  return projectReports.filter(report => ['进展已审', '进展通过', '结项已审', '结项通过'].includes(report.status)).map((report, index) => ({
+  return projectReports.filter(report => !report.reviewedProgressExample && !report.passedProgressExample && ['进展已审', '进展通过', '结项已审', '结项通过'].includes(report.status)).map((report, index) => ({
     ...report,
     id: 'payment-' + report.reportCode,
     paymentCode: 'P-' + String(993 - index).padStart(6, '0'),

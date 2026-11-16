@@ -88,5 +88,6 @@ const reports = [
 ]
 
 reports.push(createCompletionExample(reports.find(report => report.id === 'P-001006')))
+reports.push({ ...JSON.parse(JSON.stringify(reports.find(report => report.id === 'P-001006'))), id: 'P-001000' })
 
 export default reports

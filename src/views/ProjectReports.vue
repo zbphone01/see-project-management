@@ -28,16 +28,46 @@
         <template slot="submittedAt" slot-scope="value"><span v-if="value" class="updated-time"><span>{{ value.split(' ')[0] }}</span><span>{{ value.split(' ')[1] }}</span></span><span v-else class="empty-value">—</span></template>
         <template slot="outcome" slot-scope="value"><span :class="{ 'empty-value': value === '-' }">{{ value === '-' ? '—' : value }}</span></template>
         <template slot="operation" slot-scope="text, report">
-          <a-dropdown v-if="report.status !== '进展放弃'" :trigger="['hover']" placement="bottomRight">
+          <a-dropdown v-if="report.status !== '进展放弃' || report.reportCode === 'P-001000'" :trigger="['hover']" placement="bottomRight">
             <a-button class="operation-button">操作 <a-icon type="down" /></a-button>
             <a-menu slot="overlay" @click="showDemo($event.key, report)">
-              <template v-if="['green-home', 'grass'].includes(report.detailType)">
+              <template v-if="report.reportCode === 'P-001000'">
+                <a-menu-item key="see-heading" disabled>--SEE--</a-menu-item>
+                <a-menu-item key="see-view-report">查看本报告</a-menu-item>
+                <a-menu-item key="partner-heading" disabled>--伙伴--</a-menu-item>
+                <a-menu-item key="重新修改">重新修改</a-menu-item>
+              </template>
+              <template v-else-if="report.status === '进展待审' || (report.reportCode === 'P-001010' && report.status === '结项待审')">
+                <a-menu-item key="see-heading" disabled>--SEE--</a-menu-item>
+                <a-menu-item key="审核">审核</a-menu-item>
+                <a-menu-item key="see-view-report">查看本报告</a-menu-item>
+                <a-menu-item key="partner-heading" disabled>--伙伴--</a-menu-item>
+                <a-menu-item key="partner-view-report">查看本报告</a-menu-item>
+              </template>
+              <a-menu-item v-else-if="report.freshProgressDraft" key="编辑">编辑</a-menu-item>
+              <template v-else-if="report.rejectedProgressExample">
+                <a-menu-item key="修改">修改</a-menu-item><a-menu-item key="放弃">放弃</a-menu-item>
+              </template>
+              <template v-else-if="report.passedProgressExample">
+                <a-menu-item key="see-heading" disabled>--SEE--</a-menu-item>
+                <a-menu-item key="see-view-progress">查看本报告</a-menu-item>
+                <a-menu-item key="partner-heading" disabled>--伙伴--</a-menu-item>
+                <a-menu-item key="partner-view-progress">查看本报告</a-menu-item>
+              </template>
+              <template v-else-if="report.reviewedProgressExample">
+                <a-menu-item key="see-heading" disabled>--SEE--</a-menu-item>
+                <a-menu-item key="see-view-progress">查看本报告</a-menu-item>
+                <a-menu-item key="驳回本进展">驳回本进展</a-menu-item>
+                <a-menu-item key="partner-heading" disabled>--伙伴--</a-menu-item>
+                <a-menu-item key="partner-view-progress">查看本报告</a-menu-item>
+                <a-menu-item key="下载预算表">下载预算表</a-menu-item>
+                <a-menu-item key="上传预算表扫描件">上传预算表扫描件</a-menu-item>
+              </template>
+              <template v-else-if="['green-home', 'grass'].includes(report.detailType)">
                 <a-menu-item key="审核">审核</a-menu-item><a-menu-item key="查看">查看</a-menu-item><a-menu-item key="驳回编辑">驳回编辑</a-menu-item><a-menu-item key="全新编辑">全新编辑</a-menu-item>
               </template>
               <template v-else>
-              <a-menu-item v-if="report.status === '进展待审' || (report.reportCode === 'P-001010' && report.status === '结项待审')" key="审核">审核</a-menu-item>
               <a-menu-item :key="report.reportType === '进展报告' ? '查看进展报告' : report.reportType === '结项报告' ? '查看结项报告' : '查看报告'">{{ report.reportType === '进展报告' ? '查看进展报告' : report.reportType === '结项报告' ? '查看结项报告' : '查看报告' }}</a-menu-item>
-              <a-menu-item v-if="report.reportCode === 'P-001006'" key="驳回后修改示例">驳回后修改示例</a-menu-item><a-menu-item v-if="report.reportCode === 'P-001006'" key="全新修改示例">全新修改示例</a-menu-item>
               <a-menu-item v-if="report.status === '草稿'" key="编辑报告">编辑报告</a-menu-item>
               </template>
             </a-menu>
@@ -90,6 +120,7 @@ export default {
   },
   methods: {
     statusTone (status) {
+      if (status === '进展驳回') return 'action-rejected'
       if (status === '草稿' || status === '进展放弃') return 'neutral'
       if (status.endsWith('待审')) return 'pending-review'
       return 'active-approved'
@@ -98,12 +129,19 @@ export default {
     resetFilters () { this.filters = emptyFilters(); this.queryReports() },
     changePage (pagination) { this.page = pagination.pageSize !== this.pageSize ? 1 : pagination.current; this.pageSize = pagination.pageSize },
     showDemo (action, report) {
+      if (report.reportCode === 'P-001015') { this.$message.info('待后续开发'); return }
+      if (action === '编辑' && report.freshProgressDraft && ['green-home', 'grass'].includes(report.detailType)) { this.$router.push({ name: 'report-form', params: { id: String(report.projectId) }, query: { type: 'progress', example: report.detailType === 'grass' ? 'P-001009' : 'P-001008', draftId: report.detailType + '-fresh' } }); return }
       const type = report.reportType === '结项报告' || report.reportType === '结项' ? 'completion' : 'progress'
+      if (report.reportCode === 'P-001000' && action === 'see-view-report') { this.$router.push({ name: 'report-detail', params: { id: report.reportCode }, query: { type: 'progress', viewer: 'see', reportStatus: 'abandoned' } }); return }
+      if (report.reportCode === 'P-001000' && action === '重新修改') { this.$router.push({ name: 'report-form', params: { id: String(report.projectId) }, query: { type: 'progress', example: 'P-001006', rejectedExample: '1', draftId: 'p001006-rejected-v1' } }); return }
+      if ((report.reviewedProgressExample || report.passedProgressExample) && ['see-view-progress', 'partner-view-progress'].includes(action)) { this.$router.push({ name: 'report-detail', params: { id: 'P-001006' }, query: { type: 'progress', viewer: action === 'partner-view-progress' ? 'partner' : 'see' } }); return }
+      if (report.reviewedProgressExample && ['驳回本进展', '下载预算表', '上传预算表扫描件'].includes(action)) { this.$message.info('待后续开发'); return }
+      if (report.rejectedProgressExample && action === '修改') { this.$router.push({ name: 'report-form', params: { id: String(report.projectId) }, query: { type: 'progress', example: 'P-001006', rejectedExample: '1', draftId: 'p001006-rejected-v1' } }); return }
+      if (report.rejectedProgressExample && action === '放弃') { this.$message.info('待后续开发'); return }
       if (['green-home', 'grass'].includes(report.detailType) && ['驳回编辑', '全新编辑'].includes(action)) { this.$router.push({ name: 'report-form', params: { id: String(report.projectId) }, query: { type, example: report.reportCode, ...(action === '全新编辑' ? { draftId: report.detailType + '-fresh' } : {}) } }); return }
-      if (action === '全新修改示例' && report.reportCode === 'P-001006') { this.$router.push({ name: 'report-form', params: { id: String(report.projectId) }, query: { type: 'progress', example: report.reportCode, draftId: 'p001006-fresh' } }); return }
-      if (action === '驳回后修改示例') { this.$router.push({ name: 'report-form', params: { id: String(report.projectId) }, query: { type, example: report.reportCode, rejectedExample: '1', draftId: 'p001006-rejected-v1' } }); return }
-      if (action === '审核' || action === '查看' || action === '查看进展报告' || action === '查看结项报告' || action === '查看报告') {
-        this.$router.push({ name: 'report-detail', params: { id: report.reportCode }, query: action === '审核' ? { mode: 'audit', type } : { type } })
+      if (action === '编辑' && report.freshProgressDraft) { this.$router.push({ name: 'report-form', params: { id: String(report.projectId) }, query: { type: 'progress', example: 'P-001006', draftId: 'p001006-fresh' } }); return }
+      if (['审核', '查看', '查看进展报告', '查看结项报告', '查看报告', 'see-view-report', 'partner-view-report'].includes(action)) {
+        this.$router.push({ name: 'report-detail', params: { id: report.reportCode }, query: action === '审核' ? { mode: 'audit', type, viewer: 'see' } : { type, viewer: action === 'partner-view-report' ? 'partner' : 'see', ...(report.status === '进展待审' || (report.reportCode === 'P-001010' && report.status === '结项待审') ? { reportStatus: 'pending' } : {}) } })
         return
       }
       this.$message.info(`${action}：${report.reportCode}（演示入口，尚未接入业务功能）`)

@@ -1,19 +1,22 @@
 <template>
 <section class="project-detail-page" :class="{ 'project-snapshot-content': snapshotEntry }">
         <div v-if="!snapshotEntry" class="detail-back-row">
+          <div :class="{ 'project-audit-actions': mode === 'audit' && isGreenHomeExample }">
+          <a-button v-if="mode === 'audit' && isGreenHomeExample" class="project-ai-assistant" @click="notify('待后续开发')"><svg class="project-ai-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.7" /><path d="M8 2v3m4-3v3m4-3v3M8 19v3m4-3v3m4-3v3M2 8h3m-3 4h3m-3 4h3m14-8h3m-3 4h3m-3 4h3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" /><text x="12" y="15" text-anchor="middle" fill="currentColor" font-size="8" font-weight="700">AI</text></svg><span>AI助手</span></a-button>
           <a-button class="detail-back" @click="goBack"><a-icon type="arrow-left" /> 返回</a-button>
+          </div>
         </div>
 
-        <section v-if="!snapshotEntry" class="privacy-reminder" :style="isPendingApplicationView ? { minHeight: '0' } : null" role="note" aria-label="信息安全提醒">
+        <section v-if="!snapshotEntry" class="privacy-reminder" :style="isCompactApplicationView ? { minHeight: '0' } : null" role="note" aria-label="信息安全提醒">
           <div class="privacy-reminder-head">
-            <span class="privacy-icon" :class="{ 'audit-notice-icon': mode === 'audit' || isPendingApplicationView }"><a-icon :type="mode === 'audit' || isPendingApplicationView ? 'info-circle' : 'warning'" theme="filled" /></span>
+            <span class="privacy-icon" :class="{ 'audit-notice-icon': mode === 'audit' || isCompactApplicationView }"><a-icon :type="mode === 'audit' || isCompactApplicationView ? 'info-circle' : 'warning'" theme="filled" /></span>
             <div>
-              <strong>{{ mode === 'audit' || isPendingApplicationView ? '请注意' : '请注意保护信息安全' }}</strong>
-              <span>{{ isPendingApplicationView ? '该项目申请为待审，这不是最终确认的内容' : mode === 'audit' ? '完成审核表示您代表SEE进行了项目申请书的审核，对审核结果负责' : '当前页面内容可能包含不适合公开的隐私资料' }}</span>
+              <strong>{{ mode === 'audit' || isCompactApplicationView ? '请注意' : '请注意保护信息安全' }}</strong>
+              <span>{{ isAgreementSigningView ? '该项目申请正在协议签署流程，内容可能会修改，这不是最终确认的内容' : isPendingApplicationView ? '该项目申请为待审，这不是最终确认的内容' : mode === 'audit' ? '完成审核表示您代表SEE进行了项目申请书的审核，对审核结果负责' : '当前页面内容可能包含不适合公开的隐私资料' }}</span>
             </div>
             <a-icon class="privacy-watermark" type="exclamation-circle" />
           </div>
-          <div v-if="!isPendingApplicationView" class="privacy-reminder-body">
+          <div v-if="!isCompactApplicationView" class="privacy-reminder-body">
             <div class="privacy-reminder-copy">
               <template v-if="mode === 'audit'">
                 <p>这是待审核的项目申请书，内容在审核通过前不会入库存档，下载用于线下审核时，资料会带有“待审核”相关标注。</p>
@@ -188,7 +191,7 @@
 
         <section id="detail-budget" class="panel detail-section">
           <div class="detail-section-header"><span class="detail-section-icon gold"><a-icon type="fund" /></span><div><h2>在线预算表</h2><p>项目预算及执行情况概览</p></div></div><div class="detail-module-content">
-          <budget-review :audit="mode === 'audit'" :donation-project="isDonationProject" :budget="displayBudget" />
+          <budget-review :audit="mode === 'audit'" :donation-project="isDonationProject" :charity-header="projectId === 10 && mode === 'view' && !snapshotEntry" :history-examples="budgetHistoryExamples" :budget="displayBudget" />
         </div></section>
 
         <section v-if="!snapshotEntry && !isGreenHomeExample" id="detail-attachments" class="panel detail-section">
@@ -298,6 +301,7 @@ import monthlyDonationTableData from '../mock/project-monthly-donation-detail.js
 import oneTimeDonationTableData from '../mock/project-one-time-donation-detail.json'
 import ProjectSnapshotWindow from '../components/ProjectSnapshotWindow.vue'
 import BudgetReview from '../components/BudgetReview.vue'
+import { createCharityBudgetHistoryExamples, createCharityBudgetExecutionExample } from '../mock/charity-budget-history'
 import ReviewCommentLabel from '../components/ReviewCommentLabel.vue'
 
 // 同一容器统一插入真实分隔元素，兼容静态及 v-for 富文本区块。
@@ -409,7 +413,7 @@ export default {
   data () {
     const typeTableData = detailTableDataByType[this.detailType] || defaultTableData
     const sourceTableData = (this.tableData ? { ...typeTableData, ...this.tableData, basic: { ...typeTableData.basic, ...(this.tableData.basic || {}) } } : null) || (['one-time-donation', 'monthly-donation'].includes(this.detailType)
-      ? { ...defaultTableData, ...typeTableData, basic: { ...defaultTableData.basic, ...typeTableData.basic } }
+      ? { ...defaultTableData, ...typeTableData, basic: { ...defaultTableData.basic, ...typeTableData.basic }, budget: { ...(typeTableData.budget || defaultTableData.budget), metadata: { ...(typeTableData.budget || defaultTableData.budget).metadata, ...(typeTableData.budgetMetadata || {}) } } }
       : typeTableData)
     const comments = Object.prototype.hasOwnProperty.call(sourceTableData, 'reviewComments') ? { ...sourceTableData.reviewComments } : { targets: '请补充各项目目标板块对应的成果指标及衡量方式。', overview: '请补充项目受益范围和社区参与方式。', 'areas.areas-1': '请核实实施区域与活动地点的一致性。', 'outputs.output-1': '请明确产出的数量、完成时间和验收依据。', 'activities.activity-2-1': '请补充活动实施安排及执行人员分工。' }
     try {
@@ -438,11 +442,27 @@ export default {
     auditExecutingFundingTotal: 5000
   } },
   computed: {
+    isAgreementSigningView () { return this.mode === 'view' && !this.snapshotEntry && (this.applicationStatus ? this.applicationStatus === 'agreement-signing' : /^审核流程中/.test(this.detailProject.status)) },
+    isCompactApplicationView () { return this.isPendingApplicationView || this.isAgreementSigningView },
     isPendingApplicationView () { return this.mode === 'view' && !this.snapshotEntry && (this.applicationStatus ? this.applicationStatus === 'pending' : this.detailProject.status === '申请待审') },
     displayBudget () {
+      if (this.projectId === 10 && this.budgetProject && this.budgetProject.budget.metadata.charityFinance) return this.budgetProject.budget
+      if (this.mode === 'view' && !this.snapshotEntry && this.projectId === 10) return createCharityBudgetExecutionExample(this.detailTableData.budget)
       if (this.mode === 'view' && !this.tableData && !this.snapshotEntry && this.projectId === 1 && this.detailType === 'default') return reportExamples.find(report => report.id === 'P-001010').budget
       if (this.budgetProject) return this.budgetProject.budget
       return this.detailTableData.budget
+    },
+    budgetHistoryExamples () {
+      if (this.projectId === 10 && this.budgetProject && this.budgetProject.budget.metadata.charityFinance) return null
+      if (this.mode === 'view' && !this.snapshotEntry && this.projectId === 10) return createCharityBudgetHistoryExamples(this.detailTableData.budget)
+      if (this.mode !== 'view' || this.snapshotEntry || this.basicInfo.code !== 'ZZ-1764740216' || this.isDonationProject) return null
+      const multiple = reportExamples.find(report => report.id === 'P-001010').budget
+      const first = multiple.adjustmentHistory[0]
+      return {
+        none: { ...defaultTableData.budget, metadata: { ...multiple.metadata, executionCutoff: '无' }, adjustmentHistory: [] },
+        single: { ...first.budget, adjustmentHistory: [first] },
+        multiple
+      }
     },
     isDonationProject () { return ['one-time-donation', 'monthly-donation'].includes(this.detailType) },
     reviewComments () { return this.detailTableData.reviewComments },
@@ -661,6 +681,11 @@ export default {
 </script>
 
 <style scoped>
+.project-audit-actions { position: fixed; top: 92px; right: 28px; z-index: 14; display: flex; align-items: center; gap: 10px; }
+.project-audit-actions .detail-back { position: static; }
+.project-ai-assistant { height: 38px; padding: 0 10px; display: inline-flex; align-items: center; gap: 8px; border-color: #4e91e5; border-radius: 9px; color: #fff; background: #4e91e5; }
+.project-ai-assistant:hover, .project-ai-assistant:focus { color: #fff; border-color: #70a8ec; background: #70a8ec; }
+.project-ai-icon { width: 24px; height: 24px; flex: none; }
 .detail-section-header .basic-review-hint { margin-top: 8px; }
 .detail-section-header .review-hint { color: #AAAAAA; }
 .project-snapshot-content { min-width: 0; }

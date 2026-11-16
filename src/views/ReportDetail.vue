@@ -4,13 +4,13 @@
       <a-button class="detail-back" @click="goBack"><a-icon type="arrow-left" /> 返回</a-button>
     </div>
 
-    <section class="privacy-reminder" role="note" aria-label="信息安全提醒">
+    <section v-if="isAudit || viewer !== 'partner'" class="privacy-reminder" :style="isCompactViewNotice ? { minHeight: '0' } : null" role="note" aria-label="信息安全提醒">
       <div class="privacy-reminder-head">
-        <span class="privacy-icon" :class="{ 'audit-notice-icon': isAudit }"><a-icon :type="isAudit ? 'info-circle' : 'warning'" theme="filled" /></span>
-        <div><strong>{{ isAudit ? '请注意' : '请注意保护信息安全' }}</strong><span>{{ isAudit ? '完成审核表示您代表SEE进行了项目进展/结项报告的审核，对审核结果负责' : '当前报告可能包含不适合公开的隐私资料' }}</span></div>
+        <span class="privacy-icon" :class="{ 'audit-notice-icon': isAudit || isCompactViewNotice }"><a-icon :type="isAudit || isCompactViewNotice ? 'info-circle' : 'warning'" theme="filled" /></span>
+        <div><strong>{{ isAudit || isCompactViewNotice ? '请注意' : '请注意保护信息安全' }}</strong><span>{{ isAbandonedView ? '该报告已被放弃，内容仅作为历史参考，全部无效！' : isPendingView ? '该' + report.type + '为待审，这不是最终确认的内容' : isAudit ? '完成审核表示您代表SEE进行了项目进展/结项报告的审核，对审核结果负责' : '当前报告可能包含不适合公开的隐私资料' }}</span></div>
         <a-icon class="privacy-watermark" type="exclamation-circle" />
       </div>
-      <div class="privacy-reminder-body">
+      <div v-if="!isCompactViewNotice" class="privacy-reminder-body">
         <div class="privacy-reminder-copy">
           <template v-if="isAudit">
             <p>这是待审核的{{ report.type }}，内容在审核通过前不会入库存档。如果报告需要请款，在OA流程完成后报告状态才会更新为“{{ report.type === '结项报告' ? '结项通过' : '进展通过' }}”。</p>
@@ -148,6 +148,7 @@
 
 <script>
 import reports from '../mock/report-examples'
+import { uppercaseMoney } from '../mock/project-drafts'
 import { normalizeReportArea } from '../mock/report-drafts'
 import GreenHomeReportSections from '../components/GreenHomeReportSections.vue'
 import { reviewText, rowReviewText } from '../utils/report-review'
@@ -178,7 +179,7 @@ const DetailRichContent = {
 export default {
   name: 'ReportDetail',
   components: { BudgetReview, DetailRichContent, ReviewCommentLabel, GreenHomeReportSections },
-  props: { reportId: { type: String, required: true }, mode: { type: String, default: 'view' }, type: { type: String, default: '' } },
+  props: { reportId: { type: String, required: true }, mode: { type: String, default: 'view' }, viewer: { type: String, default: 'see' }, reportStatus: { type: String, default: '' }, type: { type: String, default: '' } },
   data () { return {
     savedProjectArea: null, reports, auditForm: emptyForm(), formErrors: emptyErrors(), paymentOptions: [],
     paymentMismatchVisible: false, aidConfirmationVisible: false, auditPreviewVisible: false,
@@ -186,6 +187,9 @@ export default {
     attachmentDialog: { visible: false, name: '', action: '' }, reportBudgetTemplate,
   } },
   computed: {
+    isPendingView () { return !this.isAudit && this.reportStatus === 'pending' },
+    isAbandonedView () { return !this.isAudit && (this.reportStatus === 'abandoned' || this.reportId === 'P-001000') },
+    isCompactViewNotice () { return this.isPendingView || this.isAbandonedView },
     fundingLabel () { return this.report && this.report.projectType === '联合公益' ? '筹款目标' : '申请SEE基金会资金' },
     report () { const source = this.reports.find(item => item.id === this.reportId); return source && ['progress', 'completion'].includes(this.type) ? { ...source, type: this.type === 'completion' ? '结项报告' : '进展报告' } : source },
     isCompletion () { return this.report && this.report.type === '结项报告' },
@@ -247,9 +251,7 @@ export default {
   methods: {
     money (cents) { return (cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) },
     moneyWithUppercase (cents) {
-      // 本地报告的已知金额；接入接口时可直接使用接口返回的大写金额。
-      const uppercase = { 50000000: '伍拾万元整', 19400000: '壹拾玖万肆仟元整', 48500000: '肆拾捌万伍仟元整', 20000000: '贰拾万元整' }
-      return this.money(cents) + ' 元' + (uppercase[cents] ? '（' + uppercase[cents] + '）' : '')
+      return this.money(cents) + ' 元（' + uppercaseMoney(cents / 100) + '）'
     },
     ratio (amount, total) { return total ? (amount / total * 100).toFixed(1) + ' %' : '—' },
     readSavedProjectArea () {

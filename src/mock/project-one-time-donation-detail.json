@@ -1,6 +1,15 @@
 {
+  "budgetMetadata": {
+      "projectName": "联合公益-次捐项目示例",
+      "tableTitle": "北京市企业家环保基金会联合公益项目预算表",
+      "organization": "次捐示例机构",
+      "fundraisingPeriod": "2025年05月01日 至 2026年03月31日",
+      "period": "2026年01月01日 至 2026年12月31日",
+      "adjustmentDate": "",
+      "executionFilledAt": ""
+  },
   "basic": {
-    "code": "ZZ-1764740244",
+    "code": "LH-1764740244",
     "recruitment": "次捐项目招募",
     "name": "联合公益-次捐项目示例",
     "type": "联合公益",

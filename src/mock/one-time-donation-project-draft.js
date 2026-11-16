@@ -9,17 +9,18 @@ export const donationOrganization = source.basic.organization
 export const monthlyDonationOrganization = monthlySource.basic.organization
 export const donationPlatformOptions = [...new Set([source.basic.onlineFundraisingPlatform, monthlySource.basic.onlineFundraisingPlatform, '支付宝公益', '腾讯公益', '其他'].filter(Boolean))]
 
-const storageKey = (type, fresh) => 'see-' + type + '-project-draft-v1-' + donationId(type) + (fresh ? '-fresh' : '')
+const storageKey = (type, fresh, id = donationId(type)) => 'see-' + type + '-project-draft-v1-' + id + (fresh ? '-fresh' : '')
 const amount = value => Number(String(value || '').split(' ')[0].replace(/,/g, '')) || 0
 const dates = value => (String(value || '').match(/\d{4}年\d{2}月\d{2}日/g) || []).map(date => date.replace('年', '-').replace('月', '-').replace('日', ''))
 const rich = paragraphs => (paragraphs || []).map(text => '<p>' + String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>') + '</p>').join('')
 
 // 月捐与次捐分别使用自己的 JSON，复用转换过程并保留明细稳定 ID。
-export function createOneTimeDonationDraft (fresh = false, type = 'one-time-donation') {
-  const sourceData = donationSources[type] || source, id = donationId(type)
+export function createOneTimeDonationDraft (fresh = false, type = 'one-time-donation', id = donationId(type)) {
+  const sourceData = donationSources[type] || source
   const basic = sourceData.basic
   if (fresh) {
     const blank = createDraft(id)
+    if (id === 19) return { ...blank, detailType: type, fresh: true, name: basic.name, code: basic.code, type: basic.type, strategy: '', issue: '', funding: '', fundraising: '', minimumExecutionAmount: null, fundraisingStart: '', fundraisingEnd: '', executionStrategy: '', fundraisingCommunicationPlan: '' }
     return { ...blank, detailType: type, fresh: true,
       type: basic.type, strategy: basic.strategy, issue: basic.issue, funding: basic.funding, fundraising: basic.issue,
       organization: basic.organization, recruitment: basic.recruitment, name: type === 'monthly-donation' ? basic.name : blank.name,
@@ -46,22 +47,27 @@ export function createOneTimeDonationDraft (fresh = false, type = 'one-time-dona
     // 示例仅有文件元数据，不能伪造可下载文件；真实上传继续使用 IndexedDB。
     attachments: data.attachments.map(file => ({ ...file, category: file.type, time: file.uploadedAt, example: true }))
   }
+  if (id === 19) { draft.reviewComments = {}; draft.auditHistory = [] }
   data.detailedMaterials.forEach(field => { draft[field.key] = rich(field.paragraphs) })
   return draft
 }
 
-export function loadOneTimeDonationDraft (fresh = false, type = 'one-time-donation') {
-  const defaults = createOneTimeDonationDraft(fresh, type), raw = localStorage.getItem(storageKey(type, fresh))
+export function loadOneTimeDonationDraft (fresh = false, type = 'one-time-donation', id = donationId(type)) {
+  const defaults = createOneTimeDonationDraft(fresh, type, id), raw = localStorage.getItem(storageKey(type, fresh, id))
   let draft = defaults
   if (raw) {
     const saved = JSON.parse(raw)
-    if (!!saved.fresh !== fresh || saved.id !== donationId(type) || saved.detailType !== type || !['targets', 'thirdParties', 'areas', 'team', 'outputs', 'attachments'].every(key => Array.isArray(saved[key])) || !saved.budget || !Array.isArray(saved.budget.rows) || !Array.isArray(saved.budget.personnel)) throw new Error('次捐草稿格式无法读取')
+    if (!!saved.fresh !== fresh || saved.id !== id || saved.detailType !== type || !['targets', 'thirdParties', 'areas', 'team', 'outputs', 'attachments'].every(key => Array.isArray(saved[key])) || !saved.budget || !Array.isArray(saved.budget.rows) || !Array.isArray(saved.budget.personnel)) throw new Error('次捐草稿格式无法读取')
     draft = { ...defaults, ...saved, reviewComments: { ...defaults.reviewComments, ...(saved.reviewComments || {}) } }
   }
   if (type === 'monthly-donation') draft.name = defaults.name
+  const oldCode = type === 'monthly-donation' ? 'ZZ-1764740245' : 'ZZ-1764740244'
+  const currentCode = (donationSources[type] || source).basic.code
+  if (draft.code === oldCode) draft.code = currentCode
+  if (draft.budget.metadata && draft.budget.metadata.projectCode === oldCode) draft.budget.metadata.projectCode = currentCode
   if (fresh) return draft
   try {
-    const review = JSON.parse(localStorage.getItem('see-project-review-example-' + donationId(type)))
+    const review = JSON.parse(localStorage.getItem('see-project-review-example-' + id))
     if (review && review.reviewComments && typeof review.reviewComments === 'object' && !Array.isArray(review.reviewComments)) draft.reviewComments = clone(review.reviewComments)
   } catch (error) { /* 损坏的演示意见不覆盖业务草稿。 */ }
   return draft
@@ -69,6 +75,6 @@ export function loadOneTimeDonationDraft (fresh = false, type = 'one-time-donati
 
 export function saveOneTimeDonationDraft (draft, fresh = false, type = 'one-time-donation') {
   const savedAt = new Date().toLocaleString('zh-CN', { hour12: false })
-  localStorage.setItem(storageKey(type, fresh), JSON.stringify({ ...draft, savedAt }))
+  localStorage.setItem(storageKey(type, fresh, draft.id), JSON.stringify({ ...draft, savedAt }))
   return savedAt
 }

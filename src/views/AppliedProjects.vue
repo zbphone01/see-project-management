@@ -85,10 +85,18 @@
               <a-dropdown placement="bottomRight" :trigger="['hover']">
                 <a-button class="operation-button">操作 <a-icon type="down" /></a-button>
                 <a-menu slot="overlay" @click="handleProjectAction($event, record)">
-                  <template v-if="record.status === '草稿'">
+                  <template v-if="record.id === 19">
+                    <a-menu-item key="draft-see-heading" disabled>--SEE--</a-menu-item>
+                    <a-menu-item key="edit-agreement">填写协议金额</a-menu-item>
+                    <a-menu-item key="draft-partner-heading" disabled>--伙伴--</a-menu-item>
+                    <a-menu-item key="edit-one-time-donation">编辑</a-menu-item>
+                    <a-menu-item key="edit-fresh-one-time-donation">全新编辑示例</a-menu-item>
+                  </template>
+                  <template v-else-if="record.status === '草稿'">
                     <a-menu-item key="edit-draft">编辑</a-menu-item>
                   </template>
                   <template v-else-if="record.status === '申请待审'">
+                    <a-menu-item key="pending-see-heading" disabled>--SEE--</a-menu-item>
                     <a-menu-item key="audit">审核</a-menu-item>
                     <template v-if="record.id === 6">
                       <a-menu-item key="audit-project-center">项目组或中心审核</a-menu-item>
@@ -97,14 +105,19 @@
                     <a-menu-item key="download-pdf">下载待审申请书pdf</a-menu-item>
                     <a-menu-item key="download-word">下载待审申请书word</a-menu-item>
                     <a-menu-item key="download-budget">下载待审预算表</a-menu-item>
+                    <a-menu-item key="pending-partner-heading" disabled>--伙伴--</a-menu-item>
                     <a-menu-item key="detail">查看详情</a-menu-item>
                   </template>
                   <template v-else-if="record.status === '进展待审'">
+                    <a-menu-item key="progress-see-heading" disabled>--SEE--</a-menu-item>
                     <a-menu-item key="audit-progress">审核</a-menu-item>
                     <a-menu-item key="view-progress-report">查看本进展报告</a-menu-item>
                     <a-menu-item key="project-detail">查看项目详情</a-menu-item>
                     <a-menu-item key="download-progress-pdf">下载进展报告pdf</a-menu-item>
                     <a-menu-item key="download-progress-word">下载进展报告word</a-menu-item>
+                    <a-menu-item key="progress-partner-heading" disabled>--伙伴--</a-menu-item>
+                    <a-menu-item key="partner-view-progress-report">查看本进展报告</a-menu-item>
+                    <a-menu-item key="partner-project-detail">查看详情详情</a-menu-item>
                   </template>
                   <template v-else-if="record.status === '进展已审'">
                     <a-menu-item key="change-reviewed-project-status">变更项目状态为</a-menu-item>
@@ -114,21 +127,35 @@
                     <a-menu-item key="download-budget">下载预算表</a-menu-item>
                     <a-menu-item key="upload-budget-scan">上传预算表扫描件</a-menu-item>
                   </template>
+                  <template v-else-if="record.id === 18 && record.status === '正常结项'">
+                    <a-menu-item key="completed-see-heading" disabled>--SEE--</a-menu-item>
+                    <a-menu-item key="detail">查看详情</a-menu-item>
+                    <a-menu-item key="view-completion-report">查看结项报告</a-menu-item>
+                    <a-menu-item key="completed-partner-heading" disabled>--伙伴--</a-menu-item>
+                    <a-menu-item key="partner-detail">查看详情</a-menu-item>
+                    <a-menu-item key="partner-view-completion-report">查看结项报告</a-menu-item>
+                    <a-menu-item key="supplement-completion">补充结项</a-menu-item>
+                  </template>
                   <template v-else-if="record.status === '异常结项'">
                     <a-menu-item key="project-detail">查看项目详情</a-menu-item>
                     <a-menu-item key="view-completion-report">查看结项报告</a-menu-item>
                     <a-menu-item key="supplement-completion">补充结项</a-menu-item>
                   </template>
                   <template v-else-if="record.status === '请求修订'">
+                    <a-menu-item key="revision-see-heading" disabled>--SEE--</a-menu-item>
                     <a-menu-item key="agree-revision">同意</a-menu-item>
                     <a-menu-item key="reject-revision">驳回</a-menu-item>
+                    <a-menu-item key="revision-partner-heading" disabled>--伙伴--</a-menu-item>
                     <a-menu-item key="withdraw-revision">撤回请求</a-menu-item>
                   </template>
                   <template v-else-if="record.status === '修订中'">
-                    <a-menu-item key="complete-revision">完成修订</a-menu-item>
+                    <a-menu-item key="revising-see-heading" disabled>--SEE--</a-menu-item>
+                    <a-menu-item key="complete-revision">强制完成修订</a-menu-item>
+                    <a-menu-item key="revising-partner-heading" disabled>--伙伴--</a-menu-item>
                     <a-menu-item key="edit-revision">修订</a-menu-item>
                   </template>
                   <template v-else-if="record.id === 1 && record.status === '执行中'">
+                    <a-menu-item key="executing-see-heading" disabled>--SEE--</a-menu-item>
                     <a-menu-item key="detail">查看详情</a-menu-item>
                     <a-menu-item key="view-reports">查看进展/结项</a-menu-item>
                     <a-sub-menu key="fundraising-status" title="变更筹款状态 ">
@@ -137,8 +164,16 @@
                     </a-sub-menu>
                     <a-menu-item key="download-project-files">下载项目资料</a-menu-item>
                     <a-menu-item key="abnormal-completion"><span style="color: #bfbfbf">*异常结项*</span></a-menu-item>
+                    <a-menu-item key="executing-partner-heading" disabled>--伙伴--</a-menu-item>
+                    <a-menu-item key="partner-publish-progress">发布进展</a-menu-item>
+                    <a-menu-item key="partner-publish-completion">发布结项</a-menu-item>
+                    <a-menu-item key="partner-detail">查看详情</a-menu-item>
+                    <a-menu-item key="partner-view-reports">查看进展/结项</a-menu-item>
+                    <a-menu-item key="partner-adjust-budget">调整预算</a-menu-item>
+                    <a-menu-item key="partner-request-revision"><span style="color: #bfbfbf">*请求修订*</span></a-menu-item>
                   </template>
                   <template v-else-if="['审核流程中①', '审核流程中②', '审核流程中③'].includes(record.status)">
+                    <a-menu-item key="agreement-see-heading" disabled>--SEE--</a-menu-item>
                     <a-menu-item key="detail">查看详情</a-menu-item>
                     <a-menu-item key="download-project-files">下载项目资料</a-menu-item>
                     <a-sub-menu key="project-status" title="变更项目状态 ">
@@ -153,6 +188,9 @@
                     </a-sub-menu>
                     <a-menu-item v-if="record.status === '审核流程中③'" key="upload-agreement-scan">上传协议扫描件</a-menu-item>
                     <a-menu-item key="abnormal-completion"><span style="color: #bfbfbf">*异常结项*</span></a-menu-item>
+                    <a-menu-item key="agreement-partner-heading" disabled>--伙伴--</a-menu-item>
+                    <a-menu-item key="partner-detail">查看详情</a-menu-item>
+                    <a-menu-item key="partner-download-project-files">下载项目资料</a-menu-item>
                   </template>
                   <template v-else-if="record.detailType === 'green-home'">
                     <a-menu-item key="edit-green-home">编辑</a-menu-item>
@@ -187,13 +225,15 @@
 </template>
 
 <script>
+import { loadOneTimeDonationDraft } from '../mock/one-time-donation-project-draft'
+import { prepareBudgetContext } from '../utils/project-budget'
 import { appliedProjects } from '../mock/projects'
 import RevisionRequestModal from '../components/RevisionRequestModal.vue'
 export default {
   name: 'AppliedProjects',
   components: { RevisionRequestModal },
   data () { return {
-    appliedProjects: appliedProjects.filter(project => project.status !== '正常结项'),
+    appliedProjects: appliedProjects.filter(project => project.status !== '正常结项' || project.id === 18),
     selectedProjectKeys: [],
     appliedPage: 1,
     appliedFilters: {
@@ -203,7 +243,7 @@ export default {
         projectName: '',
         recruitmentName: ''
       },
-    appliedStatuses: ['草稿', '审核流程中①', '审核流程中③', '审核流程中②', '申请待审', '进展待审', '进展已审', '执行中', '请求修订', '修订中', '异常结项'],
+    appliedStatuses: ['草稿', '审核流程中①', '审核流程中③', '审核流程中②', '申请待审', '进展待审', '进展已审', '执行中', '请求修订', '修订中', '正常结项', '异常结项'],
     appliedColumns: [
         { title: '项目名称', dataIndex: 'name', key: 'project', scopedSlots: { customRender: 'project' } },
         { title: '项目类型', dataIndex: 'type', key: 'type', width: 110, align: 'center', scopedSlots: { customRender: 'type' } },
@@ -278,6 +318,19 @@ export default {
     handleAppliedTableChange (pagination) { this.appliedPage = pagination.current },
     exportSelected (type) { this.$message.info(`已选择 ${this.selectedProjectKeys.length} 个项目，准备导出${type}`) },
     handleProjectAction ({ key }, record) {
+      if (key === 'edit-agreement' && record.id === 19) {
+        const route = { params: { id: String(record.id) }, query: { detailType: record.detailType } }
+        try {
+          const draft = loadOneTimeDonationDraft(false, record.detailType, record.id)
+          prepareBudgetContext(route, draft, true, JSON.stringify(draft))
+          this.$router.push({ name: 'project-budget-form', params: route.params, query: { ...route.query, budgetType: 'donation', mode: 'agreement' } })
+        } catch (error) { this.$message.error('无法读取草稿预算，请检查浏览器存储后重试') }
+        return
+      }
+      if (key === 'partner-view-progress-report') key = 'view-progress-report'
+      if (key === 'partner-project-detail') key = 'project-detail'
+      if (key === 'partner-detail') key = 'detail'
+      if (key === 'partner-download-project-files') key = 'download-project-files'
       if (key === 'edit-revision') {
         this.$router.push({ name: 'project-form', params: { id: String(record.id) }, query: { revisionMode: 'normal' } })
         return
@@ -287,10 +340,10 @@ export default {
         return
       }
       if (key === 'edit-draft') {
-        this.$router.push({ name: 'project-form', params: { id: String(record.id) } })
+        this.$router.push({ name: 'project-form', params: { id: String(record.id) }, query: record.id === 12 ? { fresh: '1' } : {} })
         return
       }
-      if ([2, 3].includes(record.id) && key === 'detail') {
+      if ([2, 3].includes(record.id) && !['审核流程中①', '审核流程中②', '审核流程中③'].includes(record.status) && key === 'detail') {
         this.$message.info('待后续开发')
         return
       }
@@ -311,7 +364,9 @@ export default {
         return
       }
       if (key === 'audit-progress' || key === 'view-progress-report') {
-        this.$router.push({ name: 'report-detail', params: { id: record.reportId }, query: key === 'audit-progress' ? { mode: 'audit' } : {} })
+        const query = key === 'audit-progress' ? { mode: 'audit' } : {}
+        if (record.status === '进展待审') query.reportStatus = 'pending'
+        this.$router.push({ name: 'report-detail', params: { id: record.reportId }, query })
         return
       }
       const auditTypes = {
@@ -321,6 +376,7 @@ export default {
       if (key === 'detail' || key === 'project-detail' || key === 'audit' || auditTypes[key]) {
         const query = key === 'audit' || auditTypes[key] ? { mode: 'audit' } : {}
         if (record.status === '申请待审') query.applicationStatus = 'pending'
+        if (/^审核流程中/.test(record.status)) query.applicationStatus = 'agreement-signing'
         if (auditTypes[key]) query.auditType = auditTypes[key]
         if (record.detailType) query.detailType = record.detailType
         this.$router.push({ name: 'project-detail', params: { id: String(record.id) }, query })

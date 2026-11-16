@@ -16,12 +16,12 @@
         </template>
         <div class="field"><span class="basic-field-label">项目执行周期</span><span class="basic-field-value">{{ draft.projectPeriod }}</span></div>
         <div class="field execution-period" :class="reviewClass('reportPeriod')"><label><review-comment-label overlay-class-name="report-edit-review-comment" :comment="reviewComment('reportPeriod')"> {{ isOrganizationReport ? '本次报告涵盖时间' : '本报告执行周期' }}</review-comment-label></label><div class="date-pair"><a-date-picker class="execution-date-picker" :value="draft.periodStart || null" value-format="YYYY-MM-DD" format="YYYY-MM-DD" placeholder="请选择开始日期" aria-label="报告开始日期" :locale="executionDateLocale" :month-cell-content-render="renderExecutionMonth" dropdown-class-name="project-execution-calendar" @change="draft.periodStart = $event || ''" /><span>至</span><a-date-picker class="execution-date-picker" :value="draft.periodEnd || null" value-format="YYYY-MM-DD" format="YYYY-MM-DD" placeholder="请选择结束日期" aria-label="报告结束日期" :locale="executionDateLocale" :month-cell-content-render="renderExecutionMonth" dropdown-class-name="project-execution-calendar" @change="draft.periodEnd = $event || ''" /></div></div>
-        <div v-if="isOrganizationReport" class="field"><span class="basic-field-label">预算总金额</span><span class="basic-field-value">{{ draft.total }} 元</span></div>
-        <div class="field" :class="{ full: !isOrganizationReport }"><span class="basic-field-label">{{ fundingLabel }}</span><span class="basic-field-value">{{ money(draft.funding) }} 元</span></div>
+        <div v-if="isOrganizationReport" class="field"><span class="basic-field-label">预算总金额</span><span class="basic-field-value">{{ money(draft.total) }} 元（{{ uppercaseMoney(draft.total) }}）</span></div>
+        <div class="field" :class="{ full: !isOrganizationReport }"><span class="basic-field-label">{{ fundingLabel }}</span><span class="basic-field-value">{{ money(draft.funding) }} 元（{{ uppercaseMoney(draft.funding) }}）</span></div>
         <div v-if="isOrganizationReport" class="field"><span class="basic-field-label">其他地方资助</span><span class="basic-field-value basic-field-multiline">{{ draft.otherLocalFunding }}</span></div>
-        <div class="field"><span class="basic-field-label">已执行预算金额（包括本报告提交的执行额）</span><span class="basic-field-value">{{ money(draft.executed) }} 元</span></div>
+        <div class="field"><span class="basic-field-label">已执行预算金额（包括本报告提交的执行额）</span><span class="basic-field-value">{{ money(draft.executed) }} 元（{{ uppercaseMoney(draft.executed) }}）</span></div>
         <div class="field"><span class="basic-field-label">项目预算总执行率</span><span class="basic-field-value">{{ executionRate }}</span></div>
-        <div class="field request-field" :class="reviewClass('request')"><label><review-comment-label overlay-class-name="report-edit-review-comment" :comment="reviewComment('request')">本次报告请款</review-comment-label></label><div class="request-control"><a-checkbox v-model="draft.requestNeeded" @change="changeRequestNeeded">需要请款</a-checkbox><div class="amount-input"><a-input-number v-model="draft.requested" :disabled="!draft.requestNeeded" :min="0" :precision="2" placeholder="请输入请款金额" /><span>元</span></div></div></div>
+        <div class="field request-field" :class="reviewClass('request')"><label><review-comment-label overlay-class-name="report-edit-review-comment" :comment="reviewComment('request')">本次报告请款</review-comment-label></label><div class="request-control"><a-checkbox v-model="draft.requestNeeded" @change="changeRequestNeeded">需要请款</a-checkbox><div class="amount-input"><a-input-number v-model="draft.requested" :disabled="!draft.requestNeeded" :min="0" :precision="2" placeholder="请输入请款金额" /><span>元</span></div></div><small v-if="draft.requestNeeded && draft.requested !== null && draft.requested !== undefined && draft.requested !== ''">大写：{{ uppercaseMoney(draft.requested) }}</small></div>
         <div class="field"><span class="basic-field-label">本报告通过后请款比例</span><span class="basic-field-value">{{ requestRate }}</span></div>
         <div v-if="isCompletion" class="field"><span class="basic-field-label">直接或委托其他组织资助给受益人款物</span><span class="basic-field-value">{{ draft.beneficiaryAid }}</span></div>
         <div v-if="isCompletion" class="field" :class="draft.beneficiaryAid === '是' ? reviewClass('aidCompleted') : {}"><label><review-comment-label overlay-class-name="report-edit-review-comment" :comment="draft.beneficiaryAid === '是' ? reviewComment('aidCompleted') : ''"> 已完成对受益人款物的资助</review-comment-label></label><div class="choice-with-hint"><a-radio-group v-model="draft.aidCompleted" class="binary-choice" :disabled="draft.beneficiaryAid !== '是'"><a-radio value="否">否</a-radio><a-radio value="是">是</a-radio></a-radio-group><span v-if="!draft.aidCompleted" class="empty-hint">请选择资助完成状态</span></div></div>
@@ -34,8 +34,6 @@
     <green-home-report-sections v-if="isOrganizationReport" part="organization" :report="draft" :comments="draft.reviewComments" editing />
 
     <green-home-report-sections v-if="isOrganizationReport" :report="draft" :comments="draft.reviewComments" editing />
-
-    <green-home-report-sections v-if="draft.detailType === 'grass'" part="community" :report="draft" :comments="draft.reviewComments" editing />
 
     <section class="panel form-section detail-section report-progress-section">
       <div class="detail-section-header"><span class="detail-section-icon orange"><a-icon type="project" /></span><div><h2>项目执行进展</h2><p v-if="hasProgressReviewComments">请检查并修改标红的最新进展内容，点击最新进展日期可查看具体审核意见</p></div></div>
@@ -55,6 +53,8 @@
       </div>
       </div>
     </section>
+
+    <green-home-report-sections v-if="draft.detailType === 'grass'" part="community" :report="draft" :comments="draft.reviewComments" editing />
 
     <section class="panel form-section other-info-section">
       <div class="detail-section-header"><span class="detail-section-icon green"><a-icon type="read" /></span><div><h2>其他信息</h2><p v-if="hasOtherReviewComments">请检查并修改标红的项目信息，点击信息小标题可查看具体审核意见</p></div></div>
@@ -123,6 +123,7 @@
 
 <script>
 import { loadReportDraft, loadReviewedReportExample, saveReportDraft, normalizeReportArea } from '../mock/report-drafts'
+import { uppercaseMoney } from '../mock/project-drafts'
 import { reviewText, rowReviewText } from '../utils/report-review'
 import ReviewCommentLabel from '../components/ReviewCommentLabel.vue'
 import GreenHomeReportSections from '../components/GreenHomeReportSections.vue'
@@ -301,6 +302,7 @@ export default {
     } })
   },
   methods: {
+    uppercaseMoney,
     displayRegion ({ labels }) { return formatRegionPath(labels) },
     updateProjectArea () { normalizeReportArea(this.draft) },
     captureSavedSnapshot () { this.savedSnapshot = JSON.stringify({ draft: this.draft, benefits: this.benefitSections }) },

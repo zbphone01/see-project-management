@@ -339,7 +339,7 @@ const tableSections = [
 export default {
   name: 'ProjectForm', components: { ProjectBudgetEditor, RichEditor, ReviewCommentLabel, ProjectDateRange, ProjectMonthRange, ProjectThirdParties, ProjectBinaryChoice, ProjectAmountInput },
   data () { return {
-    draft: ((this.$route.query.detailType === 'one-time-donation' && this.$route.params.id === '10') || (this.$route.query.detailType === 'monthly-donation' && this.$route.params.id === '11')) ? createOneTimeDonationDraft(this.$route.query.fresh === '1', this.$route.query.detailType) : this.$route.query.detailType === 'grass' && this.$route.params.id === '9' ? createGrassDraft(this.$route.query.fresh === '1') : this.$route.query.detailType === 'green-home' && this.$route.params.id === '8' ? createGreenHomeDraft(this.$route.query.fresh === '1') : this.$route.query.example === 'filled' && ['3', '5'].includes(this.$route.params.id) ? createDashboardDraft(Number(this.$route.params.id)) : createDraft(Number(this.$route.params.id)), savedSnapshot: '', errors: [], uploading: 0,
+    draft: ((this.$route.query.detailType === 'one-time-donation' && ['10', '19'].includes(this.$route.params.id)) || (this.$route.query.detailType === 'monthly-donation' && this.$route.params.id === '11')) ? createOneTimeDonationDraft(this.$route.query.fresh === '1', this.$route.query.detailType, Number(this.$route.params.id)) : this.$route.query.detailType === 'grass' && this.$route.params.id === '9' ? createGrassDraft(this.$route.query.fresh === '1') : this.$route.query.detailType === 'green-home' && this.$route.params.id === '8' ? createGreenHomeDraft(this.$route.query.fresh === '1') : this.$route.query.example === 'filled' && ['3', '5'].includes(this.$route.params.id) ? createDashboardDraft(Number(this.$route.params.id)) : createDraft(Number(this.$route.params.id), this.$route.params.id === '12' && this.$route.query.fresh === '1'), savedSnapshot: '', errors: [], uploading: 0,
     donationPlatformOptions,
     tableSections, inheritedFields: [{ key: 'type', label: '项目类型' }, { key: 'strategy', label: '项目策略' }, { key: 'issue', label: '项目议题' }, { key: 'funding', label: '资金来源' }],
     richFields: [{ key: 'overview', label: '项目概述' }, { key: 'background', label: '项目背景' }, { key: 'goal', label: '项目总目标' }],
@@ -389,7 +389,7 @@ export default {
     },
     isFreshDonation () { return this.isDonationProject && this.$route.query.fresh === '1' },
     isMonthlyDonation () { return this.$route.query.detailType === 'monthly-donation' && this.$route.params.id === '11' },
-    isDonationProject () { return this.isMonthlyDonation || (this.$route.query.detailType === 'one-time-donation' && this.$route.params.id === '10') },
+    isDonationProject () { return this.isMonthlyDonation || (this.$route.query.detailType === 'one-time-donation' && ['10', '19'].includes(this.$route.params.id)) },
     donationOrganization () { return this.isMonthlyDonation ? monthlyDonationOrganization : donationOrganization },
     donationBasicFields () { const fields = [
       { key: 'name', label: '项目名称', full: true, required: true, readonly: this.isMonthlyDonation },
@@ -460,7 +460,7 @@ export default {
     automaticBudgetTotal: { immediate: true, handler (value) { if (this.isAutomaticBudgetTotal) this.draft.total = value } }
   },
   created () {
-    try { this.draft = this.isDonationProject ? loadOneTimeDonationDraft(this.isFreshDonation, this.$route.query.detailType) : this.isGrass ? loadGrassDraft(this.$route.query.fresh === '1') : this.isOrganizationProject ? loadGreenHomeDraft(this.$route.query.fresh === '1') : loadDraft(Number(this.$route.params.id), this.isDashboardExample) } catch (error) { this.$message.warning('无法读取本地草稿，已打开空白填写页。原保存内容尚未覆盖。') }
+    try { this.draft = this.isDonationProject ? loadOneTimeDonationDraft(this.isFreshDonation, this.$route.query.detailType, Number(this.$route.params.id)) : this.isGrass ? loadGrassDraft(this.$route.query.fresh === '1') : this.isOrganizationProject ? loadGreenHomeDraft(this.$route.query.fresh === '1') : loadDraft(Number(this.$route.params.id), this.isDashboardExample, this.$route.params.id === '12' && this.$route.query.fresh === '1') } catch (error) { this.$message.warning('无法读取本地草稿，已打开空白填写页。原保存内容尚未覆盖。') }
     try { this.draft.budget = normalizeBudget(this.draft.budget, this.draft) } catch (error) { this.$message.error('预算数据格式无效，请检查原始 JSON。原保存内容尚未覆盖。') }
     let budgetReturnContext = null
     if (this.$route.query.budgetReturn === '1') {
@@ -529,7 +529,7 @@ export default {
     },
     saveAndRemind () { if (this.save()) this.$message.info('草稿已保存；提醒SEE填写为演示操作，尚未发送通知') },
     prefillDonationGuidance () {
-      if (!this.isDonationProject || this.draft.savedAt) return
+      if (!this.isDonationProject || this.draft.savedAt || (this.$route.params.id === '19' && this.isFreshDonation)) return
       this.richFields.filter(field => field.prefill).forEach(field => {
         const element = document.createElement('div')
         element.innerHTML = cleanRichText(this.draft[field.key] || '')
@@ -645,7 +645,7 @@ export default {
       if (this.uploading) { this.$message.info('请等待附件保存完成'); return false }
       if (this.fundraisingEdit.id) { this.$message.warning('请先保存或取消正在编辑的筹资记录'); return false }
       if (this.isAutomaticBudgetTotal) this.draft.total = this.automaticBudgetTotal
-      try { this.draft.budget = saveProjectBudget(budgetKey(this.$route), this.draft); this.draft.savedAt = this.isDonationProject ? saveOneTimeDonationDraft(this.draft, this.isFreshDonation, this.$route.query.detailType) : this.isGrass ? saveGrassDraft({ ...this.draft, organizationBasicInfo: { ...this.draft.organizationBasicInfo, staffCounts: this.organizationStaffCounts } }, this.$route.query.fresh === '1') : this.isOrganizationProject ? saveGreenHomeDraft({ ...this.draft, organizationBasicInfo: { ...this.draft.organizationBasicInfo, staffCounts: this.organizationStaffCounts } }, this.$route.query.fresh === '1') : saveDraft(this.draft, this.isDashboardExample); this.savedSnapshot = JSON.stringify(this.draft); this.$message.success('草稿已保存到当前浏览器'); return true } catch (error) { this.$message.error('保存失败：浏览器存储不可用或空间不足，请保留当前页面后重试。'); return false }
+      try { this.draft.budget = saveProjectBudget(budgetKey(this.$route), this.draft); this.draft.savedAt = this.isDonationProject ? saveOneTimeDonationDraft(this.draft, this.isFreshDonation, this.$route.query.detailType) : this.isGrass ? saveGrassDraft({ ...this.draft, organizationBasicInfo: { ...this.draft.organizationBasicInfo, staffCounts: this.organizationStaffCounts } }, this.$route.query.fresh === '1') : this.isOrganizationProject ? saveGreenHomeDraft({ ...this.draft, organizationBasicInfo: { ...this.draft.organizationBasicInfo, staffCounts: this.organizationStaffCounts } }, this.$route.query.fresh === '1') : saveDraft(this.draft, this.isDashboardExample, this.$route.params.id === '12' && this.$route.query.fresh === '1'); this.savedSnapshot = JSON.stringify(this.draft); this.$message.success('草稿已保存到当前浏览器'); return true } catch (error) { this.$message.error('保存失败：浏览器存储不可用或空间不足，请保留当前页面后重试。'); return false }
     },
     submit () {
       if (this.isAutomaticBudgetTotal) this.draft.total = this.automaticBudgetTotal

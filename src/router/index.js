@@ -51,7 +51,7 @@ const router = new VueRouter({
     { path: '/projects/payment-applications', name: 'payment-applications', component: () => import('../views/PaymentApplications.vue') },
     { path: '/projects/reports', name: 'project-reports', component: () => import('../views/ProjectReports.vue') },
     { path: '/projects/reports/:id', name: 'report-detail', component: () => import('../views/ReportDetail.vue'),
-      props: route => ({ reportId: route.params.id, mode: route.query.mode === 'audit' ? 'audit' : 'view', type: ['progress', 'completion'].includes(route.query.type) ? route.query.type : '' })
+      props: route => ({ reportId: route.params.id, mode: route.query.mode === 'audit' ? 'audit' : 'view', viewer: route.query.viewer === 'partner' ? 'partner' : 'see', reportStatus: route.query.reportStatus || '', type: ['progress', 'completion'].includes(route.query.type) ? route.query.type : '' })
     },
     { path: '/projects/:id/report/edit', name: 'report-form', component: () => import('../views/ReportForm.vue'),
       props: route => ({ projectId: route.params.id, type: ['progress', 'completion'].includes(route.query.type) ? route.query.type : ((reportExamples.find(report => report.id === route.query.example) || {}).type === '结项报告' ? 'completion' : 'progress') })
@@ -78,7 +78,7 @@ router.beforeEach((to, from, next) => {
   if (to.name === 'recruitment-detail' && !Object.prototype.hasOwnProperty.call(recruitmentDetails, to.params.id)) {
     next({ name: 'available-projects', replace: true }); return
   }
-  if (to.name === 'project-form' && !((to.params.id === '8' && to.query.detailType === 'green-home') || (to.params.id === '9' && to.query.detailType === 'grass') || (to.params.id === '10' && to.query.detailType === 'one-time-donation') || (to.params.id === '11' && to.query.detailType === 'monthly-donation')) && !editableDraftIds.some(id => String(id) === String(to.params.id))) {
+  if (to.name === 'project-form' && !((to.params.id === '8' && to.query.detailType === 'green-home') || (to.params.id === '9' && to.query.detailType === 'grass') || (['10', '19'].includes(to.params.id) && to.query.detailType === 'one-time-donation') || (to.params.id === '11' && to.query.detailType === 'monthly-donation')) && !editableDraftIds.some(id => String(id) === String(to.params.id))) {
     next({ name: 'dashboard', replace: true }); return
   }
   if (to.name === 'project-detail' && !appliedProjects.some(project => String(project.id) === to.params.id)) {

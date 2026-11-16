@@ -26,7 +26,7 @@ export function createFreshOrganizationDraft (example) {
   return draft
 }
 
-export function createDraft (id = draftId) {
+export function createDraft (id = draftId, fresh = false) {
   if ([13, 14].includes(id)) return { ...createDraft(12), id }
   const draft = {
     id, name: '', code: '草稿 · 尚未提交', recruitment: '',
@@ -39,6 +39,7 @@ export function createDraft (id = draftId) {
     budget: { updatedAt: '', personnelUpdatedAt: '', rows: [], personnel: [] },
     attachments: [], savedAt: '', reviewComments: {}, auditHistory: []
   }
+  if (id === 12 && fresh) return { ...draft, name: projectExample.basic.name, code: projectExample.basic.code, strategy: '', issue: '', funding: '', fundraising: '' }
   if (id === 506306) return { ...draft, recruitment: '大熊猫国家公园四川片区药用植物保护与可持续利用项目招募', strategy: '生态保护与自然教育', issue: '生态系统保护', funding: '资助', fundraising: '-' }
   if (id === 12) {
     const basic = projectExample.basic
@@ -116,10 +117,10 @@ export function createDashboardDraft (id) {
   return draft
 }
 
-const storageKey = (id, dashboardExample = false) => `see-project-draft-example-v3-${id}` + (dashboardExample ? '-dashboard-filled' : '')
-export function loadDraft (id = draftId, dashboardExample = false) {
-  const defaults = dashboardExample ? createDashboardDraft(id) : createDraft(id)
-  if (id === 12) {
+const storageKey = (id, dashboardExample = false, fresh = false) => `see-project-draft-example-v3-${id}` + (dashboardExample ? '-dashboard-filled' : '') + (id === 12 && fresh ? '-name-only-v1' : '')
+export function loadDraft (id = draftId, dashboardExample = false, fresh = false) {
+  const defaults = dashboardExample ? createDashboardDraft(id) : createDraft(id, fresh)
+  if (id === 12 && !fresh) {
     // 仅替换原示例名，保留用户自定义名称及预算数据、版本。
     for (const key of [storageKey(id, dashboardExample), 'see-project-budget-document-v1:12:project:existing:default', 'see-budget-sheet:12:project:existing:default']) {
       const saved = localStorage.getItem(key)
@@ -132,12 +133,12 @@ export function loadDraft (id = draftId, dashboardExample = false) {
       if (changed) localStorage.setItem(key, JSON.stringify(value))
     }
   }
-  const raw = localStorage.getItem(storageKey(id, dashboardExample))
+  const raw = localStorage.getItem(storageKey(id, dashboardExample, fresh))
   if (!raw) return defaults
   const draft = JSON.parse(raw)
   if (draft.id !== id || !['areas', 'team', 'outputs', 'stakeholders', 'risks', 'monitoring', 'attachments', 'targets', 'thirdParties'].every(key => Array.isArray(draft[key])) || !draft.budget || !Array.isArray(draft.budget.rows) || !Array.isArray(draft.budget.personnel)) throw new Error('草稿格式无法读取')
   // 只迁移旧版示例遗漏的空字段；已填写内容和预算原样保留。
-  if (id === 12 && !draft.examplePrefillVersion) {
+  if (id === 12 && !fresh && !draft.examplePrefillVersion) {
     for (const key of ['overview', 'background', 'goal', 'experience']) if (!draft[key]) draft[key] = defaults[key]
     for (const key of ['areas', 'stakeholders', 'risks', 'monitoring']) if (!draft[key].length) draft[key] = clone(defaults[key])
     draft.examplePrefillVersion = 1
@@ -145,9 +146,9 @@ export function loadDraft (id = draftId, dashboardExample = false) {
   }
   return { ...defaults, ...draft, auditHistory: Array.isArray(draft.auditHistory) ? draft.auditHistory : defaults.auditHistory, reviewComments: { ...defaults.reviewComments, ...(draft.reviewComments || {}) } }
 }
-export function saveDraft (draft, dashboardExample = false) {
+export function saveDraft (draft, dashboardExample = false, fresh = false) {
   const savedAt = new Date().toLocaleString('zh-CN', { hour12: false })
-  localStorage.setItem(storageKey(draft.id, dashboardExample), JSON.stringify({ ...draft, savedAt }))
+  localStorage.setItem(storageKey(draft.id, dashboardExample, fresh), JSON.stringify({ ...draft, savedAt }))
   return savedAt
 }
 
