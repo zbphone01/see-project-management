@@ -21,7 +21,7 @@
               <template v-if="mode === 'audit'">
                 <p>这是待审核的项目申请书，内容在审核通过前不会入库存档，下载用于线下审核时，资料会带有“待审核”相关标注。</p>
                 <p class="ai-initial-review"><strong>AI初审结果</strong></p>
-                <p v-for="item in detailTableData.aiInitialReview" :key="item.section" class="ai-initial-review-item"><span>{{ item.section }}：</span>{{ item.content }}</p>
+                <p v-for="item in aiInitialReview" :key="item.section" class="ai-initial-review-item"><span>{{ item.section }}：</span>{{ item.content }}</p>
               </template>
               <template v-else>
                 <p>这是审核通过的项目申请书，查看和使用资料时，需遵循机构信息安全与保密要求！</p>
@@ -191,7 +191,7 @@
 
         <section id="detail-budget" class="panel detail-section">
           <div class="detail-section-header"><span class="detail-section-icon gold"><a-icon type="fund" /></span><div><h2>在线预算表</h2><p>项目预算及执行情况概览</p></div></div><div class="detail-module-content">
-          <budget-review :audit="mode === 'audit'" :donation-project="isDonationProject" :charity-header="projectId === 10 && mode === 'view' && !snapshotEntry" :history-examples="budgetHistoryExamples" :budget="displayBudget" />
+          <budget-review :audit="mode === 'audit'" :donation-project="isDonationProject" :charity-header="(projectId === 10 && !snapshotEntry) || monthlyBudgetExample" :monthly-donation="monthlyBudgetExample" :history-examples="budgetHistoryExamples" :budget="displayBudget" />
         </div></section>
 
         <section v-if="!snapshotEntry && !isGreenHomeExample" id="detail-attachments" class="panel detail-section">
@@ -301,7 +301,8 @@ import monthlyDonationTableData from '../mock/project-monthly-donation-detail.js
 import oneTimeDonationTableData from '../mock/project-one-time-donation-detail.json'
 import ProjectSnapshotWindow from '../components/ProjectSnapshotWindow.vue'
 import BudgetReview from '../components/BudgetReview.vue'
-import { createCharityBudgetHistoryExamples, createCharityBudgetExecutionExample } from '../mock/charity-budget-history'
+import { createCharityBudgetHistoryExamples, createCharityBudgetExecutionExample, createMonthlyDonationBudgetExample } from '../mock/charity-budget-history'
+import { createOneTimeDonationDraft } from '../mock/one-time-donation-project-draft'
 import ReviewCommentLabel from '../components/ReviewCommentLabel.vue'
 
 // 同一容器统一插入真实分隔元素，兼容静态及 v-for 富文本区块。
@@ -398,6 +399,21 @@ const detailTableDataByType = {
   'one-time-donation': oneTimeDonationTableData,
   'monthly-donation': monthlyDonationTableData
 }
+const donationReviewSections = ['项目基本信息', '项目执行计划', '执行团队配置', '项目预算计划']
+const donationReviewContent = {
+  'one-time-donation': [
+    '建议明确零废弃家庭的参与条件、服务范围及直接受益人数的统计口径。',
+    '已安排入户宣讲、物资发放和回收再利用。建议补充季度回访节点及减废量记录方式。',
+    '建议明确入户走访、物资管理和减废记录的责任人。',
+    '建议核对周转物资和交通费用的数量、单价是否与活动安排对应。'
+  ],
+  'monthly-donation': [
+    '建议明确本期覆盖的社区和场馆，以及青少年参与人次的统计口径。',
+    '已安排课件开发、讲师培训和社区课堂。建议明确试讲通过标准及每场课堂的反馈记录方式。',
+    '建议明确课程研发、讲师督导和社区联络的分工，并补充户外活动安全负责人。',
+    '建议核对培训场地和课堂材料的费用是否与培训期数、课堂场次对应，并确认协议签署金额合计。'
+  ]
+}
 export default {
   name: 'ProjectDetail',
   props: {
@@ -412,6 +428,9 @@ export default {
   },
   data () {
     const typeTableData = detailTableDataByType[this.detailType] || defaultTableData
+    const monthlyDraft = this.projectId === 11 && this.detailType === 'monthly-donation' && !this.tableData
+      ? createOneTimeDonationDraft(false, this.detailType, 20)
+      : null
     const sourceTableData = (this.tableData ? { ...typeTableData, ...this.tableData, basic: { ...typeTableData.basic, ...(this.tableData.basic || {}) } } : null) || (['one-time-donation', 'monthly-donation'].includes(this.detailType)
       ? { ...defaultTableData, ...typeTableData, basic: { ...defaultTableData.basic, ...typeTableData.basic }, budget: { ...(typeTableData.budget || defaultTableData.budget), metadata: { ...(typeTableData.budget || defaultTableData.budget).metadata, ...(typeTableData.budgetMetadata || {}) } } }
       : typeTableData)
@@ -421,7 +440,12 @@ export default {
       if (!this.tableData && saved && saved.reviewComments && typeof saved.reviewComments === 'object' && !Array.isArray(saved.reviewComments)) { Object.keys(comments).forEach(key => delete comments[key]); Object.assign(comments, saved.reviewComments) }
     } catch (error) { /* Invalid local data does not prevent opening the page. */ }
     return {
-    detailTableData: { ...JSON.parse(JSON.stringify(sourceTableData)), reviewComments: comments },
+    detailTableData: { ...JSON.parse(JSON.stringify(sourceTableData)), ...(monthlyDraft ? {
+      basic: { ...sourceTableData.basic, name: monthlyDraft.name },
+      areas: monthlyDraft.areas, team: monthlyDraft.team, outputs: monthlyDraft.outputs,
+      budget: createMonthlyDonationBudgetExample(monthlyDraft, false)
+    } : {}), reviewComments: comments },
+    monthlyDraft,
     budgetProject: null,
     activeSnapshot: null,
     snapshotData: null,
@@ -442,10 +466,19 @@ export default {
     auditExecutingFundingTotal: 5000
   } },
   computed: {
+    aiInitialReview () {
+      const content = donationReviewContent[this.detailType]
+      return content ? donationReviewSections.map((section, index) => ({ section, content: content[index] })) : this.detailTableData.aiInitialReview
+    },
+    monthlyBudgetExample () { return this.projectId === 11 && this.detailType === 'monthly-donation' && !!this.detailTableData.budget.metadata.charityFinance },
     isAgreementSigningView () { return this.mode === 'view' && !this.snapshotEntry && (this.applicationStatus ? this.applicationStatus === 'agreement-signing' : /^审核流程中/.test(this.detailProject.status)) },
     isCompactApplicationView () { return this.isPendingApplicationView || this.isAgreementSigningView },
     isPendingApplicationView () { return this.mode === 'view' && !this.snapshotEntry && (this.applicationStatus ? this.applicationStatus === 'pending' : this.detailProject.status === '申请待审') },
     displayBudget () {
+      if (this.monthlyBudgetExample) return this.mode === 'view' && this.monthlyDraft && !this.snapshotEntry
+        ? createMonthlyDonationBudgetExample(this.monthlyDraft, true)
+        : this.detailTableData.budget
+      if (this.mode === 'audit' && !this.snapshotEntry && this.projectId === 10) return createCharityBudgetHistoryExamples(this.detailTableData.budget).none
       if (this.projectId === 10 && this.budgetProject && this.budgetProject.budget.metadata.charityFinance) return this.budgetProject.budget
       if (this.mode === 'view' && !this.snapshotEntry && this.projectId === 10) return createCharityBudgetExecutionExample(this.detailTableData.budget)
       if (this.mode === 'view' && !this.tableData && !this.snapshotEntry && this.projectId === 1 && this.detailType === 'default') return reportExamples.find(report => report.id === 'P-001010').budget

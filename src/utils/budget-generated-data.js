@@ -49,7 +49,7 @@ export function costSheet (budget) {
   }
 }
 
-export function historySheet (budget, charityHistory = false) {
+export function historySheet (budget, charityHistory = false, { monthlyDonation = false, hideUnadjustedTotal = false } = {}) {
   const reviewData = charityHistory ? createCharityBudgetReviewData : createBudgetReviewData
   // adjustmentHistory 按时间正序保存 { id, budget }，budget 为该次调整后的完整业务快照，
   // 原始四期金额保持不变；adjustedBudget 为该轮结果。汇总与比例仅在读取时计算。
@@ -64,10 +64,13 @@ export function historySheet (budget, charityHistory = false) {
   const originals = new Map()
   current.concat(...snapshots).forEach(row => { if (!originals.has(row.key)) originals.set(row.key, row) })
   const maps = snapshots.map(rows => new Map(rows.map(row => [row.key, row])))
+  const keepBaseColumn = (item, index) => !monthlyDonation || (index !== 5 && index !== 7)
+  const showUnadjustedTotal = charityHistory && !rounds.length && !hideUnadjustedTotal
   const columns = charityHistory
-    ? [column('预算科目', charityBudgetWidths[0], 'text'), column('费用类型', charityBudgetWidths[1]), column('数量', charityBudgetWidths[2]), column('单位', charityBudgetWidths[3]), column('单价', charityBudgetWidths[4]), column('上线筹款预算', charityBudgetWidths[5]), column('协议签署金额', charityBudgetWidths[6]), column('协议签署科目明细', charityBudgetWidths[7], 'text')]
+    ? [column('预算科目', charityBudgetWidths[0], 'text'), column('费用类型', charityBudgetWidths[1]), column('数量', charityBudgetWidths[2]), column('单位', charityBudgetWidths[3]), column('单价', charityBudgetWidths[4]), column('上线筹款预算', charityBudgetWidths[5]), column('协议签署金额', charityBudgetWidths[6]), column('协议签署科目明细', charityBudgetWidths[7], 'text')].filter(keepBaseColumn)
     : [column('预算编号', 90), column('预算科目', 120, 'text'), column('预算明细（单价*数量）', 210, 'text'), column('费用类型', 80), column('原始\n预算合计金额', 100)]
   rounds.forEach((round, index) => columns.push(column('第' + (index + 1) + '次\n预算调整金额', charityHistory ? charityBudgetWidths[8] : 100), column('预算变动比例', charityHistory ? charityBudgetWidths[10] : 60), column('第' + (index + 1) + '次\n预算调整明细', charityHistory ? charityBudgetWidths[9] : 210, 'text'), column('第' + (index + 1) + '次\n调整后预算', charityHistory ? charityBudgetWidths[11] : 100)))
+  if (showUnadjustedTotal) columns.push(column('调整后预算', charityBudgetWidths[11]))
   return {
     columns,
     note: rounds.length ? '' : '暂无调整记录',
@@ -75,17 +78,27 @@ export function historySheet (budget, charityHistory = false) {
       const parts = budgetDetailParts(row)
       const detail = parts.price == null ? cell(parts.text || '') : { ...cell(''), detail: { expression: amount(parts.price) + '元 × ' + amount(parts.quantity) + (parts.unit || ''), description: parts.description } }
       const cells = charityHistory
-        ? [cell((row.code ? row.code + ' ' : '') + (row.name || '合计金额')), cell(row.type || '/'), cell(parts.quantity == null ? '/' : Number(parts.quantity).toFixed(2)), cell(parts.unit || '/'), cell(amount(parts.price)), cell(amount(row.initialTotal)), cell(amount(row.agreementAmount == null ? row.cost && row.cost.agreementAmount : row.agreementAmount)), detail]
+        ? [cell((row.code ? row.code + ' ' : '') + (row.name || '合计金额')), cell(row.type || '/'), cell(parts.quantity == null ? '/' : Number(parts.quantity).toFixed(2)), cell(parts.unit || '/'), cell(amount(parts.price)), cell(amount(row.initialTotal)), cell(amount(row.agreementAmount == null ? row.cost && row.cost.agreementAmount : row.agreementAmount)), detail].filter(keepBaseColumn)
         : [cell(row.kind === 'total' ? '合计金额' : row.code), cell(row.name), detail, cell(row.type || ''), cell(amount(row.initialTotal == null ? row.total : row.initialTotal))]
-      let previous = row.historyBaseAmount == null ? (row.initialTotal == null ? row.total : row.initialTotal) : row.historyBaseAmount
+      const baseAmount = row.historyBaseAmount == null ? (row.initialTotal == null ? row.total : row.initialTotal) : row.historyBaseAmount
+      const agreementAmount = row.agreementAmount == null ? row.cost && row.cost.agreementAmount : row.agreementAmount
+      let previous = charityHistory && agreementAmount != null ? agreementAmount : baseAmount
+      if (showUnadjustedTotal) cells.push(cell(amount(previous == null ? 0 : previous)))
       maps.forEach(map => {
         const next = map.get(row.key)
-        if (!next) { cells.push(cell('/'), cell('/'), cell('/'), cell('/')); return }
-        const after = effective(next), change = budgetMoney(after - previous)
+        if (!next) {
+          cells.push(cell('/'), cell('/'), cell('/'), cell(charityHistory ? amount(0) : '/'))
+          if (charityHistory) previous = 0
+          return
+        }
+        const after = charityHistory && next.adjustedBudget == null
+          ? budgetMoney((previous || 0) + (next.hasBudgetAdjustment ? next.adjustment || 0 : 0))
+          : effective(next)
+        const change = budgetMoney(after - previous)
         const parts = budgetAdjustmentParts(next)
         const detail = parts.price == null ? cell(parts.text || '/') : { ...cell(''), detail: { expression: amount(parts.price) + '元 × ' + amount(parts.quantity) + (parts.unit || ''), description: parts.description } }
         if (next.hasBudgetAdjustment) cells.push(cell((change > 0 ? '+' : '') + amount(change), adjustmentRole(change)), cell(ratio(change, previous, true)), detail, cell(amount(after)))
-        else cells.push(cell('/'), cell('/'), cell('/'), cell('/'))
+        else cells.push(cell('/'), cell('/'), cell('/'), cell(charityHistory ? amount(after) : '/'))
         previous = after
       })
       return { key: row.key, kind: row.kind, mergeLeading: row.mergeLeading, cells }
@@ -93,9 +106,9 @@ export function historySheet (budget, charityHistory = false) {
   }
 }
 
-export function generatedBudgetSheet (value, kind, charityHistory = false) {
+export function generatedBudgetSheet (value, kind, charityHistory = false, historyOptions) {
   if (!generatedSheets[kind]) throw new Error('预算表类型无效')
   const review = createBudgetReviewData(value)
-  const sheet = kind === 'summary' ? summarySheet(review.rows) : kind === 'cost' ? costSheet(review.budget) : historySheet(review.budget, charityHistory)
+  const sheet = kind === 'summary' ? summarySheet(review.rows) : kind === 'cost' ? costSheet(review.budget) : historySheet(review.budget, charityHistory, historyOptions)
   return { ...sheet, metadata: review.budget.metadata }
 }

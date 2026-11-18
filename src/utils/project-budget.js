@@ -1,3 +1,4 @@
+import { isDonationDraftExample } from '../mock/one-time-donation-project-draft'
 import { saveReportDraft } from '../mock/report-drafts'
 import { reportExecuted } from './report-budget'
 import { normalizeBudget, snapshotBudget, buildBudgetRows, budgetQuarterTotal, budgetPersonnelAmount } from './project-budget-data'
@@ -12,7 +13,17 @@ export const budgetStatus = budget => budget && budget.editStatus === 'completed
 export const canViewBudget = budget => budgetStatus(budget) !== '待编辑'
 export const rowTotal = budgetQuarterTotal
 export const detailTotal = row => roundMoney(Number(row.price) * Number(row.quantity))
-export const budgetKey = route => route.query.reportBudget ? ['report', route.params.id, route.query.type || 'progress', route.query.draftId || route.query.example || 'default'].join(':') : [route.params.id, (!route.query.detailType || route.query.detailType === 'default') ? 'project' : route.query.detailType, route.query.fresh === '1' ? 'fresh' : 'existing', route.query.example === 'filled' ? 'filled' : 'default'].join(':')
+export function budgetKey (route) {
+  const { params, query } = route
+  if (query.reportBudget) return ['report', params.id, query.type || 'progress', query.draftId || query.example || 'default'].join(':')
+  const detailType = !query.detailType || query.detailType === 'default' ? 'project' : query.detailType
+  const fresh = query.fresh === '1'
+  const parts = [params.id, detailType, fresh ? 'fresh' : 'existing', query.example === 'filled' ? 'filled' : 'default']
+  if (String(params.id) === '19' && detailType === 'one-time-donation' && fresh) parts.push('v2')
+  if (isDonationDraftExample(params.id, detailType) && query.mode === 'agreement') parts.push('agreement')
+  if (isDonationDraftExample(params.id, detailType) && query.example === 'agreement') parts[3] = 'agreement'
+  return parts.join(':')
+}
 export function prepareBudgetContext (route, draft, donationProject, savedSnapshot, editable = true) {
   const key = budgetKey(route)
   const budget = editable ? snapshotBudget(draft.budget, draft, donationProject) : normalizeBudget(draft.budget)
@@ -30,6 +41,7 @@ export function readBudgetContext (key) {
   if (parts[1] !== 'project') query.detailType = parts[1]
   if (parts[2] === 'fresh') query.fresh = '1'
   if (parts[3] === 'filled') query.example = 'filled'
+  if (parts[3] === 'agreement') query.example = 'agreement'
   return { draft: project, savedSnapshot: JSON.stringify(project), returnTo: { name: 'project-form', params: { id: parts[0] }, query } }
 }
 export function clearBudgetContext (key) { sessionStorage.removeItem('see-budget-context:' + key) }
@@ -50,6 +62,24 @@ export function readSavedBudget (key) {
   const budget = JSON.parse(raw)
   if (!Array.isArray(budget.rows) || !Array.isArray(budget.personnel)) throw new Error('预算数据无法读取')
   return normalizeBudget(budget)
+}
+export function readSeeAgreementAmounts (route) {
+  const key = budgetKey({ params: route.params, query: { detailType: route.query.detailType, mode: 'agreement' } })
+  const budget = readSavedBudget(key)
+  const finance = budget && budget.metadata.charityFinance
+  const amounts = finance && finance.agreementAmounts
+  return amounts && ['platform', 'foundation', 'fundraising', 'publicFee'].every(field =>
+    Number.isFinite(amounts[field]) && amounts[field] >= 0
+  ) ? amounts : null
+}
+export function followsMonthlySeeAgreement (route) {
+  return route.query.detailType === 'monthly-donation' && String(route.params.id) === '20' &&
+    route.query.example !== 'agreement' && route.query.mode !== 'agreement' && !route.query.reportBudget
+}
+export function readAgreementExampleAmounts (route) {
+  return readSeeAgreementAmounts(route) || (route.query.detailType === 'monthly-donation'
+    ? { platform: 1000, foundation: 1500, fundraising: 100000, publicFee: 5000 }
+    : { platform: 100, foundation: 100, fundraising: 2315.79, publicFee: 115.79 })
 }
 export function saveProjectBudget (key, project) {
   if (String(project.id) !== key.split(':')[0]) throw new Error('项目 ID 不匹配')

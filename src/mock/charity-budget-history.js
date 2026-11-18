@@ -1,4 +1,5 @@
-import { normalizeBudget, copyBudgetData, budgetBaseAmount, budgetMoney } from '../utils/project-budget-data'
+import { normalizeBudget, copyBudgetData, snapshotBudget, budgetBaseAmount, budgetMoney } from '../utils/project-budget-data'
+import { prepareCharityBudget } from '../utils/charity-budget-editor'
 
 // 独立样式示例：只生成查看快照，不写入项目预算或本地草稿。
 export function createCharityBudgetHistoryExamples (source) {
@@ -67,5 +68,55 @@ export function createCharityBudgetExecutionExample (source) {
   })
   budget.metadata.executionFilledAt = '2026-09-21'
   budget.metadata.executionCutoff = '2026-09-21'
+  return budget
+}
+
+export function createMonthlyDonationBudgetExample (draft, showExecution) {
+  const cost = (id, kind, name, type, price, quantity, unit) => ({
+    id, kind, name, type, price, quantity, unit,
+    quarters: [price * quantity, 0, 0, 0], agreementAmount: price * quantity
+  })
+  const rows = [
+    cost('monthly-office', 'support', '项目行政办公及场地分摊', '执行机构管理费', 3500, 1, '项'),
+    { ...cost('monthly-course-design', 'activity', '图文视频制作费', '活动费用', 3000, 4, '套'), outputId: 'monthly-training', activityId: 'monthly-materials' },
+    { ...cost('monthly-workshop-venue', 'activity', '租赁费', '活动费用', 5000, 4, '期'), outputId: 'monthly-training', activityId: 'monthly-workshops' },
+    { ...cost('monthly-class-materials', 'activity', '活动物料费', '活动费用', 1375, 20, '场'), outputId: 'monthly-classes', activityId: 'monthly-outreach' },
+    { ...cost('monthly-event-services', 'activity', '第三方服务购买费', '活动费用', 4000, 2, '场'), outputId: 'monthly-classes', activityId: 'monthly-sharing' }
+  ]
+  const personnel = [{
+    ...cost('monthly-coordination', 'support', '薪金及补贴', '运营人员成本', 2000, 12, '月'),
+    monthly: 2000, months: 12, quarters: [6000, 6000, 6000, 6000], charityCost: true
+  }]
+  const agreementAmounts = { platform: 1000, foundation: 1500, fundraising: 100000, publicFee: 5000 }
+  const budget = prepareCharityBudget(snapshotBudget({
+    editStatus: 'completed', rows, personnel, metadata: { charityFinance: { agreementAmounts } }
+  }, draft, true), true)
+  budget.metadata.charityFinance.incentives.forEach((row, index) => {
+    row.agreementAmount = index === 0 ? agreementAmounts.platform : agreementAmounts.foundation
+    row.quarters = [row.agreementAmount, 0, 0, 0]
+  })
+  if (!showExecution) return budget
+
+  const changes = {
+    'monthly-workshop-venue': { price: 4500, description: '培训场地费用调减，每期减少500元。' },
+    'monthly-class-materials': { price: 1475, description: '社区课堂补充材料，每场增加100元。' }
+  }
+  budget.rows.forEach(row => {
+    const change = changes[row.id]
+    if (!change) return
+    row.previousBudget = row.agreementAmount
+    row.adjustedBudget = budgetMoney(change.price * row.quantity)
+    row.adjustment = budgetMoney(row.adjustedBudget - row.previousBudget)
+    row.adjustmentInput = { ...change, quantity: row.quantity, unit: row.unit }
+  })
+  budget.rows.concat(budget.personnel, budget.metadata.charityFinance.incentives).forEach(row => {
+    if (row.adjustedBudget == null) row.adjustedBudget = row.agreementAmount == null ? 0 : row.agreementAmount
+  })
+  budget.metadata.adjustmentDate = '2026-07-15'
+  budget.adjustmentHistory = [{ id: 'monthly-adjustment-1', time: '2026-07-15 10:00:00', budget: copyBudgetData(budget) }]
+  budget.rows.concat(budget.personnel).forEach(row => {
+    row.executed = budgetMoney((row.adjustedBudget == null ? row.agreementAmount : row.adjustedBudget) * 0.8)
+  })
+  budget.metadata.executionFilledAt = '2026-09-21'
   return budget
 }

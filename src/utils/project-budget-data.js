@@ -79,7 +79,7 @@ export function normalizeBudget (value = {}, project = {}) {
   })
   const personnel = (source.personnel || []).map(row => {
     if (!row.id) throw new Error('人员明细缺少稳定 ID')
-    const memberId = row.memberId || row.id
+    const memberId = row.charityCost ? null : row.memberId || row.id
     const item = { adjustmentDetail: null, ...row, memberId, quarters: quarters(row) }
     if (row.previousBudget !== undefined) item.previousBudget = budgetNumber(row.previousBudget)
     ;['monthly', 'months', 'ratio', 'adjustment', 'adjustedBudget', 'executed'].forEach(field => { item[field] = budgetNumber(row[field]) })
@@ -123,8 +123,27 @@ export function snapshotBudget (value, project = {}, donationProject = false) {
     partners: Array.isArray(project.thirdParties) ? project.thirdParties.join('、') || '无' : project.thirdParties === undefined ? metadata.partners : project.thirdParties,
     executionCutoff: metadata.executionCutoff || '无'
   }
+  if (donationProject && String(project.id) === '19' && budget.personnel.length === 2) {
+    const salary = budget.personnel.find(row => row.id === 'personnel-team-1')
+    const second = budget.personnel.find(row => row.id === 'personnel-team-2')
+    const isOriginal = (row, names) => row && names.includes(row.name) &&
+      row.monthly === 50 && row.months === 4 && row.quarters.every(amount => amount === 50) &&
+      row.agreementAmount == null && row.agreementDetail == null && row.adjustment == null &&
+      row.adjustedBudget == null && row.executed == null
+    if (isOriginal(salary, ['胡刚', '薪金及补贴']) && isOriginal(second, ['张慧敏', '张善敏', '薪金及补贴'])) {
+      budget.personnel = [
+        { id: salary.id, name: '薪金及补贴', price: 100, quantity: 4, unit: '月', monthly: 100, months: 4, quarters: [100, 100, 100, 100] },
+        { id: 'charity-personnel-transport', name: '交通费', price: 25, quantity: 4, unit: '次', monthly: 25, months: 4, quarters: [25, 25, 25, 25] }
+      ].map(row => ({ ...row, type: '运营人员成本', memberId: null, charityCost: true }))
+    }
+  }
   const team = project.organizationMembers || project.team || []
   budget.personnel = budget.personnel.map(row => {
+    if (donationProject) {
+      // Convert the two original draft examples without changing saved cost amounts.
+      const legacySubject = String(project.id) === '19' && ['personnel-team-1', 'personnel-team-2'].includes(row.id) && !row.charityCost
+      return { ...row, name: legacySubject ? '薪金及补贴' : row.name, memberId: null, charityCost: true }
+    }
     const member = team.find(item => item.id === row.memberId)
     return member ? { ...row, name: member.name, position: member.position, responsibilities: member.responsibilities } : row
   })

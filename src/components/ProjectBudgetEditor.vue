@@ -3,9 +3,9 @@
     <div v-for="sheet in visibleSheets" :key="sheet.title" class="budget-sheet-row">
       <div class="budget-sheet-info">
         <strong>{{ sheet.title }}</strong>
-        <span>{{ sheet.status }}</span>
+        <span>{{ agreementStatus || sheet.status }}</span>
       </div>
-      <a-button v-for="action in sheet.actions" :key="action" type="link" :disabled="action === '查看' && !sheet.viewable" :class="{ 'budget-view-link': action === '查看' }" @click="open(action, sheet)">{{ action }}</a-button>
+      <a-button v-for="action in sheet.actions" :key="action" type="link" :disabled="actionDisabled(action, sheet)" :class="{ 'budget-view-link': action === '查看' }" @click="open(action, sheet)">{{ action }}</a-button>
     </div>
   </div>
 </template>
@@ -18,6 +18,8 @@ export default {
   props: {
     reportMode: { type: Boolean, default: false },
     donationProject: { type: Boolean, default: false },
+    waitingForSee: { type: Boolean, default: false },
+    agreementStatus: { type: String, default: '' },
     hideCostTypeAnalysis: { type: Boolean, default: false },
     value: { type: Object, required: true },
     projectName: { type: String, default: '' }
@@ -42,8 +44,11 @@ export default {
     }
   },
   methods: {
+    actionDisabled (action, sheet) {
+      return (action === '编辑' && this.waitingForSee) || (action === '查看' && !sheet.viewable)
+    },
     open (action, sheet) {
-      if (action === '查看' && !sheet.viewable) return
+      if (this.actionDisabled(action, sheet)) return
       this.$emit('open', { action, detail: !!sheet.detail, title: sheet.title })
     }
   }

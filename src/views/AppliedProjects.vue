@@ -85,12 +85,18 @@
               <a-dropdown placement="bottomRight" :trigger="['hover']">
                 <a-button class="operation-button">操作 <a-icon type="down" /></a-button>
                 <a-menu slot="overlay" @click="handleProjectAction($event, record)">
-                  <template v-if="record.id === 19">
+                  <template v-if="isDonationDraftExample(record.id, record.detailType)">
                     <a-menu-item key="draft-see-heading" disabled>--SEE--</a-menu-item>
                     <a-menu-item key="edit-agreement">填写协议金额</a-menu-item>
                     <a-menu-item key="draft-partner-heading" disabled>--伙伴--</a-menu-item>
-                    <a-menu-item key="edit-one-time-donation">编辑</a-menu-item>
-                    <a-menu-item key="edit-fresh-one-time-donation">全新编辑示例</a-menu-item>
+                    <a-menu-item key="edit-fresh-one-time-donation">编辑（新申请）</a-menu-item>
+                    <a-menu-item v-if="record.detailType === 'one-time-donation'" key="edit-one-time-donation">编辑（填写协议金额前）</a-menu-item>
+                    <a-menu-item key="edit-one-time-donation-agreement">编辑（填写协议金额）</a-menu-item>
+                    <a-menu-item v-if="record.detailType === 'monthly-donation'" key="edit-monthly-budget">填写预算表</a-menu-item>
+                  </template>
+                  <template v-else-if="[10, 11].includes(record.id)">
+                    <a-menu-item key="audit">审核</a-menu-item>
+                    <a-menu-item key="detail">查看详情</a-menu-item>
                   </template>
                   <template v-else-if="record.status === '草稿'">
                     <a-menu-item key="edit-draft">编辑</a-menu-item>
@@ -225,7 +231,7 @@
 </template>
 
 <script>
-import { loadOneTimeDonationDraft } from '../mock/one-time-donation-project-draft'
+import { isDonationDraftExample, loadOneTimeDonationDraft } from '../mock/one-time-donation-project-draft'
 import { prepareBudgetContext } from '../utils/project-budget'
 import { appliedProjects } from '../mock/projects'
 import RevisionRequestModal from '../components/RevisionRequestModal.vue'
@@ -317,13 +323,14 @@ export default {
     },
     handleAppliedTableChange (pagination) { this.appliedPage = pagination.current },
     exportSelected (type) { this.$message.info(`已选择 ${this.selectedProjectKeys.length} 个项目，准备导出${type}`) },
+    isDonationDraftExample,
     handleProjectAction ({ key }, record) {
-      if (key === 'edit-agreement' && record.id === 19) {
-        const route = { params: { id: String(record.id) }, query: { detailType: record.detailType } }
+      if (key === 'edit-agreement' && isDonationDraftExample(record.id, record.detailType)) {
+        const route = { params: { id: String(record.id) }, query: { detailType: record.detailType, mode: 'agreement' } }
         try {
           const draft = loadOneTimeDonationDraft(false, record.detailType, record.id)
           prepareBudgetContext(route, draft, true, JSON.stringify(draft))
-          this.$router.push({ name: 'project-budget-form', params: route.params, query: { ...route.query, budgetType: 'donation', mode: 'agreement' } })
+          this.$router.push({ name: 'project-budget-form', params: route.params, query: { ...route.query, budgetType: 'donation' } })
         } catch (error) { this.$message.error('无法读取草稿预算，请检查浏览器存储后重试') }
         return
       }
@@ -349,6 +356,19 @@ export default {
       }
       if (['edit-fresh-one-time-donation', 'edit-fresh-green-home', 'edit-fresh-grass'].includes(key)) {
         this.$router.push({ name: 'project-form', params: { id: String(record.id) }, query: { detailType: record.detailType, fresh: '1' } })
+        return
+      }
+      if (key === 'edit-monthly-budget' && record.detailType === 'monthly-donation' && isDonationDraftExample(record.id, record.detailType)) {
+        const route = { params: { id: String(record.id) }, query: { detailType: record.detailType, example: 'agreement' } }
+        try {
+          const draft = loadOneTimeDonationDraft(false, record.detailType, record.id, true)
+          prepareBudgetContext(route, draft, true, JSON.stringify(draft))
+          this.$router.push({ name: 'project-budget-form', params: route.params, query: { ...route.query, budgetType: 'donation', mode: 'edit' } })
+        } catch (error) { this.$message.error('无法读取草稿预算，请检查浏览器存储后重试') }
+        return
+      }
+      if (key === 'edit-one-time-donation-agreement' && isDonationDraftExample(record.id, record.detailType)) {
+        this.$router.push({ name: 'project-form', params: { id: String(record.id) }, query: { detailType: record.detailType, example: 'agreement' } })
         return
       }
       if (key === 'edit-green-home' || key === 'edit-grass' || key === 'edit-one-time-donation') {

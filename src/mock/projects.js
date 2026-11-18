@@ -15,8 +15,9 @@ export const appliedProjects = [
         { id: 8, name: '创绿家示例', recruitment: '创绿家项目招募', organization: '创绿家示例机构', code: 'ZZ-1764740242', status: '执行中', type: '项目', fundraising: '-', updatedAt: '2026-09-21 10:00:00', initiator: 'department', cover: 'forest-table', icon: 'environment', detailType: 'green-home' },
         { id: 9, name: '劲草示例', recruitment: '劲草项目招募', organization: '劲草示例机构', code: 'ZZ-1764740243', status: '执行中', type: '项目', fundraising: '-', updatedAt: '2026-09-21 10:00:00', initiator: 'department', cover: 'plateau', icon: 'deployment-unit', detailType: 'grass' },
         { id: 19, name: '联合公益-次捐项目示例', recruitment: '次捐项目招募', organization: '次捐示例机构', code: 'LH-1764740244', status: '草稿', type: '联合公益', fundraising: '-', updatedAt: '2026-09-21 10:00:00', initiator: 'department', cover: 'wildlife', icon: 'heart', detailType: 'one-time-donation' },
-        { id: 10, name: '联合公益-次捐项目示例', recruitment: '次捐项目招募', organization: '次捐示例机构', code: 'LH-1764740244', status: '执行中', type: '联合公益', fundraising: '筹款中', updatedAt: '2026-09-21 10:00:00', initiator: 'department', cover: 'wildlife', icon: 'heart', detailType: 'one-time-donation' },
-        { id: 11, name: '联合公益-月捐项目示例', recruitment: '月捐项目招募', organization: '月捐示例机构', code: 'LH-1764740245', status: '执行中', type: '联合公益', fundraising: '筹款中', updatedAt: '2026-09-21 10:00:00', initiator: 'department', cover: 'city', icon: 'heart', detailType: 'monthly-donation' },
+        { id: 10, name: '联合公益-次捐项目示例', recruitment: '次捐项目招募', organization: '次捐示例机构', code: 'LH-1764740244', status: '申请待审', type: '联合公益', fundraising: '-', updatedAt: '2026-09-21 10:00:00', initiator: 'department', cover: 'wildlife', icon: 'heart', detailType: 'one-time-donation' },
+        { id: 20, name: '月捐示例-湖湘自然教育讲师培养与公益课堂（第1期）', recruitment: '月捐项目招募', organization: '月捐示例机构', code: 'LH-1764740245', status: '草稿', type: '联合公益', fundraising: '-', updatedAt: '2026-09-21 10:00:00', initiator: 'department', cover: 'city', icon: 'heart', detailType: 'monthly-donation' },
+        { id: 11, name: '月捐示例-湖湘自然教育讲师培养与公益课堂（第1期）', recruitment: '月捐项目招募', organization: '月捐示例机构', code: 'LH-1764740245', status: '申请待审', type: '联合公益', fundraising: '-', updatedAt: '2026-09-21 10:00:00', initiator: 'department', cover: 'city', icon: 'heart', detailType: 'monthly-donation' },
       ]
 
 // 可申请项目列表演示数据；后续接入招募接口时保持相同稳定字段。

@@ -1,3 +1,4 @@
+import { followsMonthlySeeAgreement, readSeeAgreementAmounts } from '../utils/project-budget'
 import reportExamples from '../mock/report-examples'
 import Vue from 'vue'
 import VueRouter from 'vue-router'
@@ -69,6 +70,15 @@ const router = new VueRouter({
 
 // 全局守卫也覆盖详情页之间仅变更项目 ID 的导航。
 router.beforeEach((to, from, next) => {
+  if (['project-budget-form', 'project-personnel-form'].includes(to.name) && followsMonthlySeeAgreement(to) && to.query.mode !== 'view') {
+    let amounts
+    try { amounts = readSeeAgreementAmounts(to) } catch (error) { amounts = null }
+    if (!amounts) {
+      const query = { detailType: to.query.detailType }
+      if (to.query.fresh === '1') query.fresh = '1'
+      next({ name: 'project-form', params: to.params, query, replace: true }); return
+    }
+  }
   if (to.name === 'benefit-region-detail' && !getBenefitRegion(to.query.regionCode)) {
     next({ name: 'benefit-regions', replace: true }); return
   }
@@ -78,7 +88,7 @@ router.beforeEach((to, from, next) => {
   if (to.name === 'recruitment-detail' && !Object.prototype.hasOwnProperty.call(recruitmentDetails, to.params.id)) {
     next({ name: 'available-projects', replace: true }); return
   }
-  if (to.name === 'project-form' && !((to.params.id === '8' && to.query.detailType === 'green-home') || (to.params.id === '9' && to.query.detailType === 'grass') || (['10', '19'].includes(to.params.id) && to.query.detailType === 'one-time-donation') || (to.params.id === '11' && to.query.detailType === 'monthly-donation')) && !editableDraftIds.some(id => String(id) === String(to.params.id))) {
+  if (to.name === 'project-form' && !((to.params.id === '8' && to.query.detailType === 'green-home') || (to.params.id === '9' && to.query.detailType === 'grass') || (['10', '19'].includes(to.params.id) && to.query.detailType === 'one-time-donation') || (['11', '20'].includes(to.params.id) && to.query.detailType === 'monthly-donation')) && !editableDraftIds.some(id => String(id) === String(to.params.id))) {
     next({ name: 'dashboard', replace: true }); return
   }
   if (to.name === 'project-detail' && !appliedProjects.some(project => String(project.id) === to.params.id)) {

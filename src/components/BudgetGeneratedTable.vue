@@ -15,7 +15,7 @@
             <template v-if="charityHistory">
               <tr><td :colspan="sheet.columns.length" class="budget-generated-meta">执行机构：{{ sheet.metadata.organization || '未填写' }}</td></tr>
               <tr><td :colspan="sheet.columns.length" class="budget-generated-meta">筹款周期：{{ sheet.metadata.fundraisingPeriod || '未填写' }}</td></tr>
-              <tr><td colspan="8" class="budget-generated-meta">执行周期：{{ sheet.metadata.period || '未填写' }}</td><td v-for="round in budget.adjustmentHistory || []" :key="round.id" colspan="4" class="budget-generated-meta">预算调整时间：{{ (round.budget.metadata && round.budget.metadata.adjustmentDate) || (round.time && round.time.slice(0, 10)) || '无' }}</td></tr>
+              <tr><td :colspan="sheet.columns.length - 4 * (budget.adjustmentHistory || []).length" class="budget-generated-meta">执行周期：{{ sheet.metadata.period || '未填写' }}</td><td v-for="round in budget.adjustmentHistory || []" :key="round.id" colspan="4" class="budget-generated-meta">预算调整时间：{{ (round.budget.metadata && round.budget.metadata.adjustmentDate) || (round.time && round.time.slice(0, 10)) || '无' }}</td></tr>
             </template>
             <template v-else-if="kind === 'summary'">
               <tr><td colspan="2" class="budget-generated-meta">编制单位（全称）：{{ sheet.metadata.organization || '未填写' }}</td><td :colspan="sheet.columns.length - 2" class="budget-generated-meta">项目周期：{{ sheet.metadata.period || '未填写' }}</td></tr>
@@ -46,7 +46,14 @@
 import { generatedBudgetSheet, generatedSheets } from '../utils/budget-generated-data'
 export default {
   name: 'BudgetGeneratedTable',
-  props: { budget: { type: Object, required: true }, kind: { type: String, required: true }, audit: { type: Boolean, default: false }, charityHistory: { type: Boolean, default: false } },
+  props: {
+    budget: { type: Object, required: true },
+    kind: { type: String, required: true },
+    audit: { type: Boolean, default: false },
+    charityHistory: { type: Boolean, default: false },
+    monthlyDonation: { type: Boolean, default: false },
+    hideUnadjustedTotal: { type: Boolean, default: false }
+  },
   methods: {
     mergeHistoryContent (row) { return this.kind === 'adjustments' && (row.key.indexOf('output:') === 0 || row.key.indexOf('activity:') === 0) },
     historyCellVisible (row, index) { return this.charityHistory && (row.kind !== 'detail' || row.mergeLeading) ? index === 0 || index > 4 : !this.mergeHistoryContent(row) || index < 2 || index > 3 },
@@ -56,7 +63,9 @@ export default {
     title () { return generatedSheets[this.kind] || '预算表' },
     sheet () {
       try {
-        const sheet = generatedBudgetSheet(this.budget, this.kind, this.charityHistory)
+        const sheet = generatedBudgetSheet(this.budget, this.kind, this.charityHistory, {
+          monthlyDonation: this.monthlyDonation, hideUnadjustedTotal: this.hideUnadjustedTotal
+        })
         if (this.kind === 'summary' || this.kind === 'adjustments') sheet.metadata = Object.keys(sheet.metadata).reduce((result, key) => { result[key] = typeof sheet.metadata[key] === 'string' ? sheet.metadata[key].replace(/（自动获取）/g, '') : sheet.metadata[key]; return result }, {})
         return sheet
       } catch (error) { return { error: error.message } }

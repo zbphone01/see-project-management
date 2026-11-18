@@ -6,7 +6,7 @@
         <tr><th :colspan="columns.length" class="budget-title"><strong>北京市企业家环保基金会</strong><br />“{{ displayMetadata.projectName || '未填写' }}” <strong>项目预算表 / 执行情况表 / 预算调整表</strong></th></tr>
         <tr><td :colspan="columns.length" class="budget-meta">执行机构：{{ displayMetadata.organization || '未填写' }}</td></tr>
         <tr><td :colspan="columns.length" class="budget-meta">筹款周期：{{ displayMetadata.fundraisingPeriod || '未填写' }}</td></tr>
-        <tr><td colspan="8" class="budget-meta">执行周期：{{ displayMetadata.period || '未填写' }}</td><td colspan="4" class="budget-meta">预算调整时间：{{ displayMetadata.adjustmentDate || '无' }}</td><td colspan="2" class="budget-meta">执行填写时间：{{ displayMetadata.executionFilledAt || '无' }}</td></tr>
+        <tr><td :colspan="columns.length - 6" class="budget-meta">执行周期：{{ displayMetadata.period || '未填写' }}</td><td colspan="4" class="budget-meta">预算调整时间：{{ displayMetadata.adjustmentDate || '无' }}</td><td colspan="2" class="budget-meta">执行填写时间：{{ displayMetadata.executionFilledAt || '无' }}</td></tr>
       </template>
       <template v-else>
       <tr><th :colspan="columns.length">{{ displayMetadata.projectName || '未填写' }}</th></tr>
@@ -24,16 +24,27 @@
           <th v-if="row.kind === 'total'" colspan="5" class="budget-description">{{ row.name || '合计金额' }}</th>
           <td v-else-if="row.kind === 'group' || row.kind === 'activity' || row.mergeLeading" colspan="5" class="budget-description">{{ row.code }} {{ row.name }}</td>
           <template v-else>
-            <td class="budget-description"><button v-if="!readonly && row.cost && row.charityEditable !== false" type="button" class="budget-subject-link" @click="$emit('edit-cost', row)">{{ row.name }}</button><span v-else>{{ row.name }}</span></td><td>{{ row.type || '/' }}</td>
+            <td class="budget-description"><button v-if="!readonly && !agreementCostMode && row.cost && row.charityEditable !== false" type="button" class="budget-subject-link" @click="$emit('edit-cost', row)">{{ row.name }}</button><span v-else>{{ row.name }}</span></td><td>{{ row.type || '/' }}</td>
             <td>{{ row.detailParts.quantity == null ? '/' : quantity(row.detailParts.quantity) }}</td><td>{{ row.detailParts.unit || '/' }}</td><td>{{ optionalMoney(row.detailParts.price) }}</td>
           </template>
-          <td class="budget-number">{{ optionalMoney(row.initialTotal) }}</td>
+          <td v-if="!hideFundraisingBudget" class="budget-number">{{ optionalMoney(row.initialTotal) }}</td>
           <td class="budget-number">
-            <button v-if="agreementMode && row.agreementKey" type="button" class="budget-subject-link" @click="$emit('edit-agreement', row)">{{ row.agreementAmount == null ? '填写金额' : money(row.agreementAmount) }}</button>
+            <template v-if="agreementMode && row.agreementKey"><a-button v-if="row.agreementAmount == null" class="budget-add-button" @click="$emit('edit-agreement', row)">填写协议金额</a-button><button v-else type="button" class="budget-subject-link" @click="$emit('edit-agreement', row)">{{ money(row.agreementAmount) }}</button></template>
+            <a-popconfirm v-else-if="agreementCostMode && !readonly" :visible="!!agreementError && agreementError.key === row.key" :trigger="[]" placement="bottom" :title="agreementError ? agreementError.message : ''" ok-text="确定" :cancel-button-props="{ style: { display: 'none' } }" @confirm="agreementError = null" @visibleChange="dismissAgreementError(row, $event)">
+              <span :ref="agreementError && agreementError.key === row.key ? 'agreementErrorAnchor' : null" class="budget-number-content" tabindex="-1">
+                <template v-if="row.charityEditable"><a-button v-if="row.agreementAmount == null" class="budget-add-button" @click="agreementError = null; $emit('edit-agreement-cost', row)">填写协议金额</a-button><button v-else type="button" class="budget-subject-link" @click="agreementError = null; $emit('edit-agreement-cost', row)">{{ money(row.agreementAmount) }}</button></template>
+                <span v-else-if="row.key === 'total' && agreementItemsTotal != null">
+                  {{ optionalMoney(row.agreementAmount) }}
+                  <span class="budget-agreement-items-total">{{ money(agreementItemsTotal) }}</span>
+                </span>
+                <template v-else>{{ optionalMoney(row.agreementAmount) }}</template>
+              </span>
+            </a-popconfirm>
+            <template v-else-if="hideAgreementAmounts">/</template>
             <span v-else-if="agreementMode && row.agreementAmount == null && ['charity-allocation', 'charity-incentives'].includes(row.key)">填写后计算</span>
             <template v-else>{{ optionalMoney(row.agreementAmount == null ? row.cost && row.cost.agreementAmount : row.agreementAmount) }}</template>
           </td>
-          <td :class="{ 'budget-description': !blankAgreementDetails && (row.detailParts.price !== undefined || !!row.detailParts.text) }"><template v-if="blankAgreementDetails">/</template><template v-else-if="row.detailParts.price != null"><div>{{ money(row.detailParts.price) }}元 × {{ quantity(row.detailParts.quantity) }}{{ row.detailParts.unit }}</div><p v-if="row.detailParts.description" class="budget-detail-note">{{ row.detailParts.description }}</p></template><template v-else>{{ optionalValue(row.detailParts.text) }}</template></td>
+          <td v-if="!hideFundraisingBudget" :class="{ 'budget-description': row.agreementParts.price != null || !!row.agreementParts.text }"><template v-if="row.agreementParts.price != null"><div>{{ money(row.agreementParts.price) }}元 × {{ quantity(row.agreementParts.quantity) }}{{ row.agreementParts.unit }}</div><p v-if="!agreementCostMode && row.agreementParts.description" class="budget-detail-note">{{ row.agreementParts.description }}</p></template><template v-else>{{ optionalValue(row.agreementParts.text) }}</template></td>
           <td class="budget-number" :class="adjustmentColor(row.adjustment)">{{ signedAdjustment(row.adjustment) }}</td>
           <td :class="{ 'budget-description': row.adjustmentParts.price !== undefined || optionalValue(row.adjustmentParts.text) !== '/' }"><template v-if="row.adjustmentParts.price !== undefined"><div>{{ money(row.adjustmentParts.price) }}元 × {{ quantity(row.adjustmentParts.quantity) }}{{ row.adjustmentParts.unit }}</div><p v-if="row.adjustmentParts.description" class="budget-detail-note">{{ row.adjustmentParts.description }}</p></template><template v-else>{{ optionalValue(row.adjustmentParts.text) }}</template></td>
           <td :class="{ 'budget-ratio-increase': parseFloat(row.adjustmentRatio) > 0, 'budget-ratio-decrease': parseFloat(row.adjustmentRatio) < 0 }">{{ optionalValue(row.adjustmentRatio) }}</td>
@@ -59,7 +70,7 @@ import dateLocale from 'ant-design-vue/es/date-picker/locale/zh_CN'
 
 const charityColumns = ['预算科目', '费用类型', '数量', '单位', '单价', '上线筹款预算', '协议签署金额', '协议签署科目明细', '预算调整金额', '预算调整明细', '预算调整\n比例', '预算调整后金额', '执行金额', '执行率']
 
-export function measureCharityBudgetWidths (rows) {
+export function measureCharityBudgetWidths (rows, hideFundraisingBudget = false) {
   // 基础列宽按联合公益查看原型标注，金额较长时继续按内容撑宽。
   const widths = measureBudgetWidths(rows.map(row => ({ ...row, hasInitialBudget: false })))
   const result = charityBudgetWidths.slice()
@@ -72,7 +83,8 @@ export function measureCharityBudgetWidths (rows) {
     if (parts.quantity != null) cells.push({ index: 2, text: Number(parts.quantity).toFixed(2) })
     if (parts.price != null) cells.push({ index: 4, text: money(parts.price) })
   })
-  return measureNumberWidths(result, cells)
+  const measured = measureNumberWidths(result, cells)
+  return hideFundraisingBudget ? measured.filter((width, index) => index !== 5 && index !== 7) : measured
 }
 
 export function measureBudgetWidths (rows, progressReport = false) {
@@ -114,7 +126,11 @@ export default {
     widths: { type: Array, required: true },
     donationProject: { type: Boolean, default: false },
     charityHeader: { type: Boolean, default: false },
+    hideFundraisingBudget: { type: Boolean, default: false },
     agreementMode: { type: Boolean, default: false },
+    agreementCostMode: { type: Boolean, default: false },
+    agreementItemsTotal: { type: Number, default: null },
+    hideAgreementAmounts: { type: Boolean, default: false },
     blankAgreementDetails: { type: Boolean, default: false },
     readonly: { type: Boolean, default: true },
     blackAmounts: { type: Boolean, default: false },
@@ -125,16 +141,20 @@ export default {
     audit: { type: Boolean, default: false },
     mismatchVisible: { type: Boolean, default: false }
   },
-  data () { return { dateLocale, dateOpen: false } },
+  data () { return { dateLocale, dateOpen: false, agreementError: null } },
   computed: {
     hasAdjustment () { return this.rows.some(row => row.hasBudgetAdjustment || row.hasInitialBudget) },
     hasInitialBudget () { return this.rows.some(row => row.hasInitialBudget) },
-    columns () { if (this.charityHeader) return charityColumns; const columns = budgetColumns.slice(); if (this.hasInitialBudget) columns.splice(8, 0, '初始预算合计'); return columns },
+    columns () { if (this.charityHeader) return this.hideFundraisingBudget ? charityColumns.filter((label, index) => index !== 5 && index !== 7) : charityColumns; const columns = budgetColumns.slice(); if (this.hasInitialBudget) columns.splice(8, 0, '初始预算合计'); return columns },
     displayMetadata () { return Object.keys(this.metadata).reduce((result, key) => { result[key] = typeof this.metadata[key] === 'string' ? this.metadata[key].replace(/（自动获取）/g, '') : this.metadata[key]; return result }, {}) },
     title () { return this.displayMetadata.tableTitle || '项目预算及执行情况明细表' },
     tableRows () {
       const rows = this.progressReport ? progressBudgetDisplayRows(this.rows) : this.rows
-      return rows.filter(row => !this.readonly || row.kind !== 'action').map(row => ({ ...row, adjustment: row.hasBudgetAdjustment ? row.adjustment : null, adjustmentRatio: row.hasBudgetAdjustment ? row.adjustmentRatio : null, detailParts: row.cost && row.cost.charityAutomatic ? { price: row.cost.price, quantity: row.cost.quantity, unit: row.cost.unit } : row.previousDetailParts || budgetDetailParts(row), adjustmentParts: !row.hasBudgetAdjustment ? { text: '' } : budgetAdjustmentParts(row) }))
+      return rows.filter(row => !this.readonly || row.kind !== 'action').map(row => {
+        const detailParts = row.cost && row.cost.charityAutomatic ? { price: row.cost.price, quantity: row.cost.quantity, unit: row.cost.unit } : (this.hideFundraisingBudget && row.cost && row.cost.agreementDetail) || row.previousDetailParts || budgetDetailParts(row)
+        const agreementParts = this.blankAgreementDetails ? {} : this.agreementCostMode ? (row.cost && row.cost.agreementDetail) || {} : detailParts
+        return { ...row, adjustment: row.hasBudgetAdjustment ? row.adjustment : null, adjustmentRatio: row.hasBudgetAdjustment ? row.adjustmentRatio : null, detailParts, agreementParts, adjustmentParts: !row.hasBudgetAdjustment ? { text: '' } : budgetAdjustmentParts(row) }
+      })
     },
     tableWidth () { return this.widths.reduce((sum, width) => sum + width, 0) }
   },
@@ -147,6 +167,20 @@ export default {
     optionalMoney (value) { return value === null || value === undefined ? '/' : money(value) },
     optionalValue (value) { return value === null || value === undefined || value === '' ? '/' : value },
     onMismatchVisibleChange (visible) { if (!visible) this.$emit('dismiss-mismatch') },
+    dismissAgreementError (row, visible) {
+      if (!visible && this.agreementError && this.agreementError.key === row.key) this.agreementError = null
+    },
+    showAgreementError (key, message) {
+      this.agreementError = { key, message }
+      this.$nextTick(() => {
+        const ref = this.$refs.agreementErrorAnchor
+        const target = Array.isArray(ref) ? ref[0] : ref
+        if (target) {
+          target.scrollIntoView({ block: 'center', inline: 'center' })
+          target.focus({ preventScroll: true })
+        }
+      })
+    },
     focusTotal () {
       const ref = this.$refs.budgetGrandTotal
       const target = Array.isArray(ref) ? ref[0] : ref
@@ -189,6 +223,10 @@ export default {
 .budget-row-total .budget-executed-column, .budget-row-total .budget-ratio-column { background: inherit; }
 .budget-subject-link { padding: 0; border: 0; background: none; color: #f59a23; text-decoration: underline; cursor: pointer; font: inherit; overflow-wrap: anywhere; }
 .budget-subject-link:focus-visible { outline: 2px solid #1677ff; outline-offset: 2px; }
+.budget-agreement-items-total { display: block; color: #777; font-weight: normal; }
+.budget-edit-table .ant-btn.budget-subject-link { height: auto; box-shadow: none; }
+.budget-edit-table .ant-btn.budget-subject-link:hover, .budget-edit-table .ant-btn.budget-subject-link:focus { color: #f59a23; text-decoration: underline; }
+.donation-budget .budget-description > .budget-subject-link { text-align: inherit; }
 .budget-detail-note { margin: 8px 0 0; }
 .budget-edit-table .budget-row-action { height: 56px; }
 .budget-edit-table .budget-add-cell { text-align: left; }

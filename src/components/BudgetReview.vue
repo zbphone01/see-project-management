@@ -4,14 +4,14 @@
     <a-tabs v-else v-model="activeTab" :animated="false">
       <a-tab-pane v-for="tab in tabs" :key="tab.key" :tab="tab.title">
         <div v-if="tab.key === 'detail'" class="budget-review-scroll" tabindex="0" :aria-label="tab.title + '，可左右滚动'">
-          <project-budget-table :metadata="review.budget.metadata" :rows="review.rows" :widths="widths" :progress-report="reportMode && progressReport" :donation-project="donationProject" :charity-header="charityHeader" :audit="audit && !reportMode" readonly black-amounts show-execution />
+          <project-budget-table :metadata="review.budget.metadata" :rows="review.rows" :widths="widths" :progress-report="reportMode && progressReport" :donation-project="donationProject" :charity-header="charityHeader" :hide-fundraising-budget="monthlyDonation" :audit="audit && !reportMode" readonly black-amounts show-execution />
         </div>
         <div v-else-if="tab.key === 'personnel' && review.budget.personnel.length" class="budget-review-scroll" tabindex="0" :aria-label="tab.title + '，可左右滚动'">
           <project-personnel-table :rows="review.budget.personnel" :project-name="review.budget.metadata.projectName" :audit="audit && !reportMode" readonly black-amounts show-execution />
         </div>
         <budget-summary v-else-if="tab.key === 'summary'" :budget="review.budget" :audit="audit && !reportMode" />
-        <budget-generated-table v-else-if="tab.historyExample" :budget="historyExamples[tab.historyExample]" kind="adjustments" :charity-history="charityHeader" />
-        <budget-generated-table v-else-if="tab.key === 'cost' || tab.key === 'adjustments'" :budget="review.budget" :kind="tab.key" :charity-history="charityHeader && tab.key === 'adjustments'" :audit="audit && !reportMode && tab.key === 'cost'" />
+        <budget-generated-table v-else-if="tab.historyExample" :budget="historyExamples[tab.historyExample]" kind="adjustments" :charity-history="charityHeader" :hide-unadjusted-total="charityHeader && !monthlyDonation && tab.historyExample === 'none'" />
+        <budget-generated-table v-else-if="tab.key === 'cost' || tab.key === 'adjustments'" :budget="review.budget" :kind="tab.key" :charity-history="charityHeader && tab.key === 'adjustments'" :monthly-donation="monthlyDonation" :audit="audit && !reportMode && tab.key === 'cost'" />
         <a-empty v-else class="budget-review-empty" :description="tab.title + '暂无示例数据'" />
       </a-tab-pane>
     </a-tabs>
@@ -37,6 +37,7 @@ export default {
     progressReport: { type: Boolean, default: false },
     donationProject: { type: Boolean, default: false },
     charityHeader: { type: Boolean, default: false },
+    monthlyDonation: { type: Boolean, default: false },
     historyExamples: { type: Object, default: null }
   },
   data () { return { activeTab: 'detail' } },
@@ -44,8 +45,9 @@ export default {
     review () {
       try { return this.charityHeader ? createCharityBudgetReviewData(this.budget) : createBudgetReviewData(this.budget, this.projectName) } catch (error) { return { error: error.message } }
     },
-    widths () { return this.review.error ? [] : this.charityHeader ? measureCharityBudgetWidths(this.review.rows) : measureBudgetWidths(this.review.rows, this.reportMode && this.progressReport) },
+    widths () { return this.review.error ? [] : this.charityHeader ? measureCharityBudgetWidths(this.review.rows, this.monthlyDonation) : measureBudgetWidths(this.review.rows, this.reportMode && this.progressReport) },
     tabs () {
+      if (this.monthlyDonation && this.audit) return [{ key: 'detail', title: '联合公益预算表' }]
       if (this.charityHeader) return [{ key: 'detail', title: '联合公益预算表' }].concat(this.historyExamples
         ? [{ key: 'adjustments-none', title: '预算调整历史（无调整）', historyExample: 'none' }, { key: 'adjustments-multiple', title: '预算调整历史（多次调整）', historyExample: 'multiple' }]
         : [{ key: 'adjustments', title: '预算调整历史' }])

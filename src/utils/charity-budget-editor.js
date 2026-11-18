@@ -17,18 +17,24 @@ const publicFeeAmount = rows => {
 }
 
 // 编辑真实预算，只初始化缺失的联合公益资料，不注入查看页的演示明细。
-export function prepareCharityBudget (value) {
+export function prepareCharityBudget (value, monthlyAgreement = false) {
   const budget = normalizeBudget(value)
   const finance = { publicManagementFee: 0, incentives: [], ...(budget.metadata.charityFinance || {}) }
   const publicFees = budget.rows.filter(isPublicFee)
   const personnel = budget.personnel.length ? budget.personnel : budget.legacyPersonnel
-  const fee = publicFeeAmount(budget.rows.concat(personnel))
+  const fee = monthlyAgreement
+    ? (finance.agreementAmounts && finance.agreementAmounts.publicFee != null ? finance.agreementAmounts.publicFee : null)
+    : publicFeeAmount(budget.rows.concat(personnel))
   const automaticFee = { adjustmentDetail: null, adjustment: null, adjustedBudget: null, executed: null, description: '',
     ...(publicFees[0] || {}), id: publicFees.length ? publicFees[0].id : 'charity-public-management-fee',
     kind: 'support', name: '公募机构管理费', type: '公募机构管理费', charityAutomatic: true,
     price: fee, quantity: 1, unit: '项', quarters: [fee || 0, 0, 0, 0],
+    ...(monthlyAgreement ? { agreementAmount: fee } : {}),
     outputId: null, activityId: null }
-  budget.rows = [automaticFee].concat(budget.rows.filter(row => !isPublicFee(row)))
+  const otherRows = budget.rows.filter(row => !isPublicFee(row)).map(row => (
+    row.kind === 'support' ? { ...row, type: '执行机构管理费' } : row
+  ))
+  budget.rows = [automaticFee].concat(otherRows)
   finance.publicManagementFee = fee || 0
   if (!finance.incentives.length) finance.incentives = ['平台激励', '北京市企业家环保基金会激励'].map((name, index) => ({
     id: 'charity-incentive-' + index, name, quarters: [0, 0, 0, 0], agreementAmount: null, adjustment: null, adjustedBudget: null, executed: null
@@ -65,8 +71,8 @@ export function validateCharityCost (row) {
   return ''
 }
 
-export function charityEditorRows (value, editable = true) {
-  const budget = prepareCharityBudget(value)
+export function charityEditorRows (value, editable = true, monthlyAgreement = false) {
+  const budget = prepareCharityBudget(value, monthlyAgreement)
   const review = createCharityBudgetReviewData(budget)
   const rows = review.rows.map(row => ({ ...row, charityEditable: !!row.cost && !row.mergeLeading && row.type !== '公募机构管理费' && row.name !== '公募机构管理费' }))
   if (!editable) return rows
@@ -75,7 +81,7 @@ export function charityEditorRows (value, editable = true) {
     while (index + 1 < rows.length && rows[index + 1].kind === 'detail') index++
     if (index >= 0) rows.splice(index + 1, 0, { key: 'add:' + key, kind: 'action', costKind, action, note, ...(activity || {}) })
   }
-  insertAction('support', 'support', '添加执行机构管理费', '请先录入人员成本和活动费用，录入执行机构管理费时，比例不能超过项目募集总金额的5%', { disabled: charityPersonnelActivityTotal(budget) <= 0 })
+  insertAction('support', 'support', '添加执行机构管理费', monthlyAgreement ? '管理费合计占比不能超过5%' : '请先录入人员成本和活动费用，录入执行机构管理费时，比例不能超过项目募集总金额的5%', { disabled: !monthlyAgreement && charityPersonnelActivityTotal(budget) <= 0 })
   insertAction('personnel', 'personnel', '添加人员成本', '录入运营人员成本的预算科目、单价和数量')
   budget.groups.forEach(output => (output.activities || []).forEach(activity => {
     insertAction('activity:' + activity.id, 'activity', '添加活动费用', '活动无需预算时可不添加费用', {
